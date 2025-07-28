@@ -1,0 +1,363 @@
+/* User Dashboard Styles */
+.navbar-brand {
+  font-weight: 600;
+}
+
+.navbar-nav .nav-link {
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.navbar-nav .nav-link:hover {
+  transform: translateY(-1px);
+}
+
+.navbar-nav .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+/* Welcome section */
+.welcome-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+}
+
+.welcome-card .btn {
+  margin: 0.25rem;
+}
+
+/* Status indicators */
+.status-card {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.status-item:last-child {
+  border-bottom: none;
+}
+
+/* Alert cards */
+.alert-card {
+  border-left: 4px solid;
+  transition: all 0.3s ease;
+}
+
+.alert-card:hover {
+  transform: translateX(5px);
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.alert-emergency {
+  border-left-color: #dc3545;
+}
+.alert-warning {
+  border-left-color: #ffc107;
+}
+.alert-info {
+  border-left-color: #0dcaf0;
+}
+.alert-advisory {
+  border-left-color: #198754;
+}
+
+/* Emergency contacts */
+.contact-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+}
+
+.contact-item:last-child {
+  border-bottom: none;
+}
+
+.contact-item:hover {
+  background-color: rgba(0, 0, 0, 0.025);
+  margin: 0 -1rem;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.contact-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  font-size: 1.25rem;
+}
+
+/* Safety tips accordion */
+.accordion-button {
+  font-weight: 500;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: rgba(13, 110, 253, 0.1);
+  color: var(--primary-color);
+}
+
+.accordion-body ul {
+  padding-left: 1.25rem;
+}
+
+.accordion-body li {
+  margin-bottom: 0.5rem;
+}
+
+/* Map container */
+.map-container {
+  position: relative;
+  min-height: 300px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.map-container img {
+  width: 100%;
+  height: auto;
+  min-height: 300px;
+  object-fit: cover;
+}
+
+.map-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.map-container:hover .map-overlay {
+  opacity: 1;
+}
+
+/* Evacuation centers */
+.evacuation-center {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+}
+
+.evacuation-center:last-child {
+  border-bottom: none;
+}
+
+.evacuation-center:hover {
+  background-color: rgba(0, 0, 0, 0.025);
+}
+
+.capacity-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Incident reports table */
+.incident-table {
+  font-size: 0.9rem;
+}
+
+.incident-table th {
+  font-weight: 600;
+  color: #495057;
+  border-top: none;
+}
+
+.incident-table td {
+  vertical-align: middle;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 50px;
+  font-weight: 500;
+}
+
+/* Footer */
+footer {
+  background: #212529 !important;
+  margin-top: 3rem;
+}
+
+footer h5,
+footer h6 {
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+footer .text-muted {
+  color: #adb5bd !important;
+}
+
+footer .text-muted:hover {
+  color: #fff !important;
+}
+
+footer .btn-outline-light {
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+footer .btn-outline-light:hover {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: #fff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .contact-item {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .contact-icon {
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  .map-container {
+    min-height: 200px;
+  }
+
+  .incident-table {
+    font-size: 0.8rem;
+  }
+
+  .navbar-nav {
+    text-align: center;
+  }
+
+  .navbar-nav .nav-item {
+    margin: 0.25rem 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .btn-group {
+    flex-direction: column;
+  }
+
+  .btn-group .btn {
+    margin-bottom: 0.5rem;
+    border-radius: 6px !important;
+  }
+
+  .d-flex.flex-wrap.gap-2 {
+    flex-direction: column;
+  }
+
+  .d-flex.flex-wrap.gap-2 .btn {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Animation classes */
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-animation > * {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.stagger-animation > *:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.stagger-animation > *:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.stagger-animation > *:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.stagger-animation > *:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+/* Emergency alert banner */
+.emergency-banner {
+  background: linear-gradient(45deg, #dc3545, #fd7e14);
+  color: white;
+  border: none;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+  }
+}
+
+/* Loading states */
+.loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.loading::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
