@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time GPS Tracker with Google Maps</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .api-config {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .api-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .api-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .status-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .info-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 25px;
+            margin: 5px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .start {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .stop {
+            background: rgba(244, 67, 54, 0.3);
+        }
+
+        .load-api {
+            background: rgba(33, 150, 243, 0.3);
+        }
+
+        .map-type-controls {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .map-type-controls select {
+            padding: 8px 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            margin: 0 5px;
+        }
+
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .accuracy-indicator {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .high-accuracy {
+            background: #4CAF50;
+        }
+
+        .medium-accuracy {
+            background: #FF9800;
+        }
+
+        .low-accuracy {
+            background: #F44336;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .active {
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        .inactive {
+            background: #F44336;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+            }
+        }
+
+        .error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Ultra-High Precision GPS Tracker</h1>
+            <p>Sub-5 meter accuracy real-time location tracking with Google Maps</p>
+            <div
+                style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-top: 15px; font-size: 0.9em;">
+                <strong>🎯 For MAXIMUM Accuracy (1-3 meters):</strong><br>
+                • <strong>Go OUTDOORS</strong> - No buildings, trees, or roof overhead<br>
+                • <strong>Wait 2-5 minutes</strong> - Allow GPS to lock onto 8+ satellites<br>
+                • <strong>Hold device steady</strong> - Minimize movement during initial lock<br>
+                • <strong>Check device GPS settings</strong> - Enable "High accuracy" mode<br>
+                • <strong>Clear weather</strong> - Avoid heavy cloud cover or storms<br>
+                • <strong>Recent device restart</strong> - Fresh GPS cache improves accuracy
+            </div>
+        </div>
+
+        <div class="api-config" id="apiConfig">
+            <h3>🔑 Google Maps API Configuration</h3>
+            <input type="text" id="apiKeyInput" class="api-input" placeholder="Enter your Google Maps API Key">
+            <button id="loadApiBtn" class="load-api">🚀 Load Google Maps</button>
+            <div style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">
+                <strong>How to get your API key:</strong><br>
+                1. Go to <a href="https://console.cloud.google.com/" target="_blank" style="color: #81C784;">Google
+                    Cloud Console</a><br>
+                2. Enable "Maps JavaScript API"<br>
+                3. Create credentials (API Key)<br>
+                4. Optional: Restrict to your domain for security
+            </div>
+        </div>
+
+        <div class="status-panel">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Status</div>
+                    <div class="info-value">
+                        <span class="status-dot inactive" id="statusDot"></span>
+                        <span id="status">Configure API key first</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Latitude</div>
+                    <div class="info-value" id="latitude">--</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Longitude</div>
+                    <div class="info-value" id="longitude">--</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Accuracy</div>
+                    <div class="info-value" id="accuracy">--</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Altitude</div>
+                    <div class="info-value" id="altitude">--</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Speed</div>
+                    <div class="info-value" id="speed">--</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Satellites</div>
+                    <div class="info-value" id="satellites">--</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Best Accuracy</div>
+                    <div class="info-value" id="bestAccuracy">--</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Last Updated</div>
+                    <div class="info-value" id="timestamp">--</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="map-type-controls hidden" id="mapControls">
+            <label style="margin-right: 15px;">
+                Map Type:
+                <select id="mapTypeSelect">
+                    <option value="roadmap">Roadmap</option>
+                    <option value="satellite">Satellite</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="terrain">Terrain</option>
+                </select>
+            </label>
+            <label>
+                Traffic:
+                <select id="trafficSelect">
+                    <option value="false">Off</option>
+                    <option value="true">On</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" class="start" disabled>📍 Start Tracking</button>
+            <button id="stopBtn" class="stop" disabled>⏹️ Stop Tracking</button>
+            <button id="centerBtn" disabled>🎯 Center on Location</button>
+            <button id="clearPathBtn" disabled>🧹 Clear Path</button>
+        </div>
+
+        <div id="messageContainer"></div>
+
+        <div id="map"></div>
+    </div>
+
+    <script>
+        class GoogleGPSTracker {
+            constructor() {
+                this.apiKey = '';
+                this.googleMapsLoaded = false;
+                this.map = null;
+                this.marker = null;
+                this.accuracyCircle = null;
+                this.path = [];
+                this.pathPolyline = null;
+                this.watchId = null;
+                this.isTracking = false;
+                this.trafficLayer = null;
+
+                this.bindEvents();
+                this.checkGeolocationSupport();
+            }
+
+            bindEvents() {
+                document.getElementById('loadApiBtn').addEventListener('click', () => this.loadGoogleMapsAPI());
+                document.getElementById('startBtn').addEventListener('click', () => this.startTracking());
+                document.getElementById('stopBtn').addEventListener('click', () => this.stopTracking());
+                document.getElementById('centerBtn').addEventListener('click', () => this.centerOnLocation());
+                document.getElementById('clearPathBtn').addEventListener('click', () => this.clearPath());
+                document.getElementById('mapTypeSelect').addEventListener('change', () => this.changeMapType());
+                document.getElementById('trafficSelect').addEventListener('change', () => this.toggleTraffic());
+
+                // Allow Enter key to load API
+                document.getElementById('apiKeyInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.loadGoogleMapsAPI();
+                });
+            }
+
+            checkGeolocationSupport() {
+                if (!navigator.geolocation) {
+                    this.showMessage('Geolocation is not supported by this browser.', 'error');
+                    return false;
+                }
+                return true;
+            }
+
+            loadGoogleMapsAPI() {
+                const apiKey = document.getElementById('apiKeyInput').value.trim();
+                if (!apiKey) {
+                    this.showMessage('Please enter your Google Maps API key.', 'error');
+                    return;
+                }
+
+                this.apiKey = apiKey;
+                this.showMessage('Loading Google Maps API...', 'success');
+
+                // Remove existing script if any
+                const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+                if (existingScript) {
+                    existingScript.remove();
+                }
+
+                // Load Google Maps API
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initGoogleMaps&libraries=geometry`;
+                script.async = true;
+                script.defer = true;
+
+                script.onerror = () => {
+                    this.showMessage('Failed to load Google Maps API. Please check your API key and internet connection.', 'error');
+                };
+
+                // Make callback globally available
+                window.initGoogleMaps = () => this.initGoogleMaps();
+
+                document.head.appendChild(script);
+            }
+
+            initGoogleMaps() {
+                try {
+                    // Initialize map centered on Lipa City, Philippines
+                    this.map = new google.maps.Map(document.getElementById('map'), {
+                        center: { lat: 14.2449, lng: 121.1654 },
+                        zoom: 15,
+                        mapTypeId: 'roadmap',
+                        zoomControl: true,
+                        streetViewControl: true,
+                        fullscreenControl: true,
+                        mapTypeControl: false
+                    });
+
+                    // Initialize traffic layer
+                    this.trafficLayer = new google.maps.TrafficLayer();
+
+                    this.googleMapsLoaded = true;
+                    this.showMessage('Google Maps loaded successfully! You can now start tracking.', 'success');
+
+                    // Hide API config and show controls
+                    document.getElementById('apiConfig').classList.add('hidden');
+                    document.getElementById('mapControls').classList.remove('hidden');
+
+                    this.updateUI();
+                    this.updateStatus('Ready to start tracking', false);
+                } catch (error) {
+                    this.showMessage('Error initializing Google Maps: ' + error.message, 'error');
+                }
+            }
+
+            startTracking() {
+                if (!this.checkGeolocationSupport() || !this.googleMapsLoaded) return;
+
+                this.locationHistory = [];
+                this.lastKnownAccuracy = null;
+
+                // Ultra high-accuracy options
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 60000, // Longer timeout for GPS lock
+                    maximumAge: 0   // Always get fresh reading
+                };
+
+                this.updateStatus('Acquiring GPS satellites... Please wait outdoors', true);
+
+                // Multi-stage approach for maximum accuracy
+                this.performHighAccuracyTracking(options);
+
+                this.isTracking = true;
+                this.updateUI();
+            }
+
+            performHighAccuracyTracking(options) {
+                // Stage 1: Get initial GPS lock with extended timeout
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        this.showMessage('Initial GPS lock acquired! Starting precision tracking...', 'success');
+
+                        // Stage 2: Start continuous high-accuracy tracking
+                        this.watchId = navigator.geolocation.watchPosition(
+                            (position) => this.handleHighAccuracyUpdate(position),
+                            (error) => this.onLocationError(error),
+                            {
+                                ...options,
+                                timeout: 15000 // Shorter timeout for continuous updates
+                            }
+                        );
+
+                        // Initial position update
+                        this.handleHighAccuracyUpdate(position);
+                    },
+                    (error) => {
+                        this.showMessage('Initial GPS lock failed, trying continuous tracking...', 'error');
+
+                        // Fallback: Start watching immediately
+                        this.watchId = navigator.geolocation.watchPosition(
+                            (position) => this.handleHighAccuracyUpdate(position),
+                            (error) => this.onLocationError(error),
+                            options
+                        );
+                    },
+                    options
+                );
+            }
+
+            handleHighAccuracyUpdate(position) {
+                const { latitude, longitude, accuracy, altitude, speed, heading } = position.coords;
+                const timestamp = new Date(position.timestamp);
+
+                // Add to location history for accuracy filtering
+                this.locationHistory.push({
+                    position: position,
+                    timestamp: timestamp,
+                    accuracy: accuracy
+                });
+
+                // Keep only last 10 readings
+                if (this.locationHistory.length > 10) {
+                    this.locationHistory.shift();
+                }
+
+                // Apply accuracy filtering and smoothing
+                const filteredPosition = this.applyAccuracyFiltering(position);
+                if (!filteredPosition) return;
+
+                this.onLocationUpdate(filteredPosition);
+            }
+
+            applyAccuracyFiltering(currentPosition) {
+                const { accuracy } = currentPosition.coords;
+
+                // Reject extremely poor accuracy readings
+                if (accuracy > 500) {
+                    this.updateStatus(`Very poor GPS signal (±${Math.round(accuracy)}m) - Move to open area`, false);
+                    return null;
+                }
+
+                // If we have history, apply additional filtering
+                if (this.locationHistory.length > 3) {
+                    // Calculate average accuracy of recent readings
+                    const recentReadings = this.locationHistory.slice(-5);
+                    const avgAccuracy = recentReadings.reduce((sum, reading) => sum + reading.accuracy, 0) / recentReadings.length;
+
+                    // Reject readings that are significantly worse than recent average
+                    if (accuracy > avgAccuracy * 2 && accuracy > 50) {
+                        console.log(`Filtered out reading with accuracy ${accuracy}m (avg: ${avgAccuracy.toFixed(1)}m)`);
+                        return null;
+                    }
+
+                    // Apply position smoothing for very accurate readings
+                    if (accuracy <= 10 && this.locationHistory.length >= 3) {
+                        return this.applySmoothingFilter(currentPosition);
+                    }
+                }
+
+                return currentPosition;
+            }
+
+            applySmoothingFilter(currentPosition) {
+                // Weighted average of last 3 positions, giving more weight to more accurate readings
+                const recent = this.locationHistory.slice(-3);
+                let totalWeight = 0;
+                let weightedLat = 0;
+                let weightedLng = 0;
+
+                recent.forEach(reading => {
+                    // Weight = inverse of accuracy (more accurate = higher weight)
+                    const weight = 1 / Math.max(reading.accuracy, 1);
+                    totalWeight += weight;
+                    weightedLat += reading.position.coords.latitude * weight;
+                    weightedLng += reading.position.coords.longitude * weight;
+                });
+
+                // Create smoothed position
+                const smoothedPosition = {
+                    ...currentPosition,
+                    coords: {
+                        ...currentPosition.coords,
+                        latitude: weightedLat / totalWeight,
+                        longitude: weightedLng / totalWeight
+                    }
+                };
+
+                return smoothedPosition;
+            }
+
+            stopTracking() {
+                if (this.watchId !== null) {
+                    navigator.geolocation.clearWatch(this.watchId);
+                    this.watchId = null;
+                }
+
+                this.isTracking = false;
+                this.updateUI();
+                this.updateStatus('Tracking stopped', false);
+            }
+
+            onLocationUpdate(position) {
+                const { latitude, longitude, accuracy, altitude, speed, heading } = position.coords;
+                const timestamp = new Date(position.timestamp);
+
+                // Enhanced accuracy validation with dynamic thresholds
+                if (accuracy > 1000) {
+                    this.updateStatus(`Very poor accuracy (±${Math.round(accuracy)}m) - Finding satellites...`, false);
+                    this.showMessage(`GPS accuracy is very poor. Ensure you are:\n• Outdoors with clear sky view\n• Away from tall buildings\n• Device has GPS enabled\n• Wait for satellite lock (2-5 minutes)`, 'error');
+                    return;
+                }
+
+                // Store best accuracy achieved
+                if (!this.lastKnownAccuracy || accuracy < this.lastKnownAccuracy) {
+                    this.lastKnownAccuracy = accuracy;
+                }
+
+                this.updateLocationDisplay({
+                    latitude: latitude.toFixed(7), // More precision
+                    longitude: longitude.toFixed(7),
+                    accuracy: Math.round(accuracy),
+                    altitude: altitude ? Math.round(altitude) : 'N/A',
+                    speed: speed ? (speed * 3.6).toFixed(2) : 'N/A', // More precision
+                    heading: heading ? Math.round(heading) : 'N/A',
+                    timestamp: timestamp.toLocaleTimeString()
+                });
+
+                this.updateMap(latitude, longitude, accuracy);
+
+                // Enhanced status feedback with accuracy trends
+                let statusMessage = '';
+                let accuracyTrend = '';
+
+                if (this.lastKnownAccuracy && accuracy > this.lastKnownAccuracy * 1.5) {
+                    accuracyTrend = ' (accuracy decreasing)';
+                } else if (this.lastKnownAccuracy && accuracy < this.lastKnownAccuracy * 0.8) {
+                    accuracyTrend = ' (accuracy improving)';
+                }
+
+                if (accuracy <= 3) {
+                    statusMessage = `🎯 ULTRA HIGH PRECISION (±${Math.round(accuracy)}m)${accuracyTrend}`;
+                } else if (accuracy <= 5) {
+                    statusMessage = `🎯 VERY HIGH PRECISION (±${Math.round(accuracy)}m)${accuracyTrend}`;
+                } else if (accuracy <= 10) {
+                    statusMessage = `✅ HIGH PRECISION (±${Math.round(accuracy)}m)${accuracyTrend}`;
+                } else if (accuracy <= 25) {
+                    statusMessage = `📍 GOOD ACCURACY (±${Math.round(accuracy)}m)${accuracyTrend}`;
+                } else if (accuracy <= 50) {
+                    statusMessage = `📱 FAIR ACCURACY (±${Math.round(accuracy)}m)${accuracyTrend}`;
+                } else if (accuracy <= 100) {
+                    statusMessage = `⚠️ LOW ACCURACY (±${Math.round(accuracy)}m)${accuracyTrend}`;
+                } else {
+                    statusMessage = `❌ POOR ACCURACY (±${Math.round(accuracy)}m) - Move outdoors`;
+                }
+
+                this.updateStatus(statusMessage, true);
+                this.hideMessage();
+
+                // Log high accuracy achievements
+                if (accuracy <= 5) {
+                    console.log(`🎯 High precision achieved: ±${accuracy.toFixed(1)}m at ${timestamp.toLocaleTimeString()}`);
+                }
+            }
+
+            onLocationError(error) {
+                let message = 'Location error: ';
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        message += 'Location access denied by user.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message += 'Location information is unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        message += 'Location request timed out.';
+                        break;
+                    default:
+                        message += 'An unknown error occurred.';
+                        break;
+                }
+
+                this.showMessage(message, 'error');
+                this.updateStatus('Location error', false);
+            }
+
+            updateLocationDisplay(data) {
+                document.getElementById('latitude').textContent = data.latitude;
+                document.getElementById('longitude').textContent = data.longitude;
+                document.getElementById('altitude').textContent = data.altitude + (data.altitude !== 'N/A' ? 'm' : '');
+                document.getElementById('speed').textContent = data.speed + (data.speed !== 'N/A' ? ' km/h' : '');
+                document.getElementById('timestamp').textContent = data.timestamp;
+
+                // Update best accuracy achieved
+                if (this.lastKnownAccuracy) {
+                    document.getElementById('bestAccuracy').textContent = `±${Math.round(this.lastKnownAccuracy)}m`;
+                }
+
+                // Estimate satellite count based on accuracy (approximation)
+                let satelliteCount = '--';
+                if (data.accuracy <= 3) satelliteCount = '12+ (Excellent)';
+                else if (data.accuracy <= 5) satelliteCount = '8-12 (Very Good)';
+                else if (data.accuracy <= 10) satelliteCount = '6-8 (Good)';
+                else if (data.accuracy <= 25) satelliteCount = '4-6 (Fair)';
+                else if (data.accuracy <= 100) satelliteCount = '3-4 (Poor)';
+                else satelliteCount = '1-3 (Very Poor)';
+
+                document.getElementById('satellites').textContent = satelliteCount;
+
+                // Update accuracy with color coding
+                const accuracyEl = document.getElementById('accuracy');
+                let accuracyClass = 'low-accuracy';
+                if (data.accuracy <= 10) accuracyClass = 'high-accuracy';
+                else if (data.accuracy <= 50) accuracyClass = 'medium-accuracy';
+
+                accuracyEl.innerHTML = `<span class="accuracy-indicator ${accuracyClass}">±${data.accuracy}m</span>`;
+            }
+
+            updateMap(lat, lng, accuracy) {
+                if (!this.googleMapsLoaded) return;
+
+                const position = new google.maps.LatLng(lat, lng);
+
+                // Update or create marker
+                if (this.marker) {
+                    this.marker.setPosition(position);
+                } else {
+                    this.marker = new google.maps.Marker({
+                        position: position,
+                        map: this.map,
+                        title: 'Current Location',
+                        icon: {
+                            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
+                                    <circle cx="15" cy="15" r="12" fill="#4285F4" stroke="#fff" stroke-width="3"/>
+                                    <circle cx="15" cy="15" r="6" fill="#fff"/>
+                                </svg>
+                            `),
+                            scaledSize: new google.maps.Size(30, 30),
+                            anchor: new google.maps.Point(15, 15)
+                        }
+                    });
+                }
+
+                // Update or create accuracy circle
+                if (this.accuracyCircle) {
+                    this.accuracyCircle.setCenter(position);
+                    this.accuracyCircle.setRadius(accuracy);
+                } else {
+                    this.accuracyCircle = new google.maps.Circle({
+                        center: position,
+                        radius: accuracy,
+                        map: this.map,
+                        fillColor: '#4285F4',
+                        fillOpacity: 0.2,
+                        strokeColor: '#4285F4',
+                        strokeWeight: 2
+                    });
+                }
+
+                // Add to path
+                this.path.push(position);
+                if (this.pathPolyline) {
+                    this.pathPolyline.setPath(this.path);
+                } else {
+                    this.pathPolyline = new google.maps.Polyline({
+                        path: this.path,
+                        geodesic: true,
+                        strokeColor: '#FF0000',
+                        strokeOpacity: 1.0,
+                        strokeWeight: 3,
+                        map: this.map
+                    });
+                }
+
+                // Auto-center on first location
+                if (this.path.length === 1) {
+                    this.map.setCenter(position);
+                    this.map.setZoom(18);
+                }
+            }
+
+            centerOnLocation() {
+                if (this.marker && this.googleMapsLoaded) {
+                    this.map.setCenter(this.marker.getPosition());
+                    this.map.setZoom(18);
+                }
+            }
+
+            clearPath() {
+                this.path = [];
+                if (this.pathPolyline) {
+                    this.pathPolyline.setPath([]);
+                }
+            }
+
+            changeMapType() {
+                if (!this.googleMapsLoaded) return;
+                const mapType = document.getElementById('mapTypeSelect').value;
+                this.map.setMapTypeId(mapType);
+            }
+
+            toggleTraffic() {
+                if (!this.googleMapsLoaded) return;
+                const showTraffic = document.getElementById('trafficSelect').value === 'true';
+                if (showTraffic) {
+                    this.trafficLayer.setMap(this.map);
+                } else {
+                    this.trafficLayer.setMap(null);
+                }
+            }
+
+            updateStatus(message, active) {
+                document.getElementById('status').textContent = message;
+                const dot = document.getElementById('statusDot');
+                dot.className = `status-dot ${active ? 'active' : 'inactive'}`;
+            }
+
+            updateUI() {
+                const mapsReady = this.googleMapsLoaded;
+                document.getElementById('startBtn').disabled = this.isTracking || !mapsReady;
+                document.getElementById('stopBtn').disabled = !this.isTracking;
+                document.getElementById('centerBtn').disabled = !this.marker || !mapsReady;
+                document.getElementById('clearPathBtn').disabled = this.path.length === 0 || !mapsReady;
+            }
+
+            showMessage(message, type) {
+                const container = document.getElementById('messageContainer');
+                container.innerHTML = `<div class="${type}">${message}</div>`;
+            }
+
+            hideMessage() {
+                document.getElementById('messageContainer').innerHTML = '';
+            }
+        }
+
+        // Initialize the GPS tracker when the page loads
+        window.addEventListener('load', () => {
+            new GoogleGPSTracker();
+        });
+    </script>
+</body>
+
+</html>

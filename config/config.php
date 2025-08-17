@@ -13,7 +13,7 @@ require_once 'database.php';
 // Application settings
 define('APP_NAME', 'Mobile Emergency Response System');
 define('APP_VERSION', '1.0.0');
-define('BASE_URL', 'http://localhost/MERS/');
+define('BASE_URL', '');
 
 // File upload settings
 define('UPLOAD_PATH', 'uploads/');
@@ -35,7 +35,12 @@ ini_set('display_errors', 1);
 
 // Helper functions
 function redirect($url) {
-    header("Location: " . BASE_URL . $url);
+    // If BASE_URL is not defined, use relative URL
+    if (defined('BASE_URL') && BASE_URL !== '') {
+        header("Location: " . rtrim(BASE_URL, '/') . '/' . ltrim($url, '/'));
+    } else {
+        header("Location: " . $url);
+    }
     exit();
 }
 

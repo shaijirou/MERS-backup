@@ -248,11 +248,12 @@ include '../includes/header.php';
                                     </span>
                                 </div>
                             </div>
-                            <button class="btn btn-sm btn-outline-primary" 
-                                    onclick="event.stopPropagation(); dashboardMap.getDirections(<?php echo $index; ?>)"
-                                    title="Get directions">
-                                <i class="bi bi-navigation"></i>
-                            </button>
+                            <div class="text-end">
+                                <button class="btn btn-md btn-solid-primary" onclick="getDirections(<?php echo $center['latitude']; ?>, <?php echo $center['longitude']; ?>)">
+                                    <i class="bi bi-geo-alt me-1 text-primary" style="font-size: 1.5rem;"></i>
+                                </button>
+                                <p style="font-size: 0.575rem;">Get Directions</p>
+                            </div>
                         </div>
                     </div>
                     <?php endforeach; ?>

@@ -1,10 +1,10 @@
 <?php
 // Database configuration
 class Database {
-    private $host = 'localhost';
-    private $db_name = 'agoncillo_disaster_system';
-    private $username = 'root';
-    private $password = '';
+    private $host = 'sql104.byethost13.com';
+    private $db_name = 'b13_39672354_agoncillo_disaster_system';
+    private $username = 'b13_39672354';
+    private $password = 'mers@2025';
     private $conn;
 
     public function getConnection() {

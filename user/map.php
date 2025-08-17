@@ -92,9 +92,6 @@ include '../includes/header.php';
                     <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#legendModal">
                         <i class="bi bi-info-circle me-1"></i>Legend
                     </button>
-                    <button class="btn btn-primary" onclick="getCurrentLocation()">
-                        <i class="bi bi-geo-alt-fill me-1"></i>My Location
-                    </button>
                 </div>
             </div>
         </div>
@@ -182,9 +179,10 @@ include '../includes/header.php';
                                 </div>
                             </div>
                             <div class="text-end">
-                                <button class="btn btn-sm btn-outline-primary" onclick="getDirections(<?php echo $center['latitude']; ?>, <?php echo $center['longitude']; ?>)">
-                                    <i class="bi bi-navigation"></i>
+                                <button class="btn btn-md btn-solid-primary" onclick="getDirections(<?php echo $center['latitude']; ?>, <?php echo $center['longitude']; ?>)">
+                                    <i class="bi bi-geo-alt me-1 text-primary" style="font-size: 1.5rem;"></i>
                                 </button>
+                                <p style="font-size: 0.575rem;">Get Directions</p>
                             </div>
                         </div>
                     </div>
@@ -240,41 +238,41 @@ include '../includes/header.php';
             </div>
 
             <!-- Weather Information -->
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-cloud-sun me-2 text-warning"></i>Current Weather
-                    </h5>
+          <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-cloud-sun me-2 text-warning"></i>Current Weather
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h3 class="mb-0" id="temperature">--°C</h3>
+                        <p class="text-muted mb-0" id="weather-desc">Loading...</p>
+                    </div>
+                    <i class="bi bi-cloud-sun display-4 text-warning" id="weather-icon"></i>
                 </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h3 class="mb-0">32°C</h3>
-                            <p class="text-muted mb-0">Partly Cloudy</p>
-                        </div>
-                        <i class="bi bi-cloud-sun display-4 text-warning"></i>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <small class="text-muted d-block">Humidity</small>
+                        <strong id="humidity">--%</strong>
                     </div>
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <small class="text-muted d-block">Humidity</small>
-                            <strong>68%</strong>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-muted d-block">Wind</small>
-                            <strong>12 km/h</strong>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-muted d-block">Rain</small>
-                            <strong>20%</strong>
-                        </div>
+                    <div class="col-4">
+                        <small class="text-muted d-block">Wind</small>
+                        <strong id="wind">-- km/h</strong>
                     </div>
-                    <hr>
-                    <div class="alert alert-warning alert-sm mb-0" role="alert">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        <small>Flood risk level: <strong>Medium</strong></small>
+                    <div class="col-4">
+                        <small class="text-muted d-block">Rain</small>
+                        <strong id="rain">--%</strong>
                     </div>
+                </div>
+                <hr>
+                <div class="alert alert-warning alert-sm mb-0" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <small>Flood risk level: <strong id="flood-risk">Calculating...</strong></small>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 </div>
@@ -557,23 +555,9 @@ function focusOnLocation(lat, lng) {
 }
 
 function getDirections(lat, lng) {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                const userLat = position.coords.latitude;
-                const userLng = position.coords.longitude;
-                const url = `https://www.google.com/maps/dir/${userLat},${userLng}/${lat},${lng}`;
-                window.open(url, '_blank');
-            },
-            function(error) {
-                const url = `https://www.google.com/maps/place/${lat},${lng}`;
-                window.open(url, '_blank');
-            }
-        );
-    } else {
-        const url = `https://www.google.com/maps/place/${lat},${lng}`;
-        window.open(url, '_blank');
-    }
+    // Just pin the location of the evacuation center on Google Maps
+    const url = `https://www.google.com/maps/place/${lat},${lng}`;
+    window.open(url, '_blank');
 }
 
 function toggleLayer(layerType) {
@@ -673,6 +657,56 @@ document.addEventListener('DOMContentLoaded', function() {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 });
+
+const apiKey = "b94c896f1adfd27f17a915b9422e4db9"; // <-- OpenWeatherMap API key
+
+function fetchWeather(lat, lon) {
+    fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,alerts&units=metric&appid=${apiKey}`)
+        .then(response => response.json())
+        .then(data => {
+            const current = data.current;
+
+            document.getElementById("temperature").innerText = `${current.temp}°C`;
+            document.getElementById("description").innerText = current.weather[0].description;
+            document.getElementById("humidity").innerText = `${current.humidity}%`;
+            document.getElementById("wind").innerText = `${current.wind_speed} km/h`;
+            document.getElementById("rain").innerText = current.rain ? `${current.rain["1h"]}%` : "0%";
+
+            // Pick icon based on condition
+            const icon = current.weather[0].main.toLowerCase();
+            let iconClass = "bi-cloud-sun";
+            if (icon.includes("rain")) iconClass = "bi-cloud-rain";
+            if (icon.includes("cloud")) iconClass = "bi-cloud";
+            if (icon.includes("clear")) iconClass = "bi-sun";
+            document.getElementById("weatherIcon").className = `bi ${iconClass} display-4 text-warning`;
+        })
+        .catch(err => {
+            console.error("Weather fetch failed", err);
+            document.getElementById("description").innerText = "Unable to load weather.";
+        });
+}
+
+// Get user location
+function getLocationAndFetch() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                fetchWeather(position.coords.latitude, position.coords.longitude);
+            },
+            error => {
+                console.error("Location error:", error);
+                document.getElementById("description").innerText = "Location not available.";
+            }
+        );
+    } else {
+        document.getElementById("description").innerText = "Geolocation not supported.";
+    }
+}
+
+// Run on page load + refresh every 10 minutes
+getLocationAndFetch();
+setInterval(getLocationAndFetch, 600000);
+
 </script>
 
 <?php include '../includes/footer.php'; ?>

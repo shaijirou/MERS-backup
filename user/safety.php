@@ -176,8 +176,8 @@ include '../includes/header.php';
                     <a class="nav-link" href="report.php"><i class="bi bi-exclamation-triangle-fill me-1"></i> Report Incident</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                        <img src="../<?php echo $user['profile_picture'] ?: 'assets/img/user-avatar.jpg'; ?>" class="rounded-circle me-1" width="28" height="28" alt="User">
+                       <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                        <img src="../<?php echo $user['selfie_photo'] ?: 'assets/img/user-avatar.jpg'; ?>" class="rounded-circle me-1" width="28" height="28" alt="User">
                         <span><?php echo $user['first_name'] . ' ' . $user['last_name']; ?></span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
@@ -199,14 +199,14 @@ include '../includes/header.php';
             <h2><i class="bi bi-shield-check me-2 text-primary"></i>Safety Tips & Guidelines</h2>
             <p class="text-muted mb-0">Essential safety information for disaster preparedness and response</p>
         </div>
-        <div class="d-flex gap-2">
+        <!-- <div class="d-flex gap-2">
             <button class="btn btn-outline-primary" onclick="downloadGuide()">
                 <i class="bi bi-download me-1"></i>Download Guide
             </button>
             <button class="btn btn-primary" onclick="shareGuide()">
                 <i class="bi bi-share me-1"></i>Share
             </button>
-        </div>
+        </div> -->
     </div>
 
     <!-- Quick Navigation -->
@@ -484,78 +484,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-function downloadGuide() {
-    // Create a comprehensive safety guide
-    let guideContent = 'AGONCILLO DISASTER SAFETY GUIDE\n';
-    guideContent += '=====================================\n\n';
-    
-    guideContent += 'GENERAL EMERGENCY PREPAREDNESS\n';
-    guideContent += '------------------------------\n\n';
-    
-    guideContent += 'Emergency Kit Essentials:\n';
-    guideContent += '• Water (1 gallon per person per day for 3 days)\n';
-    guideContent += '• Non-perishable food (3-day supply)\n';
-    guideContent += '• Flashlight and extra batteries\n';
-    guideContent += '• Battery-powered or hand crank radio\n';
-    guideContent += '• First aid kit and medications\n';
-    guideContent += '• Cell phone with chargers and backup battery\n\n';
-    
-    <?php foreach ($safety_tips as $key => $tip): ?>
-    guideContent += '<?php echo strtoupper($tip['title']); ?>\n';
-    guideContent += '<?php echo str_repeat('-', strlen($tip['title'])); ?>\n\n';
-    
-    guideContent += 'BEFORE:\n';
-    <?php foreach ($tip['before'] as $item): ?>
-    guideContent += '• <?php echo addslashes($item); ?>\n';
-    <?php endforeach; ?>
-    
-    guideContent += '\nDURING:\n';
-    <?php foreach ($tip['during'] as $item): ?>
-    guideContent += '• <?php echo addslashes($item); ?>\n';
-    <?php endforeach; ?>
-    
-    guideContent += '\nAFTER:\n';
-    <?php foreach ($tip['after'] as $item): ?>
-    guideContent += '• <?php echo addslashes($item); ?>\n';
-    <?php endforeach; ?>
-    
-    guideContent += '\n\n';
-    <?php endforeach; ?>
-    
-    guideContent += 'EMERGENCY CONTACTS\n';
-    guideContent += '------------------\n';
-    guideContent += 'MDRRMO: +63 912 345 6789\n';
-    guideContent += 'Fire Department: +63 912 345 6790\n';
-    guideContent += 'Police: +63 912 345 6791\n';
-    guideContent += 'Medical: +63 912 345 6792\n';
-    
-    const blob = new Blob([guideContent], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'agoncillo_safety_guide.txt';
-    a.click();
-    window.URL.revokeObjectURL(url);
-    
-    AgoncilloAlert.showInAppNotification('Download Complete', 'Safety guide has been downloaded', 'success');
-}
-
-function shareGuide() {
-    const shareText = 'Agoncillo Disaster Safety Guide - Essential safety information for disaster preparedness and response';
-    const shareUrl = window.location.href;
-    
-    if (navigator.share) {
-        navigator.share({
-            title: 'Agoncillo Safety Guide',
-            text: shareText,
-            url: shareUrl
-        });
-    } else {
-        navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => {
-            AgoncilloAlert.showInAppNotification('Link Copied', 'Safety guide link copied to clipboard', 'success');
-        });
-    }
-}
 
 // Highlight current section in navigation
 window.addEventListener('scroll', function() {

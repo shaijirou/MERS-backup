@@ -102,14 +102,7 @@ include '../includes/header.php';
             <h2><i class="bi bi-telephone-fill me-2 text-primary"></i>Emergency Contacts</h2>
             <p class="text-muted mb-0">Important phone numbers for emergency situations in Agoncillo, Batangas</p>
         </div>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary" onclick="downloadContacts()">
-                <i class="bi bi-download me-1"></i>Download
-            </button>
-            <button class="btn btn-primary" onclick="shareContacts()">
-                <i class="bi bi-share me-1"></i>Share
-            </button>
-        </div>
+        
     </div>
 
     <!-- Emergency Alert -->
@@ -182,10 +175,7 @@ include '../includes/header.php';
                                                 onclick="sendSMS('<?php echo $contact['number']; ?>')" title="SMS">
                                             <i class="bi bi-chat-text"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-info btn-sm" 
-                                                onclick="saveContact('<?php echo $contact['name']; ?>', '<?php echo $contact['number']; ?>')" title="Save">
-                                            <i class="bi bi-person-plus"></i>
-                                        </button>
+                                      
                                     </div>
                                 </div>
                             </div>
@@ -295,69 +285,7 @@ function sendSMS(number) {
     }
 }
 
-function saveContact(name, number) {
-    // Create vCard format
-    const vcard = `BEGIN:VCARD
-VERSION:3.0
-FN:${name}
-TEL:${number}
-ORG:Agoncillo Emergency Services
-END:VCARD`;
-    
-    const blob = new Blob([vcard], { type: 'text/vcard' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${name.replace(/\s+/g, '_')}.vcf`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    
-    AgoncilloAlert.showInAppNotification('Contact Saved', `${name} has been saved to your contacts`, 'success');
-}
 
-function downloadContacts() {
-    // Create a comprehensive contact list
-    let contactList = 'AGONCILLO EMERGENCY CONTACTS\n';
-    contactList += '================================\n\n';
-    
-    <?php foreach ($emergency_contacts as $category): ?>
-    contactList += '<?php echo $category['category']; ?>\n';
-    contactList += '<?php echo str_repeat('-', strlen($category['category'])); ?>\n';
-    <?php foreach ($category['contacts'] as $contact): ?>
-    contactList += '<?php echo $contact['name']; ?>: <?php echo $contact['number']; ?>\n';
-    contactList += '  <?php echo $contact['description']; ?>\n\n';
-    <?php endforeach; ?>
-    contactList += '\n';
-    <?php endforeach; ?>
-    
-    const blob = new Blob([contactList], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'agoncillo_emergency_contacts.txt';
-    a.click();
-    window.URL.revokeObjectURL(url);
-    
-    AgoncilloAlert.showInAppNotification('Download Complete', 'Emergency contacts have been downloaded', 'success');
-}
-
-function shareContacts() {
-    const shareText = 'Agoncillo Emergency Contacts - Important phone numbers for emergency situations in Agoncillo, Batangas';
-    const shareUrl = window.location.href;
-    
-    if (navigator.share) {
-        navigator.share({
-            title: 'Agoncillo Emergency Contacts',
-            text: shareText,
-            url: shareUrl
-        });
-    } else {
-        // Fallback to copying to clipboard
-        navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => {
-            AgoncilloAlert.showInAppNotification('Link Copied', 'Emergency contacts link copied to clipboard', 'success');
-        });
-    }
-}
 </script>
 
 <?php include '../includes/footer.php'; ?>
