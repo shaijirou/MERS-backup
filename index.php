@@ -116,7 +116,7 @@ include 'includes/header.php';
             </div>
             
             <div class="text-center mt-4 text-muted">
-                <small>&copy; 2023 Municipality of Agoncillo. All rights reserved.</small>
+                <small>&copy; 2025 Municipality of Agoncillo. All rights reserved.</small>
             </div>
         </div>
     </div>

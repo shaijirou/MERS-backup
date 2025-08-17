@@ -452,30 +452,43 @@ include '../includes/header.php';
     </div>
 </div>
 
+<!-- Bootstrap & Icons (add inside <head>) -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
 <footer class="bg-dark text-white py-4 mt-auto">
     <div class="container">
         <div class="row">
+            <!-- About / App Name -->
             <div class="col-md-4 mb-3 mb-md-0">
-                <h5><?php echo APP_NAME; ?></h5>
-                <p class="text-muted">A project of the Municipality of Agoncillo, Batangas to keep residents safe during emergencies and disasters.</p>
+                <h5><?php echo APP_NAME ?? "Mobile Emergency Response System"; ?></h5>
+                <p class="text-white-50">
+                    A project of the Municipality of Agoncillo, Batangas to keep residents safe during emergencies and disasters.
+                </p>
             </div>
+
+            <!-- Quick Links -->
             <div class="col-md-2 mb-3 mb-md-0">
                 <h6>Quick Links</h6>
                 <ul class="list-unstyled">
-                    <li><a href="dashboard.php" class="text-decoration-none text-muted">Home</a></li>
-                    <li><a href="alerts.php" class="text-decoration-none text-muted">Alerts</a></li>
-                    <li><a href="map.php" class="text-decoration-none text-muted">Evacuation Map</a></li>
-                    <li><a href="report.php" class="text-decoration-none text-muted">Report Incident</a></li>
+                    <li><a href="dashboard.php" class="text-decoration-none text-white-50">Home</a></li>
+                    <li><a href="alerts.php" class="text-decoration-none text-white-50">Alerts</a></li>
+                    <li><a href="map.php" class="text-decoration-none text-white-50">Evacuation Map</a></li>
+                    <li><a href="report.php" class="text-decoration-none text-white-50">Report Incident</a></li>
                 </ul>
             </div>
+
+            <!-- Contact Info -->
             <div class="col-md-3 mb-3 mb-md-0">
                 <h6>Contact Information</h6>
-                <ul class="list-unstyled text-muted">
+                <ul class="list-unstyled text-white-50">
                     <li><i class="bi bi-geo-alt-fill me-2"></i>Municipal Hall, Poblacion, Agoncillo, Batangas</li>
                     <li><i class="bi bi-telephone-fill me-2"></i>(043) 123-4567</li>
                     <li><i class="bi bi-envelope-fill me-2"></i>mdrrmo@agoncillo.gov.ph</li>
                 </ul>
             </div>
+
+            <!-- Socials + Download -->
             <div class="col-md-3">
                 <h6>Connect With Us</h6>
                 <div class="d-flex gap-2">
@@ -485,16 +498,19 @@ include '../includes/header.php';
                     <a href="#" class="btn btn-outline-light btn-sm"><i class="bi bi-youtube"></i></a>
                 </div>
                 <div class="mt-3">
-                    <a href="#" class="btn btn-sm btn-primary"><i class="bi bi-download me-1"></i> Download Mobile App</a>
+                    <a href="#" class="btn btn-sm btn-primary">
+                        <i class="bi bi-download me-1"></i> Download Mobile App
+                    </a>
                 </div>
             </div>
         </div>
         <hr class="my-3">
-        <div class="text-center text-muted">
+        <div class="text-center text-white-50">
             <small>&copy; 2025 Municipality of Agoncillo. All rights reserved.</small>
         </div>
     </div>
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
 // Dashboard Map Implementation
