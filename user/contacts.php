@@ -20,34 +20,27 @@ $emergency_contacts = [
     [
         'category' => 'Emergency Services',
         'contacts' => [
-            ['name' => 'MDRRMO Agoncillo', 'number' => '+63 912 345 6789', 'description' => '24/7 Emergency Response', 'icon' => 'shield-fill', 'color' => 'danger'],
-            ['name' => 'Fire Department', 'number' => '+63 912 345 6790', 'description' => 'Fire and Rescue Services', 'icon' => 'fire', 'color' => 'warning'],
-            ['name' => 'Police Station', 'number' => '+63 912 345 6791', 'description' => 'Law Enforcement', 'icon' => 'shield-check', 'color' => 'primary'],
-            ['name' => 'Ambulance Service', 'number' => '+63 912 345 6792', 'description' => 'Medical Emergency', 'icon' => 'hospital', 'color' => 'success']
-        ]
-    ],
-    [
-        'category' => 'Medical Services',
-        'contacts' => [
-            ['name' => 'Agoncillo Health Center', 'number' => '+63 912 345 6793', 'description' => 'Primary Healthcare', 'icon' => 'hospital-fill', 'color' => 'info'],
-            ['name' => 'Batangas Medical Center', 'number' => '+63 912 345 6794', 'description' => 'Secondary Hospital', 'icon' => 'hospital', 'color' => 'info'],
-            ['name' => 'Red Cross Batangas', 'number' => '+63 912 345 6795', 'description' => 'Emergency Medical Aid', 'icon' => 'heart-pulse', 'color' => 'danger']
+            ['name' => 'Emergency Hotline', 'number' => '911', 'description' => 'National Emergency Hotline', 'icon' => 'telephone-fill', 'color' => 'danger'],
+            ['name' => 'MDRRMO Agoncillo', 'number' => '+63 994 295 8621', 'description' => '24/7 Emergency Response', 'icon' => 'shield-fill', 'color' => 'danger'],
+            ['name' => 'Fire Department', 'number' => '+63 981 480 5828', 'description' => 'Fire and Rescue Services', 'icon' => 'fire', 'color' => 'warning'],
+            ['name' => 'Police Station', 'number' => '+63 915 261 9656', 'description' => 'Law Enforcement', 'icon' => 'shield-check', 'color' => 'primary'],
+            ['name' => 'PCG Agoncillo Sub Station', 'number' => '+63 977 385 1215', 'description' => 'Coast Guard Services', 'icon' => 'shield-check', 'color' => 'primary'],
+            ['name' => 'Ambulance Service', 'number' => '+63 927 212 7017', 'description' => 'Medical Emergency', 'icon' => 'hospital', 'color' => 'success']
         ]
     ],
     [
         'category' => 'Utilities & Services',
         'contacts' => [
-            ['name' => 'MERALCO', 'number' => '+63 912 345 6796', 'description' => 'Power Outages', 'icon' => 'lightning-fill', 'color' => 'warning'],
-            ['name' => 'Water District', 'number' => '+63 912 345 6797', 'description' => 'Water Supply Issues', 'icon' => 'droplet-fill', 'color' => 'primary'],
-            ['name' => 'PLDT/Smart', 'number' => '+63 912 345 6798', 'description' => 'Communication Services', 'icon' => 'telephone-fill', 'color' => 'success']
+            ['name' => 'BATELEC 1', 'number' => '+63 916 590 5512', 'description' => 'Power Outages', 'icon' => 'lightning-fill', 'color' => 'warning'],
+            ['name' => 'PRIME WATER', 'number' => '+63 950 9114632', 'description' => 'Water Supply Issues', 'icon' => 'droplet-fill', 'color' => 'primary']
         ]
     ],
     [
         'category' => 'Government Offices',
         'contacts' => [
-            ['name' => 'Municipal Hall', 'number' => '+63 912 345 6799', 'description' => 'Local Government', 'icon' => 'building', 'color' => 'secondary'],
-            ['name' => 'Barangay Captain', 'number' => '+63 912 345 6800', 'description' => 'Local Barangay Office', 'icon' => 'person-badge', 'color' => 'info'],
-            ['name' => 'DSWD Office', 'number' => '+63 912 345 6801', 'description' => 'Social Services', 'icon' => 'people-fill', 'color' => 'primary']
+            ['name' => 'Municipal Hall', 'number' => '(043) 773 - 6880 LOC. 116', 'description' => 'Local Government', 'icon' => 'building-fill', 'color' => 'primary'],
+            ['name' => 'Engineering Office', 'number' => '+63 977 805 5105', 'description' => 'Infrastructure & Public Works', 'icon' => 'tools', 'color' => 'primary'],
+            ['name' => 'MSWD Office', 'number' => '+63 917 837 5254', 'description' => 'Social Services', 'icon' => 'people-fill', 'color' => 'primary']
         ]
     ]
 ];
@@ -112,7 +105,7 @@ include '../includes/header.php';
             <strong>In case of immediate emergency, call:</strong>
             <div class="d-flex flex-wrap gap-3 mt-2">
                 <a href="tel:+639123456789" class="btn btn-danger btn-sm">
-                    <i class="bi bi-telephone-fill me-1"></i>MDRRMO: +63 912 345 6789
+                    <i class="bi bi-telephone-fill me-1"></i>MDRRMO: +63 994 295 8621
                 </a>
                 <a href="tel:911" class="btn btn-danger btn-sm">
                     <i class="bi bi-telephone-fill me-1"></i>Emergency: 911
@@ -135,7 +128,6 @@ include '../includes/header.php';
                     <select class="form-select" id="filterCategory">
                         <option value="">All Categories</option>
                         <option value="Emergency Services">Emergency Services</option>
-                        <option value="Medical Services">Medical Services</option>
                         <option value="Utilities & Services">Utilities & Services</option>
                         <option value="Government Offices">Government Offices</option>
                     </select>
