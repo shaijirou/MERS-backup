@@ -16,11 +16,19 @@ if ($_POST) {
     switch ($action) {
         case 'update_status':
             $status = $_POST['status'] ?? '';
-            $admin_notes = $_POST['admin_notes'] ?? '';
-            
+            $resolution_notes = $_POST['resolution_notes'] ?? '';
+            $incident_id = $_POST['incident_id'] ?? '';
+            $admin_id = $_SESSION['user_id'] ?? null;
+
+            // Validate required fields
+            if (empty($incident_id) || empty($status) || !$admin_id) {
+                $error_message = "Missing required data for updating incident.";
+                break;
+            }
+
             $query = "UPDATE incident_reports SET 
                      status = :status, 
-                     admin_notes = :admin_notes,
+                     resolution_notes = :resolution_notes,
                      reviewed_by = :admin_id,
                      reviewed_at = NOW(),
                      updated_at = NOW() 
@@ -28,13 +36,13 @@ if ($_POST) {
             
             $stmt = $db->prepare($query);
             $stmt->bindParam(':status', $status);
-            $stmt->bindParam(':admin_notes', $admin_notes);
-            $stmt->bindParam(':admin_id', $_SESSION['user_id']);
-            $stmt->bindParam(':incident_id', $incident_id);
+            $stmt->bindParam(':resolution_notes', $resolution_notes);
+            $stmt->bindParam(':admin_id', $admin_id);
+            $stmt->bindParam(':incident_id', $incident_id, PDO::PARAM_INT);
             
             if ($stmt->execute()) {
                 $success_message = "Incident status updated successfully!";
-                logActivity($_SESSION['user_id'], 'Incident status updated', 'incident_reports', $incident_id);
+                logActivity($admin_id, 'Incident status updated', 'incident_reports', $incident_id);
             } else {
                 $error_message = "Error updating incident.";
             }
@@ -412,7 +420,7 @@ include '../includes/header.php';
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li>
-                                                        <a class="dropdown-item" href="#" onclick="updateIncident(<?php echo $incident['id']; ?>, '<?php echo $incident['status']; ?>', '<?php echo htmlspecialchars($incident['admin_notes']); ?>')">
+                                                        <a class="dropdown-item" href="#" onclick="updateIncident(<?php echo $incident['id']; ?>, '<?php echo $incident['status']; ?>', '<?php echo htmlspecialchars($incident['resolution_notes']); ?>')">
                                                             <i class="bi bi-pencil text-warning"></i> Update Status
                                                         </a>
                                                     </li>
@@ -488,8 +496,8 @@ include '../includes/header.php';
                     </div>
                     
                     <div class="mb-3">
-                        <label for="admin_notes" class="form-label">Admin Notes</label>
-                        <textarea class="form-control" id="admin_notes" name="admin_notes" rows="4" placeholder="Add notes about the incident status or actions taken..."></textarea>
+                        <label for="resolution_notes" class="form-label">Admin Notes</label>
+                        <textarea class="form-control" id="resolution_notes" name="resolution_notes" rows="4" placeholder="Add notes about the incident status or actions taken..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -533,7 +541,7 @@ include '../includes/header.php';
 function updateIncident(incidentId, currentStatus, currentNotes) {
     document.getElementById('update_incident_id').value = incidentId;
     document.getElementById('update_status').value = currentStatus;
-    document.getElementById('admin_notes').value = currentNotes;
+    document.getElementById('resolution_notes').value = currentNotes;
     new bootstrap.Modal(document.getElementById('updateIncidentModal')).show();
 }
 
