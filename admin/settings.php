@@ -123,7 +123,7 @@ if ($_POST) {
 }
 
 // Get all admin accounts
-$admin_query = "SELECT id, first_name, last_name, email, phone, user_type, created_at, 
+$admin_query = "SELECT id, first_name, last_name, email, phone,id_document, user_type, created_at, 
                        (SELECT COUNT(*) FROM system_logs WHERE user_id = users.id) as activity_count
                 FROM users 
                 WHERE user_type IN ('admin', 'super_admin') 
@@ -131,6 +131,7 @@ $admin_query = "SELECT id, first_name, last_name, email, phone, user_type, creat
 $admin_stmt = $db->prepare($admin_query);
 $admin_stmt->execute();
 $admins = $admin_stmt->fetchAll();
+
 
 // Get current user info
 $current_user_query = "SELECT first_name, last_name, email, user_type FROM users WHERE id = :id";
@@ -230,9 +231,15 @@ $current_user = $current_user_stmt->fetch();
                                             <tr>
                                                 <td>
                                                     <div class="d-flex align-items-center">
-                                                        <div class="admin-avatar me-3">
-                                                            <?php echo strtoupper(substr($admin['first_name'], 0, 1) . substr($admin['last_name'], 0, 1)); ?>
+                                                       <div class="admin-avatar me-3">
+                                                            <?php if (!empty($admin['id_document']) && file_exists(__DIR__ . '/../uploads/profiles/' . $admin['id_document'])) : ?>
+                                                                <img src="../uploads/profiles/<?php echo htmlspecialchars($admin['id_document']); ?>" 
+                                                                    class="rounded-circle" width="40" height="40" alt="Admin">
+                                                            <?php else : ?>
+                                                                <?php echo strtoupper(substr($admin['first_name'], 0, 1) . substr($admin['last_name'], 0, 1)); ?>
+                                                            <?php endif; ?>
                                                         </div>
+
                                                         <div>
                                                             <div class="fw-semibold"><?php echo htmlspecialchars($admin['first_name'] . ' ' . $admin['last_name']); ?></div>
                                                             <?php if ($admin['phone']): ?>
@@ -417,6 +424,10 @@ Agoncillo, Batangas</textarea>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        document.getElementById("menu-toggle").addEventListener("click", function(e) {
+    e.preventDefault();
+    document.getElementById("wrapper").classList.toggle("toggled");
+});
         function confirmDeleteAdmin(adminId, adminName) {
             if (confirm(`Are you sure you want to delete the admin account for "${adminName}"? This action cannot be undone.`)) {
                 document.getElementById('deleteAdminId').value = adminId;

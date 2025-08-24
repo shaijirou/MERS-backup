@@ -655,6 +655,10 @@ include '../includes/header.php';
 </form>
 
 <script>
+    document.getElementById("menu-toggle").addEventListener("click", function(e) {
+    e.preventDefault();
+    document.getElementById("wrapper").classList.toggle("toggled");
+});
 function editCenter(centerId) {
     // Fetch center details and populate edit modal
     fetch(`get_center_details.php?id=${centerId}`)

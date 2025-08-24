@@ -465,6 +465,10 @@ include '../includes/header.php';
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    document.getElementById("menu-toggle").addEventListener("click", function(e) {
+    e.preventDefault();
+    document.getElementById("wrapper").classList.toggle("toggled");
+});
 // Initialize charts for summary report
 <?php if ($report_type == 'summary'): ?>
     // Barangay Chart

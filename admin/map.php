@@ -223,6 +223,10 @@ include '../includes/header.php';
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+    document.getElementById("menu-toggle").addEventListener("click", function(e) {
+    e.preventDefault();
+    document.getElementById("wrapper").classList.toggle("toggled");
+});
 // Initialize map centered on Agoncillo, Batangas
 var map = L.map('map').setView([13.934542301563013, 120.92846530878772], 15);
 

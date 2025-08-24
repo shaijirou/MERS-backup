@@ -43,19 +43,15 @@ try {
         <button class="btn btn-primary" id="menu-toggle">
             <i class="bi bi-list"></i>
         </button>
-                    <span><?php echo isset($_SESSION['admin_name']) ? htmlspecialchars($_SESSION['admin_name']) : 'Admin'; ?></span>
+        <h4 style="margin-left: 8px;"><?php echo isset($_SESSION['admin_name']) ? htmlspecialchars($_SESSION['admin_name']) : 'Administrator'; ?></h4>
         <div class="navbar-nav ms-auto">
             <div class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                    <?php if ($profile_picture): ?>
-                        <img src="<?php echo htmlspecialchars($profile_picture); ?>" class="rounded-circle me-2" width="32" height="32" alt="Admin Profile" style="object-fit: cover;">
-                    <?php else: ?>
-                        <div class="rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                            <i class="bi bi-person-fill text-white" style="font-size: 16px;"></i>
-                        </div>
-                    <?php endif; ?>
+                    <img src="<?php echo htmlspecialchars($profile_picture ?: 'assets/img/user-avatar.jpg'); ?>" 
+                        class="rounded-circle me-1" width="28" height="28" alt="User">
                     <span><?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
                 </a>
+
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person-circle me-2"></i>Profile</a></li>
                     <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Settings</a></li>

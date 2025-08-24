@@ -82,7 +82,7 @@ $where_conditions = ["u.user_type = 'resident'"];
 $params = [];
 
 if ($search) {
-    $where_conditions[] = "(first_name LIKE :search OR last_name LIKE :search OR email LIKE :search OR phone LIKE :search)";
+    $where_conditions[] = "(u.first_name LIKE :search OR u.last_name LIKE :search OR u.email LIKE :search OR u.phone LIKE :search)";
     $params[':search'] = "%$search%";
 }
 
@@ -92,12 +92,12 @@ if ($filter_status) {
 }
 
 if ($filter_verified !== '') {
-    $where_conditions[] = "verification_status = :verified";
+    $where_conditions[] = "u.verification_status = :verified";
     $params[':verified'] = $filter_verified;
 }
 
 if ($filter_barangay) {
-    $where_conditions[] = "barangay = :barangay";
+    $where_conditions[] = "u.barangay = :barangay";
     $params[':barangay'] = $filter_barangay;
 }
 
@@ -152,9 +152,9 @@ $stats = $stats_stmt->fetch();
 
 include '../includes/header.php';
 ?>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-<link href="../assets/css/admin.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../assets/css/admin.css" rel="stylesheet">
 <div class="d-flex" id="wrapper">
     <!-- Sidebar -->
     <?php include 'includes/sidebar.php'; ?>
@@ -292,9 +292,7 @@ include '../includes/header.php';
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                <?php echo strtoupper(substr($user['first_name'], 0, 1) . substr($user['last_name'], 0, 1)); ?>
-                                            </div>
+                                          
                                             <div>
                                                 <div class="fw-bold"><?php echo $user['first_name'] . ' ' . $user['last_name']; ?></div>
                                                 <small class="text-muted"><?php echo $user['email']; ?></small>
@@ -441,19 +439,23 @@ include '../includes/header.php';
                             <select class="form-select" name="barangay" required>
                                 <option value="">Select Barangay</option>
                                 <option value="Adia">Adia</option>
+                                <option value="Bagong Sikat">Bagong Sikat</option>
                                 <option value="Balangon">Balangon</option>
+                                <option value="Bangin">Bangin</option>
                                 <option value="Banyaga">Banyaga</option>
+                                <option value="Barigon">Barigon</option>
                                 <option value="Bilibinwang">Bilibinwang</option>
                                 <option value="Coral na Munti">Coral na Munti</option>
                                 <option value="Guitna">Guitna</option>
-                                <option value="Mabacong">Mabacong</option>
+                                <option value="Mabini">Mabini</option>
+                                <option value="Pamiga">Pamiga</option>
                                 <option value="Panhulan">Panhulan</option>
+                                <option value="Pansipit">Pansipit</option>
                                 <option value="Poblacion">Poblacion</option>
                                 <option value="Pook">Pook</option>
-                                <option value="Pulang Bato">Pulang Bato</option>
                                 <option value="San Jacinto">San Jacinto</option>
                                 <option value="San Teodoro">San Teodoro</option>
-                                <option value="Santa Rosa">Santa Rosa</option>
+                                <option value="Santa Cruz">Santa Cruz</option>
                                 <option value="Santo Tomas">Santo Tomas</option>
                                 <option value="Subic Ilaya">Subic Ilaya</option>
                                 <option value="Subic Ibaba">Subic Ibaba</option>
