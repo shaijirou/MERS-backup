@@ -158,7 +158,9 @@ $barangays = $barangays_stmt->fetchAll();
 
 include '../includes/header.php';
 ?>
-
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+<link href="../assets/css/admin.css" rel="stylesheet">
 <div class="d-flex" id="wrapper">
     <!-- Sidebar -->
     <?php include 'includes/sidebar.php'; ?>
@@ -372,15 +374,16 @@ include '../includes/header.php';
                                     <td><?php echo htmlspecialchars($incident['location']); ?></td>
                                     <td>
                                         <?php
-                                        $severity_class = '';
-                                        switch ($incident['severity']) {
-                                            case 'low': $severity_class = 'bg-success'; break;
-                                            case 'medium': $severity_class = 'bg-warning'; break;
-                                            case 'high': $severity_class = 'bg-orange'; break;
-                                            case 'critical': $severity_class = 'bg-danger'; break;
+                                        $urgency = isset($incident['urgency_level']) && $incident['urgency_level'] !== null ? $incident['urgency_level'] : '';
+                                        $urgency_class = '';
+                                        switch ($urgency) {
+                                            case 'low': $urgency_class = 'bg-success'; break;
+                                            case 'medium': $urgency_class = 'bg-warning'; break;
+                                            case 'high': $urgency_class = 'bg-orange'; break;
+                                            case 'critical': $urgency_class = 'bg-danger'; break;
                                         }
                                         ?>
-                                        <span class="badge <?php echo $severity_class; ?>"><?php echo ucfirst($incident['severity']); ?></span>
+                                        <span class="badge <?php echo $urgency_class; ?>"><?php echo $urgency !== '' ? ucfirst($urgency) : 'N/A'; ?></span>
                                     </td>
                                     <td>
                                         <?php
@@ -523,6 +526,10 @@ include '../includes/header.php';
 </form>
 
 <script>
+    document.getElementById("menu-toggle").addEventListener("click", function(e) {
+    e.preventDefault();
+    document.getElementById("wrapper").classList.toggle("toggled");
+});
 function updateIncident(incidentId, currentStatus, currentNotes) {
     document.getElementById('update_incident_id').value = incidentId;
     document.getElementById('update_status').value = currentStatus;

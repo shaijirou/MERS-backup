@@ -37,7 +37,7 @@ $where_clause = implode(' AND ', $where_conditions);
 
 // Get users data
 $query = "SELECT u.id, u.first_name, u.last_name, u.email, u.phone, u.address, u.barangay, 
-                 u.verification_status, u.status, u.created_at,
+                 u.verification_status, u.created_at,
                  COUNT(ir.id) as incident_reports_count
           FROM users u 
           LEFT JOIN incident_reports ir ON u.id = ir.user_id

@@ -185,7 +185,9 @@ $barangays = ['Adia', 'Balangon', 'Banyaga', 'Bilibinwang', 'Coral na Munti', 'G
 
 include '../includes/header.php';
 ?>
-
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+<link href="../assets/css/admin.css" rel="stylesheet">
 <div class="d-flex" id="wrapper">
     <!-- Sidebar -->
     <?php include 'includes/sidebar.php'; ?>
@@ -343,7 +345,7 @@ include '../includes/header.php';
                                     </td>
                                     <td>
                                         <div><?php echo htmlspecialchars($center['address']); ?></div>
-                                        <small class="text-muted"><?php echo htmlspecialchars($center['barangay']); ?></small>
+                                        <!-- <small class="text-muted"><?php echo htmlspecialchars($center['barangay_id']); ?></small> -->
                                     </td>
                                     <td><?php echo number_format($center['capacity']); ?></td>
                                     <td>
@@ -415,21 +417,28 @@ include '../includes/header.php';
                 <div class="card-footer">
                     <nav>
                         <ul class="pagination justify-content-center mb-0">
+                            <?php
+                            // Copy $_GET and remove 'page' for clean query building
+                            $query_params = $_GET;
+                            ?>
                             <?php if ($page > 1): ?>
+                                <?php $query_params['page'] = $page - 1; ?>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page=<?php echo $page - 1; ?>&<?php echo http_build_query($_GET); ?>">Previous</a>
+                                    <a class="page-link" href="?<?php echo http_build_query($query_params); ?>">Previous</a>
                                 </li>
                             <?php endif; ?>
                             
                             <?php for ($i = max(1, $page - 2); $i <= min($total_pages, $page + 2); $i++): ?>
+                                <?php $query_params['page'] = $i; ?>
                                 <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                                    <a class="page-link" href="?page=<?php echo $i; ?>&<?php echo http_build_query($_GET); ?>"><?php echo $i; ?></a>
+                                    <a class="page-link" href="?<?php echo http_build_query($query_params); ?>"><?php echo $i; ?></a>
                                 </li>
                             <?php endfor; ?>
                             
                             <?php if ($page < $total_pages): ?>
+                                <?php $query_params['page'] = $page + 1; ?>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page=<?php echo $page + 1; ?>&<?php echo http_build_query($_GET); ?>">Next</a>
+                                    <a class="page-link" href="?<?php echo http_build_query($query_params); ?>">Next</a>
                                 </li>
                             <?php endif; ?>
                         </ul>
