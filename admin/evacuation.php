@@ -16,21 +16,21 @@ if ($_POST) {
         case 'add_center':
             $name = $_POST['name'] ?? '';
             $address = $_POST['address'] ?? '';
-            $barangay = $_POST['barangay'] ?? '';
-            $capacity = (int)($_POST['capacity'] ?? 0);
+            $barangay_id = (int)($_POST['barangay_id'] ?? 0); // Use barangay_id instead of barangay
+            $capacity = (int)$_POST['capacity'] ?? 0;
             $contact_person = $_POST['contact_person'] ?? '';
             $contact_number = $_POST['contact_number'] ?? '';
             $facilities = $_POST['facilities'] ?? '';
             $latitude = !empty($_POST['latitude']) ? (float)$_POST['latitude'] : null;
             $longitude = !empty($_POST['longitude']) ? (float)$_POST['longitude'] : null;
             
-            $query = "INSERT INTO evacuation_centers (name, address, barangay, capacity, contact_person, contact_number, facilities, latitude, longitude, created_at) 
-                     VALUES (:name, :address, :barangay, :capacity, :contact_person, :contact_number, :facilities, :latitude, :longitude, NOW())";
+            $query = "INSERT INTO evacuation_centers (name, address, barangay_id, capacity, contact_person, contact_number, facilities, latitude, longitude, created_at) 
+                     VALUES (:name, :address, :barangay_id, :capacity, :contact_person, :contact_number, :facilities, :latitude, :longitude, NOW())";
             
             $stmt = $db->prepare($query);
             $stmt->bindParam(':name', $name);
             $stmt->bindParam(':address', $address);
-            $stmt->bindParam(':barangay', $barangay);
+            $stmt->bindParam(':barangay_id', $barangay_id); // Bind barangay_id
             $stmt->bindParam(':capacity', $capacity);
             $stmt->bindParam(':contact_person', $contact_person);
             $stmt->bindParam(':contact_number', $contact_number);
@@ -50,20 +50,20 @@ if ($_POST) {
             $center_id = $_POST['center_id'] ?? '';
             $name = $_POST['name'] ?? '';
             $address = $_POST['address'] ?? '';
-            $barangay = $_POST['barangay'] ?? '';
-            $capacity = (int)($_POST['capacity'] ?? 0);
+            $barangay_id = (int)($_POST['barangay_id'] ?? 0); // Use barangay_id instead of barangay
+            $capacity = (int)$_POST['capacity'] ?? 0;
             $contact_person = $_POST['contact_person'] ?? '';
             $contact_number = $_POST['contact_number'] ?? '';
             $facilities = $_POST['facilities'] ?? '';
             $status = $_POST['status'] ?? '';
-            $current_occupancy = (int)($_POST['current_occupancy'] ?? 0);
+            $current_occupancy = (int)$_POST['current_occupancy'] ?? 0;
             $latitude = !empty($_POST['latitude']) ? (float)$_POST['latitude'] : null;
             $longitude = !empty($_POST['longitude']) ? (float)$_POST['longitude'] : null;
             
             $query = "UPDATE evacuation_centers SET 
                      name = :name,
                      address = :address,
-                     barangay = :barangay,
+                     barangay_id = :barangay_id,
                      capacity = :capacity,
                      contact_person = :contact_person,
                      contact_number = :contact_number,
@@ -78,7 +78,7 @@ if ($_POST) {
             $stmt = $db->prepare($query);
             $stmt->bindParam(':name', $name);
             $stmt->bindParam(':address', $address);
-            $stmt->bindParam(':barangay', $barangay);
+            $stmt->bindParam(':barangay_id', $barangay_id); // Bind barangay_id
             $stmt->bindParam(':capacity', $capacity);
             $stmt->bindParam(':contact_person', $contact_person);
             $stmt->bindParam(':contact_number', $contact_number);
@@ -119,20 +119,19 @@ $status_filter = $_GET['status'] ?? '';
 $barangay_filter = $_GET['barangay'] ?? '';
 $search = $_GET['search'] ?? '';
 
-// Build WHERE clause
 $where_conditions = [];
 $params = [];
 
 if ($status_filter) {
-    $where_conditions[] = "status = :status";
+    $where_conditions[] = "ec.status = :status";
     $params[':status'] = $status_filter;
 }
 if ($barangay_filter) {
-    $where_conditions[] = "barangay = :barangay";
+    $where_conditions[] = "b.name = :barangay";
     $params[':barangay'] = $barangay_filter;
 }
 if ($search) {
-    $where_conditions[] = "(name LIKE :search OR address LIKE :search OR contact_person LIKE :search)";
+    $where_conditions[] = "(ec.name LIKE :search OR ec.address LIKE :search OR ec.contact_person LIKE :search)";
     $params[':search'] = "%$search%";
 }
 
@@ -143,8 +142,9 @@ $page = $_GET['page'] ?? 1;
 $limit = RECORDS_PER_PAGE;
 $offset = ($page - 1) * $limit;
 
-// Get total count
-$count_query = "SELECT COUNT(*) as total FROM evacuation_centers $where_clause";
+$count_query = "SELECT COUNT(*) as total FROM evacuation_centers ec 
+                LEFT JOIN barangays b ON ec.barangay_id = b.id 
+                $where_clause";
 $count_stmt = $db->prepare($count_query);
 foreach ($params as $key => $value) {
     $count_stmt->bindValue($key, $value);
@@ -153,10 +153,10 @@ $count_stmt->execute();
 $total_records = $count_stmt->fetch()['total'];
 $total_pages = ceil($total_records / $limit);
 
-// Get evacuation centers
-$query = "SELECT * FROM evacuation_centers 
+$query = "SELECT ec.*, b.name as barangay_name FROM evacuation_centers ec
+          LEFT JOIN barangays b ON ec.barangay_id = b.id
           $where_clause 
-          ORDER BY name ASC 
+          ORDER BY ec.name ASC 
           LIMIT :limit OFFSET :offset";
 
 $stmt = $db->prepare($query);
@@ -180,8 +180,10 @@ $stats_stmt = $db->prepare($stats_query);
 $stats_stmt->execute();
 $stats = $stats_stmt->fetch();
 
-// Get barangays for filter
-$barangays = ['Adia', 'Balangon', 'Banyaga', 'Bilibinwang', 'Coral na Munti', 'Guitna', 'Mabacong', 'Panhulan', 'Poblacion', 'Pook', 'Pulang Bato', 'San Jacinto', 'San Teodoro', 'Santa Rosa', 'Santo Tomas', 'Subic Ilaya', 'Subic Ibaba'];
+$barangays_query = "SELECT id, name FROM barangays ORDER BY name ASC";
+$barangays_stmt = $db->prepare($barangays_query);
+$barangays_stmt->execute();
+$barangays = $barangays_stmt->fetchAll();
 
 include '../includes/header.php';
 ?>
@@ -301,8 +303,8 @@ include '../includes/header.php';
                             <select class="form-select" name="barangay">
                                 <option value="">All Barangays</option>
                                 <?php foreach ($barangays as $barangay): ?>
-                                    <option value="<?php echo $barangay; ?>" <?php echo $barangay_filter == $barangay ? 'selected' : ''; ?>>
-                                        <?php echo $barangay; ?>
+                                    <option value="<?php echo $barangay['name']; ?>" <?php echo $barangay_filter == $barangay['name'] ? 'selected' : ''; ?>>
+                                        <?php echo $barangay['name']; ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -345,7 +347,7 @@ include '../includes/header.php';
                                     </td>
                                     <td>
                                         <div><?php echo htmlspecialchars($center['address']); ?></div>
-                                        <!-- <small class="text-muted"><?php echo htmlspecialchars($center['barangay_id']); ?></small> -->
+                                        <small class="text-muted"><?php echo htmlspecialchars($center['barangay_name']); ?></small>  <!-- Display barangay_name from JOIN -->
                                     </td>
                                     <td><?php echo number_format($center['capacity']); ?></td>
                                     <td>
@@ -353,7 +355,7 @@ include '../includes/header.php';
                                         $occupancy_percentage = $center['capacity'] > 0 ? ($center['current_occupancy'] / $center['capacity']) * 100 : 0;
                                         $progress_class = '';
                                         if ($occupancy_percentage >= 90) $progress_class = 'bg-danger';
-                                        elseif ($occupancy_percentage >= 70) $progress_class = 'bg-warning';
+                                        elseif ($occupancy_percentage >= 50) $progress_class = 'bg-warning';
                                         else $progress_class = 'bg-success';
                                         ?>
                                         <div class="progress" style="height: 20px;">
@@ -472,10 +474,10 @@ include '../includes/header.php';
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="barangay" class="form-label">Barangay *</label>
-                                <select class="form-select" id="barangay" name="barangay" required>
+                                <select class="form-select" id="barangay" name="barangay_id" required>  <!-- Changed name to barangay_id -->
                                     <option value="">Select Barangay</option>
                                     <?php foreach ($barangays as $barangay): ?>
-                                        <option value="<?php echo $barangay; ?>"><?php echo $barangay; ?></option>
+                                        <option value="<?php echo $barangay['id']; ?>"><?php echo $barangay['name']; ?></option>  <!-- Use id and name from database -->
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -564,10 +566,10 @@ include '../includes/header.php';
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="edit_barangay" class="form-label">Barangay *</label>
-                                <select class="form-select" id="edit_barangay" name="barangay" required>
+                                <select class="form-select" id="edit_barangay" name="barangay_id" required>  <!-- Changed name to barangay_id -->
                                     <option value="">Select Barangay</option>
                                     <?php foreach ($barangays as $barangay): ?>
-                                        <option value="<?php echo $barangay; ?>"><?php echo $barangay; ?></option>
+                                        <option value="<?php echo $barangay['id']; ?>"><?php echo $barangay['name']; ?></option>  <!-- Use id and name from database -->
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -648,6 +650,132 @@ include '../includes/header.php';
     </div>
 </div>
 
+<!-- View Center Modal -->
+<div class="modal fade" id="viewCenterModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Evacuation Center Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Center Name</label>
+                            <p class="form-control-plaintext" id="view_name"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Status</label>
+                            <p class="form-control-plaintext">
+                                <span id="view_status_badge" class="badge"></span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <!-- <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Barangay</label>
+                            <p class="form-control-plaintext" id="view_barangay"></p>
+                        </div> -->
+                    <!-- </div> -->
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Address</label>
+                            <p class="form-control-plaintext" id="view_address"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Capacity</label>
+                            <p class="form-control-plaintext" id="view_capacity"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Current Occupancy</label>
+                            <p class="form-control-plaintext" id="view_current_occupancy"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Occupancy Rate</label>
+                            <div class="progress mt-2" style="height: 25px;">
+                                <div id="view_progress_bar" class="progress-bar" role="progressbar" style="width: 0%">
+                                    <span id="view_occupancy_text">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Contact Person</label>
+                            <p class="form-control-plaintext" id="view_contact_person"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Contact Number</label>
+                            <p class="form-control-plaintext" id="view_contact_number"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Facilities</label>
+                    <p class="form-control-plaintext" id="view_facilities"></p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Latitude</label>
+                            <p class="form-control-plaintext" id="view_latitude"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Longitude</label>
+                            <p class="form-control-plaintext" id="view_longitude"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Created At</label>
+                            <p class="form-control-plaintext" id="view_created_at"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Last Updated</label>
+                            <p class="form-control-plaintext" id="view_updated_at"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="editCenterFromView()">
+                    <i class="bi bi-pencil"></i> Edit Center
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Hidden form for actions -->
 <form id="actionForm" method="POST" style="display: none;">
     <input type="hidden" name="action" id="actionType">
@@ -667,12 +795,12 @@ function editCenter(centerId) {
             document.getElementById('edit_center_id').value = data.id;
             document.getElementById('edit_name').value = data.name;
             document.getElementById('edit_address').value = data.address;
-            document.getElementById('edit_barangay').value = data.barangay;
+            document.getElementById('edit_barangay').value = data.barangay_id; // Use barangay_id for select value
             document.getElementById('edit_capacity').value = data.capacity;
             document.getElementById('edit_current_occupancy').value = data.current_occupancy;
             document.getElementById('edit_contact_person').value = data.contact_person;
             document.getElementById('edit_contact_number').value = data.contact_number;
-            document.getElementById('edit_facilities').value = data.facilities;
+            document.getElementById('edit_facilities').value = data.facilities || '';
             document.getElementById('edit_status').value = data.status;
             document.getElementById('edit_latitude').value = data.latitude;
             document.getElementById('edit_longitude').value = data.longitude;
@@ -694,8 +822,73 @@ function deleteCenter(centerId) {
 }
 
 function viewCenter(centerId) {
-    // Implement view center functionality
-    alert('View center functionality to be implemented');
+    fetch(`get_center_details.php?id=${centerId}`)
+        .then(response => response.json())
+        .then(data => {
+            // Populate view modal with center details
+            document.getElementById('view_name').textContent = data.name;
+            // document.getElementById('view_barangay').textContent = data.barangay_name; // Use barangay_name instead of barangay
+            document.getElementById('view_address').textContent = data.address;
+            document.getElementById('view_capacity').textContent = Number(data.capacity).toLocaleString();
+            document.getElementById('view_current_occupancy').textContent = Number(data.current_occupancy).toLocaleString();
+            document.getElementById('view_contact_person').textContent = data.contact_person;
+            document.getElementById('view_contact_number').textContent = data.contact_number;
+            document.getElementById('view_facilities').textContent = data.facilities && data.facilities.trim() !== '' ? data.facilities : 'Not specified';
+            document.getElementById('view_latitude').textContent = data.latitude || 'Not specified';
+            document.getElementById('view_longitude').textContent = data.longitude || 'Not specified';
+            
+            // Format dates
+            const createdDate = new Date(data.created_at);
+            const updatedDate = data.updated_at ? new Date(data.updated_at) : null;
+            document.getElementById('view_created_at').textContent = createdDate.toLocaleDateString() + ' ' + createdDate.toLocaleTimeString();
+            document.getElementById('view_updated_at').textContent = updatedDate ? 
+                updatedDate.toLocaleDateString() + ' ' + updatedDate.toLocaleTimeString() : 'Never';
+            
+            // Set status badge
+            const statusBadge = document.getElementById('view_status_badge');
+            statusBadge.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+            statusBadge.className = 'badge ';
+            switch (data.status) {
+                case 'active': statusBadge.className += 'bg-success'; break;
+                case 'inactive': statusBadge.className += 'bg-secondary'; break;
+                case 'maintenance': statusBadge.className += 'bg-warning'; break;
+            }
+            
+            // Calculate and display occupancy rate
+            const occupancyPercentage = data.capacity > 0 ? (data.current_occupancy / data.capacity) * 100 : 0;
+            const progressBar = document.getElementById('view_progress_bar');
+            const occupancyText = document.getElementById('view_occupancy_text');
+            
+            progressBar.style.width = occupancyPercentage + '%';
+            progressBar.setAttribute('aria-valuenow', occupancyPercentage);
+            occupancyText.textContent = Math.round(occupancyPercentage) + '%';
+            
+            // Set progress bar color based on occupancy
+            progressBar.className = 'progress-bar ';
+            if (occupancyPercentage >= 90) progressBar.className += 'bg-danger';
+            else if (occupancyPercentage >= 50) progressBar.className += 'bg-warning';
+            else progressBar.className += 'bg-success';
+            
+            // Store center ID for potential edit action
+            window.currentViewCenterId = data.id;
+            
+            // Show the modal
+            new bootstrap.Modal(document.getElementById('viewCenterModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading center details');
+        });
+}
+
+function editCenterFromView() {
+    // Close view modal and open edit modal
+    bootstrap.Modal.getInstance(document.getElementById('viewCenterModal')).hide();
+    
+    // Wait for view modal to close, then open edit modal
+    setTimeout(() => {
+        editCenter(window.currentViewCenterId);
+    }, 300);
 }
 </script>
 

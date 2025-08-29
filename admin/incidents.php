@@ -364,9 +364,6 @@ include '../includes/header.php';
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                <?php echo strtoupper(substr($incident['first_name'], 0, 1) . substr($incident['last_name'], 0, 1)); ?>
-                                            </div>
                                             <div>
                                                 <div class="fw-bold"><?php echo htmlspecialchars($incident['first_name'] . ' ' . $incident['last_name']); ?></div>
                                                 <small class="text-muted"><?php echo htmlspecialchars($incident['email']); ?></small>
@@ -387,7 +384,7 @@ include '../includes/header.php';
                                         switch ($urgency) {
                                             case 'low': $urgency_class = 'bg-success'; break;
                                             case 'medium': $urgency_class = 'bg-warning'; break;
-                                            case 'high': $urgency_class = 'bg-orange'; break;
+                                            case 'high': $urgency_class = 'bg-danger'; break;
                                             case 'critical': $urgency_class = 'bg-danger'; break;
                                         }
                                         ?>
@@ -428,6 +425,12 @@ include '../includes/header.php';
                                                     <li>
                                                         <a class="dropdown-item text-danger" href="#" onclick="deleteIncident(<?php echo $incident['id']; ?>)">
                                                             <i class="bi bi-trash"></i> Delete Incident
+                                                        </a>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="#" onclick="showImageModal('<?php echo htmlspecialchars($incident['image_url']); ?>')">
+                                                            <i class="bi bi-image"></i> View Image
                                                         </a>
                                                     </li>
                                                 </ul>
@@ -527,6 +530,21 @@ include '../includes/header.php';
     </div>
 </div>
 
+<!-- Image Modal for viewing photos -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Incident Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="/placeholder.svg" alt="Incident Photo" class="img-fluid" style="max-height: 80vh;">
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Hidden form for actions -->
 <form id="actionForm" method="POST" style="display: none;">
     <input type="hidden" name="action" id="actionType">
@@ -535,43 +553,49 @@ include '../includes/header.php';
 
 <script>
     document.getElementById("menu-toggle").addEventListener("click", function(e) {
-    e.preventDefault();
-    document.getElementById("wrapper").classList.toggle("toggled");
-});
-function updateIncident(incidentId, currentStatus, currentNotes) {
-    document.getElementById('update_incident_id').value = incidentId;
-    document.getElementById('update_status').value = currentStatus;
-    document.getElementById('resolution_notes').value = currentNotes;
-    new bootstrap.Modal(document.getElementById('updateIncidentModal')).show();
-}
-
-function deleteIncident(incidentId) {
-    if (confirm('Are you sure you want to delete this incident report? This action cannot be undone.')) {
-        document.getElementById('actionType').value = 'delete_incident';
-        document.getElementById('actionIncidentId').value = incidentId;
-        document.getElementById('actionForm').submit();
+        e.preventDefault();
+        document.getElementById("wrapper").classList.toggle("toggled");
+    });
+    
+    function updateIncident(incidentId, currentStatus, currentNotes) {
+        document.getElementById('update_incident_id').value = incidentId;
+        document.getElementById('update_status').value = currentStatus;
+        document.getElementById('resolution_notes').value = currentNotes;
+        new bootstrap.Modal(document.getElementById('updateIncidentModal')).show();
     }
-}
 
-function viewIncident(incidentId) {
-    // Load incident details via AJAX
-    fetch(`get_incident_details.php?id=${incidentId}`)
-        .then(response => response.text())
-        .then(data => {
-            document.getElementById('incidentDetails').innerHTML = data;
-            new bootstrap.Modal(document.getElementById('viewIncidentModal')).show();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error loading incident details');
-        });
-}
+    function deleteIncident(incidentId) {
+        if (confirm('Are you sure you want to delete this incident report? This action cannot be undone.')) {
+            document.getElementById('actionType').value = 'delete_incident';
+            document.getElementById('actionIncidentId').value = incidentId;
+            document.getElementById('actionForm').submit();
+        }
+    }
 
-function exportIncidents() {
-    const params = new URLSearchParams(window.location.search);
-    params.set('export', '1');
-    window.location.href = 'export_incidents.php?' + params.toString();
-}
+    function viewIncident(incidentId) {
+        // Load incident details via AJAX
+        fetch(`get_incident_details.php?id=${incidentId}`)
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('incidentDetails').innerHTML = data;
+                new bootstrap.Modal(document.getElementById('viewIncidentModal')).show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error loading incident details');
+            });
+    }
+
+    function showImageModal(imageSrc) {
+        document.getElementById('modalImage').src = imageSrc;
+        new bootstrap.Modal(document.getElementById('imageModal')).show();
+    }
+
+    function exportIncidents() {
+        const params = new URLSearchParams(window.location.search);
+        params.set('export', '1');
+        window.location.href = 'export_incidents.php?' + params.toString();
+    }
 </script>
 
 <?php include '../includes/footer.php'; ?>

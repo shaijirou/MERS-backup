@@ -77,7 +77,6 @@ if ($format == 'csv') {
         'Address',
         'Barangay',
         'Verified',
-        'Status',
         'Incident Reports',
         'Registration Date'
     ]);
@@ -93,7 +92,6 @@ if ($format == 'csv') {
             $row['address'],
             $row['barangay'],
             $row['verification_status'] ? 'Yes' : 'No',
-            ucfirst($row['status']),
             $row['incident_reports_count'],
             date('Y-m-d H:i:s', strtotime($row['created_at']))
         ]);
