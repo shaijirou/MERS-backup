@@ -36,6 +36,11 @@ $stmt = $db->prepare($query);
 $stmt->execute();
 $recent_incidents = $stmt->fetchAll();
 
+$query = "SELECT * FROM hazard_zones ORDER BY risk_level DESC, name";
+$stmt = $db->prepare($query);
+$stmt->execute();
+$hazard_zones = $stmt->fetchAll();
+
 include '../includes/header.php';
 ?>
 
@@ -86,7 +91,7 @@ include '../includes/header.php';
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
                     <h2><i class="bi bi-map-fill me-2 text-primary"></i>Evacuation Map</h2>
-                    <p class="text-muted mb-0">Interactive map showing evacuation centers and emergency routes in Agoncillo</p>
+                    <p class="text-muted mb-0">Interactive map showing evacuation centers, emergency routes, and hazard zones in Agoncillo</p>
                 </div>
                 <div class="d-flex gap-2">
                     <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#legendModal">
@@ -112,6 +117,19 @@ include '../includes/header.php';
                         </button>
                         <button type="button" class="btn btn-outline-secondary" onclick="toggleLayer('routes')">
                             <i class="bi bi-signpost-2 me-1"></i>Emergency Routes
+                        </button>
+                        <!-- Replace single hazard zones toggle with individual hazard type toggles -->
+                        <button type="button" class="btn btn-outline-secondary" onclick="toggleLayer('flood')">
+                            <i class="bi bi-droplet me-1"></i>Flood Zones
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="toggleLayer('landslide')">
+                            <i class="bi bi-triangle me-1"></i>Landslide Zones
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="toggleLayer('accident')">
+                            <i class="bi bi-exclamation-diamond me-1"></i>Accident Prone Areas
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="toggleLayer('volcanic')">
+                            <i class="bi bi-fire me-1"></i>Volcanic Risk Areas
                         </button>
                     </div>
                 </div>
@@ -238,41 +256,41 @@ include '../includes/header.php';
             </div>
 
             <!-- Weather Information -->
-          <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-cloud-sun me-2 text-warning"></i>Current Weather
-                </h5>
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-cloud-sun me-2 text-warning"></i>Current Weather
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h3 class="mb-0" id="temperature">--°C</h3>
+                            <p class="text-muted mb-0" id="weather-desc">Loading...</p>
+                        </div>
+                        <i class="bi bi-cloud-sun display-4 text-warning" id="weather-icon"></i>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <small class="text-muted d-block">Humidity</small>
+                            <strong id="humidity">--%</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Wind</small>
+                            <strong id="wind">-- km/h</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Rain</small>
+                            <strong id="rain">--%</strong>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="alert alert-warning alert-sm mb-0" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <small>Flood risk level: <strong id="flood-risk">Calculating...</strong></small>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h3 class="mb-0" id="temperature">--°C</h3>
-                        <p class="text-muted mb-0" id="weather-desc">Loading...</p>
-                    </div>
-                    <i class="bi bi-cloud-sun display-4 text-warning" id="weather-icon"></i>
-                </div>
-                <div class="row text-center">
-                    <div class="col-4">
-                        <small class="text-muted d-block">Humidity</small>
-                        <strong id="humidity">--%</strong>
-                    </div>
-                    <div class="col-4">
-                        <small class="text-muted d-block">Wind</small>
-                        <strong id="wind">-- km/h</strong>
-                    </div>
-                    <div class="col-4">
-                        <small class="text-muted d-block">Rain</small>
-                        <strong id="rain">--%</strong>
-                    </div>
-                </div>
-                <hr>
-                <div class="alert alert-warning alert-sm mb-0" role="alert">
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    <small>Flood risk level: <strong id="flood-risk">Calculating...</strong></small>
-                </div>
-            </div>
-        </div>
         </div>
     </div>
 </div>
@@ -328,6 +346,25 @@ include '../includes/header.php';
                     <div style="width: 20px; height: 3px; background-color: #6c757d; border-style: dashed;" class="me-2"></div>
                     <small>Alternative Route</small>
                 </div>
+                <!-- Add hazard zones legend -->
+                <hr>
+                <h6>Hazard Zones</h6>
+                <div class="d-flex align-items-center mb-2">
+                    <div style="width: 16px; height: 16px; background-color: #3b82f6; opacity: 0.6;" class="me-2"></div>
+                    <small>Flood Prone</small>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                    <div style="width: 16px; height: 16px; background-color: #d97706; opacity: 0.6;" class="me-2"></div>
+                    <small>Landslide Prone</small>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                    <div style="width: 16px; height: 16px; background-color: #ef4444; opacity: 0.6;" class="me-2"></div>
+                    <small>Accident Prone</small>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div style="width: 16px; height: 16px; background-color: #ea580c; opacity: 0.6;" class="me-2"></div>
+                    <small>Volcanic Risk</small>
+                </div>
             </div>
         </div>
     </div>
@@ -344,7 +381,7 @@ let userLocationMarker;
 let evacuationCenterMarkers = [];
 let incidentMarkers = [];
 let layersControl;
-let evacuationLayer, incidentLayer, routeLayer;
+let evacuationLayer, incidentLayer, routeLayer, floodLayer, landslideLayer, accidentLayer, volcanicLayer;
 
 // Agoncillo coordinates (approximate center)
 const AGONCILLO_CENTER = [13.9333, 120.9333];
@@ -380,12 +417,18 @@ function initializeMap() {
     evacuationLayer = L.layerGroup().addTo(map);
     incidentLayer = L.layerGroup();
     routeLayer = L.layerGroup();
+    floodLayer = L.layerGroup();
+    landslideLayer = L.layerGroup();
+    accidentLayer = L.layerGroup();
+    volcanicLayer = L.layerGroup().addTo(map); // Add volcanic layer by default as background
     
     // Add evacuation center markers
     addEvacuationCenterMarkers();
     
     // Add recent incident markers
     addIncidentMarkers();
+    
+    addHazardZones();
     
     // Add custom controls
     addCustomControls();
@@ -470,6 +513,171 @@ function addIncidentMarkers() {
             incidentMarkers.push(marker);
         }
     });
+}
+
+function addHazardZones() {
+    const hazardZones = <?php echo json_encode($hazard_zones); ?>;
+    
+    const sortedZones = hazardZones.sort((a, b) => {
+        const layerOrder = {
+            'volcanic_risk': 1,    // Bottom layer
+            'flood_prone': 2,
+            'landslide_prone': 3,
+            'fault_line': 4        // Top layer (accident-prone)
+        };
+        return (layerOrder[a.zone_type] || 5) - (layerOrder[b.zone_type] || 5);
+    });
+    
+    sortedZones.forEach(zone => {
+        if (zone.coordinates) {
+            let coordinates;
+            try {
+                coordinates = JSON.parse(zone.coordinates);
+            } catch (e) {
+                console.error('Invalid coordinates for zone:', zone.name);
+                return;
+            }
+            
+            // Convert coordinates to Leaflet format
+            const latLngs = coordinates.map(coord => [coord.lat, coord.lng]);
+            
+            let fillColor, borderColor, fillOpacity, weight;
+            switch (zone.zone_type) {
+                case 'flood_prone':
+                    fillColor = zone.risk_level === 'critical' ? '#1e40af' : 
+                               zone.risk_level === 'high' ? '#3b82f6' : '#93c5fd';
+                    borderColor = '#1e40af';
+                    fillOpacity = 0.4;
+                    weight = 2;
+                    break;
+                case 'landslide_prone':
+                    fillColor = zone.risk_level === 'critical' ? '#92400e' : 
+                               zone.risk_level === 'high' ? '#d97706' : '#fbbf24';
+                    borderColor = '#92400e';
+                    fillOpacity = 0.4;
+                    weight = 2;
+                    break;
+                case 'fault_line': // Accident-prone roadway areas
+                    fillColor = zone.risk_level === 'critical' ? '#dc2626' : 
+                               zone.risk_level === 'high' ? '#ef4444' : '#fca5a5';
+                    borderColor = '#dc2626';
+                    fillOpacity = 0.6; // More visible for road safety
+                    weight = 4; // Thicker lines for roadways
+                    break;
+                case 'volcanic_risk':
+                    fillColor = zone.risk_level === 'critical' ? '#7c2d12' : 
+                               zone.risk_level === 'high' ? '#ea580c' : '#fed7aa';
+                    borderColor = '#7c2d12';
+                    fillOpacity = 0.15; // Lower opacity so other hazards show through
+                    weight = 1;
+                    break;
+                default:
+                    fillColor = '#6b7280';
+                    borderColor = '#374151';
+                    fillOpacity = 0.3;
+                    weight = 2;
+            }
+            
+            let hazardLayer;
+            if (zone.zone_type === 'fault_line') {
+                // Create polyline for roadway accident-prone areas
+                hazardLayer = L.polyline(latLngs, {
+                    color: borderColor,
+                    weight: weight,
+                    opacity: 0.8,
+                    dashArray: zone.risk_level === 'critical' ? '10, 5' : null
+                });
+            } else if (zone.zone_type === 'volcanic_risk') {
+                const center = getPolygonCenter(latLngs);
+                const radius = getPolygonRadius(latLngs, center);
+                hazardLayer = L.circle(center, {
+                    radius: radius,
+                    fillColor: fillColor,
+                    fillOpacity: fillOpacity,
+                    color: borderColor,
+                    weight: weight,
+                    opacity: 0.8
+                });
+            } else {
+                // Create polygon for area-based hazards
+                hazardLayer = L.polygon(latLngs, {
+                    fillColor: fillColor,
+                    fillOpacity: fillOpacity,
+                    color: borderColor,
+                    weight: weight,
+                    opacity: 0.8
+                });
+            }
+            
+            // Create popup content
+            const zoneTypeNames = {
+                'flood_prone': 'Flood Prone Area',
+                'landslide_prone': 'Landslide Prone Area', 
+                'fault_line': 'Accident Prone Roadway',
+                'volcanic_risk': 'Volcanic Risk Area'
+            };
+            
+            const popupContent = `
+                <div class="p-2">
+                    <h6 class="mb-2">${zone.name}</h6>
+                    <p class="mb-1 small"><strong>Type:</strong> ${zoneTypeNames[zone.zone_type]}</p>
+                    <p class="mb-1 small"><strong>Risk Level:</strong> 
+                        <span class="badge bg-${zone.risk_level === 'critical' ? 'danger' : 
+                                                zone.risk_level === 'high' ? 'warning' : 
+                                                zone.risk_level === 'medium' ? 'info' : 'success'}">
+                            ${zone.risk_level.toUpperCase()}
+                        </span>
+                    </p>
+                    <p class="mb-2 small">${zone.description}</p>
+                    <div class="alert alert-warning alert-sm mb-0">
+                        <small><i class="bi bi-exclamation-triangle me-1"></i>
+                        ${zone.zone_type === 'flood_prone' ? 'Avoid during heavy rains' :
+                          zone.zone_type === 'landslide_prone' ? 'Exercise caution during wet weather' :
+                          zone.zone_type === 'fault_line' ? 'Drive carefully - high accident area' :
+                          'Monitor PHIVOLCS volcanic activity alerts'}
+                        </small>
+                    </div>
+                </div>
+            `;
+            
+            hazardLayer.bindPopup(popupContent);
+            
+            switch (zone.zone_type) {
+                case 'flood_prone':
+                    floodLayer.addLayer(hazardLayer);
+                    break;
+                case 'landslide_prone':
+                    landslideLayer.addLayer(hazardLayer);
+                    break;
+                case 'fault_line':
+                    accidentLayer.addLayer(hazardLayer);
+                    break;
+                case 'volcanic_risk':
+                    volcanicLayer.addLayer(hazardLayer);
+                    break;
+            }
+        }
+    });
+}
+
+function getPolygonCenter(latLngs) {
+    let lat = 0, lng = 0;
+    latLngs.forEach(coord => {
+        lat += coord[0];
+        lng += coord[1];
+    });
+    return [lat / latLngs.length, lng / latLngs.length];
+}
+
+function getPolygonRadius(latLngs, center) {
+    let maxDistance = 0;
+    latLngs.forEach(coord => {
+        const distance = Math.sqrt(
+            Math.pow(coord[0] - center[0], 2) + Math.pow(coord[1] - center[1], 2)
+        );
+        maxDistance = Math.max(maxDistance, distance);
+    });
+    return maxDistance * 111000; // Convert to meters approximately
 }
 
 function addCustomControls() {
@@ -568,7 +776,6 @@ function toggleLayer(layerType) {
     
     if (!map) return;
     
-    // Toggle layers based on type
     switch(layerType) {
         case 'evacuation':
             if (map.hasLayer(evacuationLayer)) {
@@ -589,8 +796,35 @@ function toggleLayer(layerType) {
                 map.removeLayer(routeLayer);
             } else {
                 map.addLayer(routeLayer);
-                // Add some sample routes
                 addSampleRoutes();
+            }
+            break;
+        case 'flood':
+            if (map.hasLayer(floodLayer)) {
+                map.removeLayer(floodLayer);
+            } else {
+                map.addLayer(floodLayer);
+            }
+            break;
+        case 'landslide':
+            if (map.hasLayer(landslideLayer)) {
+                map.removeLayer(landslideLayer);
+            } else {
+                map.addLayer(landslideLayer);
+            }
+            break;
+        case 'accident':
+            if (map.hasLayer(accidentLayer)) {
+                map.removeLayer(accidentLayer);
+            } else {
+                map.addLayer(accidentLayer);
+            }
+            break;
+        case 'volcanic':
+            if (map.hasLayer(volcanicLayer)) {
+                map.removeLayer(volcanicLayer);
+            } else {
+                map.addLayer(volcanicLayer);
             }
             break;
     }
@@ -667,7 +901,7 @@ function fetchWeather(lat, lon) {
             const current = data.current;
 
             document.getElementById("temperature").innerText = `${current.temp}°C`;
-            document.getElementById("description").innerText = current.weather[0].description;
+            document.getElementById("weather-desc").innerText = current.weather[0].description;
             document.getElementById("humidity").innerText = `${current.humidity}%`;
             document.getElementById("wind").innerText = `${current.wind_speed} km/h`;
             document.getElementById("rain").innerText = current.rain ? `${current.rain["1h"]}%` : "0%";
@@ -678,11 +912,11 @@ function fetchWeather(lat, lon) {
             if (icon.includes("rain")) iconClass = "bi-cloud-rain";
             if (icon.includes("cloud")) iconClass = "bi-cloud";
             if (icon.includes("clear")) iconClass = "bi-sun";
-            document.getElementById("weatherIcon").className = `bi ${iconClass} display-4 text-warning`;
+            document.getElementById("weather-icon").className = `bi ${iconClass} display-4 text-warning`;
         })
         .catch(err => {
             console.error("Weather fetch failed", err);
-            document.getElementById("description").innerText = "Unable to load weather.";
+            document.getElementById("weather-desc").innerText = "Unable to load weather.";
         });
 }
 
@@ -695,11 +929,11 @@ function getLocationAndFetch() {
             },
             error => {
                 console.error("Location error:", error);
-                document.getElementById("description").innerText = "Location not available.";
+                document.getElementById("weather-desc").innerText = "Location not available.";
             }
         );
     } else {
-        document.getElementById("description").innerText = "Geolocation not supported.";
+        document.getElementById("weather-desc").innerText = "Geolocation not supported.";
     }
 }
 

@@ -17,8 +17,6 @@ $count_stmt = $db->prepare($count_query);
 $count_stmt->execute();
 $stats['active_alerts'] = $count_stmt->fetch()['total'];
 
-
-
 // Incident reports
 $query = "SELECT COUNT(*) as count FROM incident_reports WHERE status IN ('pending', 'in_progress')";
 $stmt = $db->prepare($query);
@@ -91,6 +89,12 @@ $map_alerts_stmt = $db->prepare($map_alerts_query);
 $map_alerts_stmt->execute();
 $map_alerts_result = $map_alerts_stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Get hazard zones for map
+$dashboard_hazard_zones_query = "SELECT * FROM hazard_zones WHERE risk_level IN ('high', 'critical') ORDER BY risk_level DESC LIMIT 15";
+$dashboard_hazard_zones_stmt = $db->prepare($dashboard_hazard_zones_query);
+$dashboard_hazard_zones_stmt->execute();
+$dashboard_hazard_zones_result = $dashboard_hazard_zones_stmt->fetchAll(PDO::FETCH_ASSOC);
+
 // Barangay coordinates (approximate center points for Agoncillo, Batangas)
 $barangay_coords = [
     'Adia' => ['lat' => 13.944797659673066, 'lng' => 120.92568019700752],
@@ -114,7 +118,6 @@ $barangay_coords = [
     'Santo Tomas' => ['lat' => 13.9392874, 'lng' => 120.9422622],
     'Subic Ibaba' => ['lat' => 13.9475472, 'lng' => 120.9411149],
     'Subic Ilaya' => ['lat' => 13.9535154, 'lng' => 120.9404725]
-    
 ];
 
 include '../includes/header.php';
@@ -252,10 +255,34 @@ include '../includes/header.php';
                                             <small>Centers</small>
                                         </label>
                                     </div>
-                                    <div class="form-check form-switch">
+                                    <div class="form-check form-switch mb-1">
                                         <input class="form-check-input" type="checkbox" id="showDashAlerts" checked>
                                         <label class="form-check-label" for="showDashAlerts">
                                             <small>Alerts</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-1">
+                                        <input class="form-check-input" type="checkbox" id="showDashFlood" checked>
+                                        <label class="form-check-label" for="showDashFlood">
+                                            <small>Flood Zones</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-1">
+                                        <input class="form-check-input" type="checkbox" id="showDashLandslide" checked>
+                                        <label class="form-check-label" for="showDashLandslide">
+                                            <small>Landslide Zones</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-1">
+                                        <input class="form-check-input" type="checkbox" id="showDashAccident" checked>
+                                        <label class="form-check-label" for="showDashAccident">
+                                            <small>Accident Prone</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="showDashVolcanic" checked>
+                                        <label class="form-check-label" for="showDashVolcanic">
+                                            <small>Volcanic Risk</small>
                                         </label>
                                     </div>
                                 </div>
@@ -415,6 +442,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 var dashIncidentLayer = L.layerGroup().addTo(dashboardMap);
 var dashEvacuationLayer = L.layerGroup().addTo(dashboardMap);
 var dashAlertLayer = L.layerGroup().addTo(dashboardMap);
+var dashFloodLayer = L.layerGroup().addTo(dashboardMap);
+var dashLandslideLayer = L.layerGroup().addTo(dashboardMap);
+var dashAccidentLayer = L.layerGroup().addTo(dashboardMap);
+var dashVolcanicLayer = L.layerGroup().addTo(dashboardMap);
 
 // Barangay coordinates
 var barangayCoords = <?php echo json_encode($barangay_coords); ?>;
@@ -423,6 +454,7 @@ var barangayCoords = <?php echo json_encode($barangay_coords); ?>;
 var evacuationCenters = <?php echo json_encode($centers_result); ?>;
 var mapIncidents = <?php echo json_encode($map_incidents_result); ?>;
 var mapAlerts = <?php echo json_encode($map_alerts_result); ?>;
+var dashboardHazardZones = <?php echo json_encode($dashboard_hazard_zones_result); ?>;
 
 // Add evacuation center markers
 evacuationCenters.forEach(function(center) {
@@ -509,6 +541,112 @@ mapAlerts.forEach(function(alert) {
     }
 });
 
+dashboardHazardZones.forEach(function(zone) {
+    if (zone.coordinates) {
+        var coordinates;
+        try {
+            coordinates = JSON.parse(zone.coordinates);
+        } catch (e) {
+            console.error('Invalid coordinates for zone:', zone.name);
+            return;
+        }
+        
+        var latLngs = coordinates.map(function(coord) {
+            return [coord.lat, coord.lng];
+        });
+        
+        var fillColor, borderColor, fillOpacity, weight;
+        switch (zone.zone_type) {
+            case 'flood_prone':
+                fillColor = '#3b82f6';
+                borderColor = '#1e40af';
+                fillOpacity = 0.4;
+                weight = 2;
+                break;
+            case 'landslide_prone':
+                fillColor = '#d97706';
+                borderColor = '#92400e';
+                fillOpacity = 0.4;
+                weight = 2;
+                break;
+            case 'fault_line': // Accident-prone roadways
+                fillColor = '#ef4444';
+                borderColor = '#dc2626';
+                fillOpacity = 0.6;
+                weight = 4;
+                break;
+            case 'volcanic_risk':
+                fillColor = '#ea580c';
+                borderColor = '#7c2d12';
+                fillOpacity = 0.15; // Lower opacity for background layer
+                weight = 1;
+                break;
+            default:
+                fillColor = '#6b7280';
+                borderColor = '#374151';
+                fillOpacity = 0.3;
+                weight = 2;
+        }
+        
+        var hazardShape;
+        if (zone.zone_type === 'fault_line') {
+            hazardShape = L.polyline(latLngs, {
+                color: borderColor,
+                weight: weight,
+                opacity: 0.8,
+                dashArray: zone.risk_level === 'critical' ? '8, 4' : null
+            });
+        } else if (zone.zone_type === 'volcanic_risk') {
+            var center = getPolygonCenter(latLngs);
+            var radius = getPolygonRadius(latLngs, center);
+            hazardShape = L.circle(center, {
+                radius: radius,
+                fillColor: fillColor,
+                fillOpacity: fillOpacity,
+                color: borderColor,
+                weight: weight,
+                opacity: 0.7
+            });
+        } else {
+            hazardShape = L.polygon(latLngs, {
+                fillColor: fillColor,
+                fillOpacity: fillOpacity,
+                color: borderColor,
+                weight: weight,
+                opacity: 0.7
+            });
+        }
+        
+        var popupContent = `
+            <div class="popup-content">
+                <h6>${zone.name}</h6>
+                <p><strong>Type:</strong> ${zone.zone_type === 'fault_line' ? 'Accident Prone Road' : 
+                                           zone.zone_type === 'volcanic_risk' ? 'Volcanic Risk' :
+                                           zone.zone_type === 'flood_prone' ? 'Flood Prone' : 'Landslide Prone'}</p>
+                <p><strong>Risk:</strong> ${zone.risk_level}</p>
+                <p>${zone.description.substring(0, 80)}...</p>
+            </div>
+        `;
+        
+        hazardShape.bindPopup(popupContent);
+        
+        switch (zone.zone_type) {
+            case 'flood_prone':
+                dashFloodLayer.addLayer(hazardShape);
+                break;
+            case 'landslide_prone':
+                dashLandslideLayer.addLayer(hazardShape);
+                break;
+            case 'fault_line':
+                dashAccidentLayer.addLayer(hazardShape);
+                break;
+            case 'volcanic_risk':
+                dashVolcanicLayer.addLayer(hazardShape);
+                break;
+        }
+    }
+});
+
 // Helper functions
 function getSeverityColor(severity) {
     switch(severity) {
@@ -518,6 +656,26 @@ function getSeverityColor(severity) {
         case 'critical': return '#dc3545';
         default: return '#6c757d';
     }
+}
+
+function getPolygonCenter(latLngs) {
+    var lat = 0, lng = 0;
+    latLngs.forEach(function(coord) {
+        lat += coord[0];
+        lng += coord[1];
+    });
+    return [lat / latLngs.length, lng / latLngs.length];
+}
+
+function getPolygonRadius(latLngs, center) {
+    var maxDistance = 0;
+    latLngs.forEach(function(coord) {
+        var distance = Math.sqrt(
+            Math.pow(coord[0] - center[0], 2) + Math.pow(coord[1] - center[1], 2)
+        );
+        maxDistance = Math.max(maxDistance, distance);
+    });
+    return maxDistance * 111000; // Convert to meters approximately
 }
 
 // Toggle layer visibility for dashboard map
@@ -545,12 +703,37 @@ document.getElementById('showDashAlerts').addEventListener('change', function() 
     }
 });
 
-// Filter map data by disaster type
-function filterMapData(type) {
-    // This would filter the displayed data based on disaster type
-    console.log('Filtering map data for:', type);
-    // Implementation would depend on your specific filtering requirements
-}
+document.getElementById('showDashFlood').addEventListener('change', function() {
+    if (this.checked) {
+        dashboardMap.addLayer(dashFloodLayer);
+    } else {
+        dashboardMap.removeLayer(dashFloodLayer);
+    }
+});
+
+document.getElementById('showDashLandslide').addEventListener('change', function() {
+    if (this.checked) {
+        dashboardMap.addLayer(dashLandslideLayer);
+    } else {
+        dashboardMap.removeLayer(dashLandslideLayer);
+    }
+});
+
+document.getElementById('showDashAccident').addEventListener('change', function() {
+    if (this.checked) {
+        dashboardMap.addLayer(dashAccidentLayer);
+    } else {
+        dashboardMap.removeLayer(dashAccidentLayer);
+    }
+});
+
+document.getElementById('showDashVolcanic').addEventListener('change', function() {
+    if (this.checked) {
+        dashboardMap.addLayer(dashVolcanicLayer);
+    } else {
+        dashboardMap.removeLayer(dashVolcanicLayer);
+    }
+});
 
 // Ensure map renders properly after page load
 setTimeout(function() {
