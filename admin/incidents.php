@@ -429,8 +429,8 @@ include '../includes/header.php';
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <a class="dropdown-item" href="#" onclick="showImageModal('<?php echo htmlspecialchars($incident['image_url']); ?>')">
-                                                            <i class="bi bi-image"></i> View Image
+                                                        <a class="dropdown-item" href="#" onclick="viewIncidentPhotos(<?php echo $incident['id']; ?>)">
+                                                            <i class="bi bi-image"></i> View Photo
                                                         </a>
                                                     </li>
                                                 </ul>
@@ -595,6 +595,30 @@ include '../includes/header.php';
         const params = new URLSearchParams(window.location.search);
         params.set('export', '1');
         window.location.href = 'export_incidents.php?' + params.toString();
+    }
+
+    function viewIncidentPhotos(incidentId) {
+        // Fetch incident photos from database
+        fetch(`get_incident_details.php?id=${incidentId}`)
+            .then(response => response.text())
+            .then(data => {
+                // Extract photos from the response
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = data;
+                const photoElements = tempDiv.querySelectorAll('img[onclick*="showImageModal"]');
+                
+                if (photoElements.length > 0) {
+                    // Show the first photo in modal
+                    const firstPhotoSrc = photoElements[0].getAttribute('onclick').match(/'([^']+)'/)[1];
+                    showImageModal(firstPhotoSrc);
+                } else {
+                    alert('No photos available for this incident.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error loading incident photos');
+            });
     }
 </script>
 

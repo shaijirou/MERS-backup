@@ -44,10 +44,12 @@ if ($_POST) {
         case 'update_status':
             $alert_id = $_POST['alert_id'] ?? '';
             $status = $_POST['status'] ?? '';
+            $notes = $_POST['notes'] ?? '';
             
-            $query = "UPDATE alerts SET status = :status, updated_at = NOW() WHERE id = :alert_id";
+            $query = "UPDATE alerts SET status = :status, notes = :notes, updated_at = NOW() WHERE id = :alert_id";
             $stmt = $db->prepare($query);
             $stmt->bindParam(':status', $status);
+            $stmt->bindParam(':notes', $notes);
             $stmt->bindParam(':alert_id', $alert_id);
             
             if ($stmt->execute()) {
@@ -488,28 +490,27 @@ include '../includes/header.php';
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="affected_barangays" class="form-label">Affected Barangay</label>
-                                 <select class="form-select" id="affected_barangays" name="affected_barangays" required>
-                                <option value="">Select Barangay</option>
-                                 <option value="All">All</option>
-                                <option value="Adia">Adia</option>
-                                <option value="Balangon">Balangon</option>
-                                <option value="Banyaga">Banyaga</option>
-                                <option value="Bilibinwang">Bilibinwang</option>
-                                <option value="Coral na Munti">Coral na Munti</option>
-                                <option value="Guitna">Guitna</option>
-                                <option value="Mabacong">Mabacong</option>
-                                <option value="Panhulan">Panhulan</option>
-                                <option value="Poblacion">Poblacion</option>
-                                <option value="Pook">Pook</option>
-                                <option value="Pulang Bato">Pulang Bato</option>
-                                <option value="San Jacinto">San Jacinto</option>
-                                <option value="San Teodoro">San Teodoro</option>
-                                <option value="Santa Rosa">Santa Rosa</option>
-                                <option value="Santo Tomas">Santo Tomas</option>
-                                <option value="Subic Ilaya">Subic Ilaya</option>
-                                <option value="Subic Ibaba">Subic Ibaba</option>
-                            </select>
-                                
+                                <select class="form-select" id="affected_barangays" name="affected_barangays" required>
+                                    <option value="">Select Barangay</option>
+                                    <option value="All">All</option>
+                                    <option value="Adia">Adia</option>
+                                    <option value="Balangon">Balangon</option>
+                                    <option value="Banyaga">Banyaga</option>
+                                    <option value="Bilibinwang">Bilibinwang</option>
+                                    <option value="Coral na Munti">Coral na Munti</option>
+                                    <option value="Guitna">Guitna</option>
+                                    <option value="Mabacong">Mabacong</option>
+                                    <option value="Panhulan">Panhulan</option>
+                                    <option value="Poblacion">Poblacion</option>
+                                    <option value="Pook">Pook</option>
+                                    <option value="Pulang Bato">Pulang Bato</option>
+                                    <option value="San Jacinto">San Jacinto</option>
+                                    <option value="San Teodoro">San Teodoro</option>
+                                    <option value="Santa Rosa">Santa Rosa</option>
+                                    <option value="Santo Tomas">Santo Tomas</option>
+                                    <option value="Subic Ilaya">Subic Ilaya</option>
+                                    <option value="Subic Ibaba">Subic Ibaba</option>
+                                </select>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -529,9 +530,32 @@ include '../includes/header.php';
     </div>
 </div>
 
+<!-- View Alert Modal -->
+<div class="modal fade" id="viewAlertModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Alert Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="alertDetails">
+                    <!-- Alert details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="editAlertFromView()">
+                    <i class="bi bi-pencil"></i> Edit Status
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Update Status Modal -->
 <div class="modal fade" id="updateStatusModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Update Alert Status</h5>
@@ -549,6 +573,11 @@ include '../includes/header.php';
                             <option value="resolved">Resolved</option>
                             <option value="expired">Expired</option>
                         </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="status_notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="status_notes" name="notes" rows="3" placeholder="Add any notes about this status change..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -568,27 +597,146 @@ include '../includes/header.php';
 
 <script>
     document.getElementById("menu-toggle").addEventListener("click", function(e) {
-    e.preventDefault();
-    document.getElementById("wrapper").classList.toggle("toggled");
-});
-function updateStatus(alertId, currentStatus) {
-    document.getElementById('update_alert_id').value = alertId;
-    document.getElementById('update_status').value = currentStatus;
-    new bootstrap.Modal(document.getElementById('updateStatusModal')).show();
-}
+        e.preventDefault();
+        document.getElementById("wrapper").classList.toggle("toggled");
+    });
 
-function deleteAlert(alertId) {
-    if (confirm('Are you sure you want to delete this alert? This action cannot be undone.')) {
-        document.getElementById('actionType').value = 'delete_alert';
-        document.getElementById('actionAlertId').value = alertId;
-        document.getElementById('actionForm').submit();
+    function viewAlert(alertId) {
+        // Show loading state
+        document.getElementById('alertDetails').innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        
+        // Show modal
+        const viewModal = new bootstrap.Modal(document.getElementById('viewAlertModal'));
+        viewModal.show();
+        
+        // Fetch alert details
+        fetch(`get_alert_details.php?id=${alertId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayAlertDetails(data.alert);
+                } else {
+                    document.getElementById('alertDetails').innerHTML = '<div class="alert alert-danger">Error loading alert details.</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('alertDetails').innerHTML = '<div class="alert alert-danger">Error loading alert details.</div>';
+            });
     }
-}
 
-function viewAlert(alertId) {
-    // Implement view alert functionality
-    alert('View alert functionality to be implemented');
-}
+    function displayAlertDetails(alert) {
+        const severityColors = {
+            'low': 'success',
+            'medium': 'warning', 
+            'high': 'danger',
+            'critical': 'danger'
+        };
+        
+        const statusColors = {
+            'active': 'success',
+            'resolved': 'primary',
+            'expired': 'secondary'
+        };
+        
+        const typeIcons = {
+            'flood': 'bi-water',
+            'earthquake': 'bi-globe',
+            'fire': 'bi-fire',
+            'typhoon': 'bi-cloud-rain',
+            'landslide': 'bi-mountain',
+            'other': 'bi-exclamation-triangle'
+        };
+        
+        const html = `
+            <div class="row">
+                <div class="col-md-8">
+                    <h4 class="mb-3">${alert.title}</h4>
+                    <div class="mb-3">
+                        <span class="badge bg-${severityColors[alert.severity_level]} me-2">
+                            <i class="bi bi-exclamation-circle"></i> ${alert.severity_level.toUpperCase()} SEVERITY
+                        </span>
+                        <span class="badge bg-${statusColors[alert.status]} me-2">
+                            <i class="bi bi-circle-fill"></i> ${alert.status.toUpperCase()}
+                        </span>
+                        <span class="badge bg-secondary">
+                            <i class="${typeIcons[alert.alert_type] || 'bi-exclamation-triangle'}"></i> ${alert.alert_type.toUpperCase()}
+                        </span>
+                    </div>
+                    <div class="alert alert-light">
+                        <h6><i class="bi bi-chat-text"></i> Message:</h6>
+                        <p class="mb-0">${alert.message}</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="bi bi-info-circle"></i> Alert Information</h6>
+                            <hr>
+                            <div class="mb-2">
+                                <strong><i class="bi bi-geo-alt"></i> Affected Area:</strong><br>
+                                <span class="text-muted">${alert.affected_barangays || 'Municipality-wide'}</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong><i class="bi bi-person"></i> Created By:</strong><br>
+                                <span class="text-muted">${alert.created_by_name}</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong><i class="bi bi-calendar"></i> Created:</strong><br>
+                                <span class="text-muted">${new Date(alert.created_at).toLocaleString()}</span>
+                            </div>
+                            ${alert.updated_at ? `
+                            <div class="mb-2">
+                                <strong><i class="bi bi-clock"></i> Last Updated:</strong><br>
+                                <span class="text-muted">${new Date(alert.updated_at).toLocaleString()}</span>
+                            </div>
+                            ` : ''}
+                            ${alert.expires_at ? `
+                            <div class="mb-2">
+                                <strong><i class="bi bi-hourglass"></i> Expires:</strong><br>
+                                <span class="text-muted">${new Date(alert.expires_at).toLocaleString()}</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('alertDetails').innerHTML = html;
+        
+        // Store alert ID for potential editing
+        window.currentViewingAlertId = alert.id;
+        window.currentViewingAlertStatus = alert.status;
+    }
+
+    function editAlertFromView() {
+        if (window.currentViewingAlertId) {
+            // Hide view modal
+            bootstrap.Modal.getInstance(document.getElementById('viewAlertModal')).hide();
+            
+            // Show update modal after a brief delay
+            setTimeout(() => {
+                updateStatus(window.currentViewingAlertId, window.currentViewingAlertStatus);
+            }, 300);
+        }
+    }
+
+    function updateStatus(alertId, currentStatus) {
+        document.getElementById('update_alert_id').value = alertId;
+        document.getElementById('update_status').value = currentStatus;
+        
+        const updateModal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
+        updateModal.show();
+    }
+
+    function deleteAlert(alertId) {
+        if (confirm('Are you sure you want to delete this alert? This action cannot be undone.')) {
+            document.getElementById('actionType').value = 'delete_alert';
+            document.getElementById('actionAlertId').value = alertId;
+            document.getElementById('actionForm').submit();
+        }
+    }
 </script>
 
 <?php include '../includes/footer.php'; ?>
