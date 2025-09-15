@@ -65,18 +65,26 @@ if ($_POST) {
         }
     } elseif (isset($_POST['update_settings'])) {
         // Update system settings
-        $app_name = sanitizeInput($_POST['app_name']);
-        $contact_email = sanitizeInput($_POST['contact_email']);
-        $contact_phone = sanitizeInput($_POST['contact_phone']);
-        $emergency_hotline = sanitizeInput($_POST['emergency_hotline']);
-        $office_address = sanitizeInput($_POST['office_address']);
-        
-        // Update settings in database (you might want to create a settings table)
+        $settings = [
+            'app_name' => sanitizeInput($_POST['app_name']),
+            'contact_email' => sanitizeInput($_POST['contact_email']),
+            'contact_phone' => sanitizeInput($_POST['contact_phone']),
+            'emergency_hotline' => sanitizeInput($_POST['emergency_hotline']),
+            'office_address' => sanitizeInput($_POST['office_address'])
+        ];
+
+        foreach ($settings as $key => $value) {
+            $update_query = "UPDATE settings SET setting_value = :value WHERE setting_key = :key";
+            $update_stmt = $db->prepare($update_query);
+            $update_stmt->bindParam(':value', $value);
+            $update_stmt->bindParam(':key', $key);
+            $update_stmt->execute();
+        }
+
         $success_message = "System settings updated successfully.";
-        logActivity($_SESSION['user_id'], 'UPDATE_SETTINGS', 'system_settings', null, null, [
-            'app_name' => $app_name,
-            'contact_email' => $contact_email
-        ]);
+        logActivity($_SESSION['user_id'], 'UPDATE_SETTINGS', 'settings', null, null, $settings);
+        
+       
     } elseif (isset($_POST['delete_admin'])) {
         $admin_id = (int)$_POST['admin_id'];
         
@@ -287,30 +295,40 @@ $current_user = $current_user_stmt->fetch();
                             </div>
                             <div class="card-body">
                                 <form method="POST">
+                                    <?php
+                                    // Fetch settings from database
+                                    $settings_query = "SELECT setting_key, setting_value FROM settings";
+                                    $settings_stmt = $db->prepare($settings_query);
+                                    $settings_stmt->execute();
+                                    $settings_data = [];
+                                    while ($row = $settings_stmt->fetch(PDO::FETCH_ASSOC)) {
+                                        $settings_data[$row['setting_key']] = $row['setting_value'];
+                                    }
+                                    ?>
                                     <div class="mb-3">
                                         <label for="app_name" class="form-label">Application Name</label>
-                                        <input type="text" class="form-control" id="app_name" name="app_name" 
-                                               value="<?php echo APP_NAME; ?>" required>
+                                        <input type="text" class="form-control" id="app_name" name="app_name"
+                                               value="<?php echo htmlspecialchars($settings_data['app_name'] ?? ''); ?>" required>
                                     </div>
                                     <div class="mb-3">
                                         <label for="contact_email" class="form-label">Contact Email</label>
-                                        <input type="email" class="form-control" id="contact_email" name="contact_email" 
-                                               value="mdrrmo@agoncillo.gov.ph">
+                                        <input type="email" class="form-control" id="contact_email" name="contact_email"
+                                               value="<?php echo htmlspecialchars($settings_data['contact_email'] ?? ''); ?>">
                                     </div>
                                     <div class="mb-3">
                                         <label for="contact_phone" class="form-label">Contact Phone</label>
-                                        <input type="text" class="form-control" id="contact_phone" name="contact_phone" 
-                                               value="(043) 778-1234">
+                                        <input type="text" class="form-control" id="contact_phone" name="contact_phone"
+                                               value="<?php echo htmlspecialchars($settings_data['contact_phone'] ?? ''); ?>">
                                     </div>
                                     <div class="mb-3">
                                         <label for="emergency_hotline" class="form-label">Emergency Hotline</label>
-                                        <input type="text" class="form-control" id="emergency_hotline" name="emergency_hotline" 
-                                               value="911">
+                                        <input type="text" class="form-control" id="emergency_hotline" name="emergency_hotline"
+                                               value="<?php echo htmlspecialchars($settings_data['emergency_hotline'] ?? ''); ?>">
                                     </div>
                                     <div class="mb-3">
                                         <label for="office_address" class="form-label">Office Address</label>
-                                        <textarea class="form-control" id="office_address" name="office_address" rows="3">Municipal Disaster Risk Reduction and Management Office
-Agoncillo, Batangas</textarea>
+                                        <textarea class="form-control" id="office_address" name="office_address" rows="3"><?php echo htmlspecialchars($settings_data['office_address'] ?? ''); ?></textarea>
+                                    </div>
                                     </div>
                                     <button type="submit" name="update_settings" class="btn btn-primary w-100">
                                         <i class="bi bi-check-lg me-1"></i>Update Settings
