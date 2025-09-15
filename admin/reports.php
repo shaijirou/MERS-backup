@@ -401,7 +401,6 @@ include '../includes/header.php';
                                         <?php elseif ($report_type == 'evacuation'): ?>
                                             <th>Name</th>
                                             <th>Address</th>
-                                            <th>Barangay</th>
                                             <th>Capacity</th>
                                             <th>Occupancy</th>
                                             <th>Status</th>
@@ -424,7 +423,7 @@ include '../includes/header.php';
                                                 <td><?php echo htmlspecialchars($row['first_name'] . ' ' . $row['last_name']); ?></td>
                                                 <td><?php echo ucfirst($row['incident_type']); ?></td>
                                                 <td><?php echo htmlspecialchars($row['location']); ?></td>
-                                                <td><?php echo ucfirst($row['severity']); ?></td>
+                                                <td><?php echo ucfirst($row['urgency_level']); ?></td>
                                                 <td><?php echo ucfirst($row['status']); ?></td>
                                                 <td><?php echo htmlspecialchars(substr($row['description'], 0, 100)) . '...'; ?></td>
                                             <?php elseif ($report_type == 'alerts'): ?>
@@ -438,7 +437,6 @@ include '../includes/header.php';
                                             <?php elseif ($report_type == 'evacuation'): ?>
                                                 <td><?php echo htmlspecialchars($row['name']); ?></td>
                                                 <td><?php echo htmlspecialchars($row['address']); ?></td>
-                                                <td><?php echo htmlspecialchars($row['barangay']); ?></td>
                                                 <td><?php echo number_format($row['capacity']); ?></td>
                                                 <td><?php echo number_format($row['current_occupancy']); ?></td>
                                                 <td><?php echo ucfirst($row['status']); ?></td>
@@ -448,7 +446,7 @@ include '../includes/header.php';
                                                 <td><?php echo htmlspecialchars($row['first_name'] . ' ' . $row['last_name']); ?></td>
                                                 <td><?php echo htmlspecialchars($row['email']); ?></td>
                                                 <td><?php echo htmlspecialchars($row['barangay']); ?></td>
-                                                <td><?php echo $row['is_verified'] ? 'Yes' : 'No'; ?></td>
+                                                <td><?php echo $row['verification_status'] ; ?></td>
                                                 <td><?php echo $row['incident_count']; ?></td>
                                             <?php endif; ?>
                                         </tr>
