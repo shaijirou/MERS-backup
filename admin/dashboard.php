@@ -65,6 +65,15 @@ $stmt = $db->prepare($query);
 $stmt->execute();
 $user_stats = $stmt->fetchAll();
 
+// Get population data from barangays table
+$population_query = "SELECT name, population 
+                    FROM barangays 
+                    WHERE population > 0 
+                    ORDER BY population DESC";
+$population_stmt = $db->prepare($population_query);
+$population_stmt->execute();
+$population_stats = $population_stmt->fetchAll();
+
 // Add these database queries for map data
 // Get evacuation centers with coordinates
 $centers_query = "SELECT * FROM evacuation_centers WHERE latitude IS NOT NULL AND longitude IS NOT NULL ORDER BY name";
@@ -324,6 +333,45 @@ include '../includes/header.php';
                 </div>
             </div>
 
+            <!-- Quick Actions -->
+            <div class="row my-4">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <a href="alerts.php" class="btn btn-danger w-100 py-3">
+                                        <i class="bi bi-exclamation-circle-fill fs-4 d-block mb-2"></i>
+                                        Send Emergency Alert
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="evacuation.php" class="btn btn-primary w-100 py-3">
+                                        <i class="bi bi-map-fill fs-4 d-block mb-2"></i>
+                                        Update Evacuation Centers
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="reports.php" class="btn btn-success w-100 py-3">
+                                        <i class="bi bi-file-earmark-text-fill fs-4 d-block mb-2"></i>
+                                        Generate Reports
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="users.php" class="btn btn-warning w-100 py-3 text-dark">
+                                        <i class="bi bi-person-plus-fill fs-4 d-block mb-2"></i>
+                                        Verify New Users
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Additional Content Row -->
             <div class="row my-4">
                 <div class="col-md-6">
@@ -371,44 +419,48 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Quick Actions -->
+            <!-- Population Statistics Row -->
             <div class="row my-4">
-                <div class="col-12">
+                <div class="col-md-12">
                     <div class="card shadow-sm">
                         <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">Quick Actions</h5>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">Population Distribution by Barangay</h5>
+                                <small class="text-muted">Total Population: <?php echo number_format(array_sum(array_column($population_stats, 'population'))); ?></small>
+                            </div>
                         </div>
                         <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-3">
-                                    <a href="alerts.php" class="btn btn-danger w-100 py-3">
-                                        <i class="bi bi-exclamation-circle-fill fs-4 d-block mb-2"></i>
-                                        Send Emergency Alert
-                                    </a>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <canvas id="populationChart" width="400" height="200"></canvas>
                                 </div>
-                                <div class="col-md-3">
-                                    <a href="map.php" class="btn btn-primary w-100 py-3">
-                                        <i class="bi bi-map-fill fs-4 d-block mb-2"></i>
-                                        Update Evacuation Map
-                                    </a>
-                                </div>
-                                <div class="col-md-3">
-                                    <a href="reports.php" class="btn btn-success w-100 py-3">
-                                        <i class="bi bi-file-earmark-text-fill fs-4 d-block mb-2"></i>
-                                        Generate Reports
-                                    </a>
-                                </div>
-                                <div class="col-md-3">
-                                    <a href="users.php" class="btn btn-warning w-100 py-3 text-dark">
-                                        <i class="bi bi-person-plus-fill fs-4 d-block mb-2"></i>
-                                        Verify New Users
-                                    </a>
+                                <div class="col-md-4">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Barangay</th>
+                                                    <th>Population</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($population_stats as $barangay): ?>
+                                                <tr>
+                                                    <td><?php echo htmlspecialchars($barangay['name']); ?></td>
+                                                    <td><?php echo number_format($barangay['population']); ?></td>
+                                                </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            
         </div>
     </div>
 </div>
@@ -455,6 +507,7 @@ var evacuationCenters = <?php echo json_encode($centers_result); ?>;
 var mapIncidents = <?php echo json_encode($map_incidents_result); ?>;
 var mapAlerts = <?php echo json_encode($map_alerts_result); ?>;
 var dashboardHazardZones = <?php echo json_encode($dashboard_hazard_zones_result); ?>;
+var populationStats = <?php echo json_encode($population_stats); ?>;
 
 // Add evacuation center markers
 evacuationCenters.forEach(function(center) {
@@ -758,6 +811,75 @@ const userStatsChart = new Chart(ctx, {
         scales: {
             y: {
                 beginAtZero: true
+            }
+        }
+    }
+});
+
+// Population statistics chart
+const populationCtx = document.getElementById('populationChart').getContext('2d');
+const populationChart = new Chart(populationCtx, {
+    type: 'bar',
+    data: {
+        labels: [<?php echo "'" . implode("','", array_column($population_stats, 'name')) . "'"; ?>],
+        datasets: [{
+            label: 'Population',
+            data: [<?php echo implode(',', array_column($population_stats, 'population')); ?>],
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.8)',
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(255, 205, 86, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(153, 102, 255, 0.8)',
+                'rgba(255, 159, 64, 0.8)',
+                'rgba(199, 199, 199, 0.8)',
+                'rgba(83, 102, 255, 0.8)',
+                'rgba(255, 99, 255, 0.8)',
+                'rgba(99, 255, 132, 0.8)'
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 205, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)',
+                'rgba(199, 199, 199, 1)',
+                'rgba(83, 102, 255, 1)',
+                'rgba(255, 99, 255, 1)',
+                'rgba(99, 255, 132, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.parsed.y.toLocaleString() + ' residents';
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return value.toLocaleString();
+                    }
+                }
+            },
+            x: {
+                ticks: {
+                    maxRotation: 45,
+                    minRotation: 45
+                }
             }
         }
     }
