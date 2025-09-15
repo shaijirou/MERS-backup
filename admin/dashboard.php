@@ -98,8 +98,7 @@ $map_alerts_stmt = $db->prepare($map_alerts_query);
 $map_alerts_stmt->execute();
 $map_alerts_result = $map_alerts_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Get hazard zones for map
-$dashboard_hazard_zones_query = "SELECT * FROM hazard_zones WHERE risk_level IN ('high', 'critical') ORDER BY risk_level DESC LIMIT 15";
+$dashboard_hazard_zones_query = "SELECT * FROM hazard_zones ORDER BY risk_level DESC, name LIMIT 25";
 $dashboard_hazard_zones_stmt = $db->prepare($dashboard_hazard_zones_query);
 $dashboard_hazard_zones_stmt->execute();
 $dashboard_hazard_zones_result = $dashboard_hazard_zones_stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -333,45 +332,6 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Quick Actions -->
-            <div class="row my-4">
-                <div class="col-12">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">Quick Actions</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-3">
-                                    <a href="alerts.php" class="btn btn-danger w-100 py-3">
-                                        <i class="bi bi-exclamation-circle-fill fs-4 d-block mb-2"></i>
-                                        Send Emergency Alert
-                                    </a>
-                                </div>
-                                <div class="col-md-3">
-                                    <a href="evacuation.php" class="btn btn-primary w-100 py-3">
-                                        <i class="bi bi-map-fill fs-4 d-block mb-2"></i>
-                                        Update Evacuation Centers
-                                    </a>
-                                </div>
-                                <div class="col-md-3">
-                                    <a href="reports.php" class="btn btn-success w-100 py-3">
-                                        <i class="bi bi-file-earmark-text-fill fs-4 d-block mb-2"></i>
-                                        Generate Reports
-                                    </a>
-                                </div>
-                                <div class="col-md-3">
-                                    <a href="users.php" class="btn btn-warning w-100 py-3 text-dark">
-                                        <i class="bi bi-person-plus-fill fs-4 d-block mb-2"></i>
-                                        Verify New Users
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Additional Content Row -->
             <div class="row my-4">
                 <div class="col-md-6">
@@ -460,7 +420,44 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            
+            <!-- Quick Actions -->
+            <div class="row my-4">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <a href="alerts.php" class="btn btn-danger w-100 py-3">
+                                        <i class="bi bi-exclamation-circle-fill fs-4 d-block mb-2"></i>
+                                        Send Emergency Alert
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="map.php" class="btn btn-primary w-100 py-3">
+                                        <i class="bi bi-map-fill fs-4 d-block mb-2"></i>
+                                        Update Evacuation Map
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="reports.php" class="btn btn-success w-100 py-3">
+                                        <i class="bi bi-file-earmark-text-fill fs-4 d-block mb-2"></i>
+                                        Generate Reports
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="users.php" class="btn btn-warning w-100 py-3 text-dark">
+                                        <i class="bi bi-person-plus-fill fs-4 d-block mb-2"></i>
+                                        Verify New Users
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -539,7 +536,7 @@ evacuationCenters.forEach(function(center) {
 mapIncidents.forEach(function(incident) {
     if (incident.barangay && barangayCoords[incident.barangay]) {
         var coords = barangayCoords[incident.barangay];
-        var markerColor = getSeverityColor(incident.severity || 'medium');
+        var markerColor = getSeverityColor(incident.severity);
         
         var lat = coords.lat + (Math.random() - 0.5) * 0.01;
         var lng = coords.lng + (Math.random() - 0.5) * 0.01;
@@ -555,8 +552,12 @@ mapIncidents.forEach(function(incident) {
         
         var popupContent = `
             <div class="popup-content">
-                <h6><i class="bi bi-exclamation-triangle"></i> ${incident.incident_type}</h6>
-                <p><strong>Location:</strong> ${incident.barangay}</p>
+                <h6><i class="bi bi-exclamation-triangle"></i> ${incident.incident_type.charAt(0).toUpperCase() + incident.incident_type.slice(1)} Incident</h6>
+                <p><strong>Location:</strong> ${incident.location || incident.barangay}, ${incident.barangay}</p>
+                <p><strong>Description:</strong> ${(incident.description || 'No description available').substring(0, 100)}...</p>
+                <p><strong>Severity:</strong> <span class="badge bg-${getSeverityBadgeClass(incident.severity)}">${incident.severity || 'Not specified'}</span></p>
+                <p><strong>Status:</strong> <span class="badge bg-${getStatusBadgeClass(incident.status)}">${(incident.status || 'pending').replace('_', ' ')}</span></p>
+                <p><strong>Reported by:</strong> ${incident.first_name} ${incident.last_name}</p>
                 <p><strong>Date:</strong> ${new Date(incident.created_at).toLocaleDateString()}</p>
             </div>
         `;
@@ -570,7 +571,7 @@ mapIncidents.forEach(function(incident) {
 mapAlerts.forEach(function(alert) {
     if (alert.affected_barangays && barangayCoords[alert.affected_barangays]) {
         var coords = barangayCoords[alert.affected_barangays];
-        var markerColor = getSeverityColor(alert.severity_level || 'medium');
+        var markerColor = getSeverityColor(alert.severity_level);
         
         var marker = L.circle([coords.lat, coords.lng], {
             radius: 800,
@@ -585,7 +586,7 @@ mapAlerts.forEach(function(alert) {
             <div class="popup-content">
                 <h6><i class="bi bi-bell"></i> ${alert.title}</h6>
                 <p><strong>Area:</strong> ${alert.affected_barangays}</p>
-                <p><strong>Severity:</strong> ${alert.severity_level}</p>
+                <p><strong>Severity:</strong> <span class="badge bg-${getSeverityBadgeClass(alert.severity_level)}">${alert.severity_level || 'Not specified'}</span></p>
             </div>
         `;
         
@@ -708,6 +709,27 @@ function getSeverityColor(severity) {
         case 'high': return '#fd7e14';
         case 'critical': return '#dc3545';
         default: return '#6c757d';
+    }
+}
+
+function getSeverityBadgeClass(severity) {
+    switch(severity) {
+        case 'low': return 'success';
+        case 'medium': return 'warning';
+        case 'high': return 'warning';
+        case 'critical': return 'danger';
+        default: return 'secondary';
+    }
+}
+
+function getStatusBadgeClass(status) {
+    switch(status) {
+        case 'pending': return 'warning';
+        case 'in_progress': return 'info';
+        case 'resolved': return 'success';
+        case 'closed': return 'secondary';
+        case 'active': return 'success';
+        default: return 'secondary';
     }
 }
 
