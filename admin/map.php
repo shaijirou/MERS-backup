@@ -31,7 +31,7 @@ $alerts_stmt = $db->prepare($alerts_query);
 $alerts_stmt->execute();
 $alerts_result = $alerts_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$hazard_zones_query = "SELECT * FROM hazard_zones ORDER BY risk_level DESC, name";
+$hazard_zones_query = "SELECT * FROM hazard_zones ORDER BY risk_level ASC, name";
 $hazard_zones_stmt = $db->prepare($hazard_zones_query);
 $hazard_zones_stmt->execute();
 $hazard_zones_result = $hazard_zones_stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -425,14 +425,14 @@ hazardZones.forEach(function(zone) {
                 fillColor = zone.risk_level === 'critical' ? '#1e40af' : 
                            zone.risk_level === 'high' ? '#3b82f6' : '#93c5fd';
                 borderColor = '#1e40af';
-                fillOpacity = 0.4;
+                fillOpacity = zone.risk_level === 'medium' ? 0.2 : 0.4;
                 weight = 2;
                 break;
             case 'landslide_prone':
                 fillColor = zone.risk_level === 'critical' ? '#92400e' : 
                            zone.risk_level === 'high' ? '#d97706' : '#fbbf24';
                 borderColor = '#92400e';
-                fillOpacity = 0.4;
+                fillOpacity = zone.risk_level === 'medium' ? 0.2 : 0.4;
                 weight = 2;
                 break;
             case 'fault_line': // Accident-prone roadway areas
