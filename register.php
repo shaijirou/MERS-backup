@@ -85,6 +85,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if (move_uploaded_file($_FILES['selfie_photo']['tmp_name'], $upload_path)) {
                     $selfie_photo = $upload_path;
                 }
+            } elseif (isset($_POST['captured_selfie']) && !empty($_POST['captured_selfie'])) {
+                // Handle base64 captured selfie
+                $upload_dir = 'uploads/selfies/';
+                if (!file_exists($upload_dir)) {
+                    mkdir($upload_dir, 0777, true);
+                }
+                
+                $base64_data = $_POST['captured_selfie'];
+                $base64_data = str_replace('data:image/png;base64,', '', $base64_data);
+                $base64_data = str_replace(' ', '+', $base64_data);
+                $image_data = base64_decode($base64_data);
+                
+                $new_filename = 'selfie_captured_' . uniqid() . '.png';
+                $upload_path = $upload_dir . $new_filename;
+                
+                if (file_put_contents($upload_path, $image_data)) {
+                    $selfie_photo = $upload_path;
+                }
             }
             
             // Insert user
@@ -143,7 +161,7 @@ include 'includes/header.php';
                         </div>
                     <?php else: ?>
                     
-                    <form method="POST" enctype="multipart/form-data">
+                    <form method="POST" enctype="multipart/form-data" id="registrationForm">
                         <div class="row mb-3">
                             <div class="col-md-6 mb-3 mb-md-0">
                                 <label for="first_name" class="form-label">First Name</label>
@@ -193,13 +211,57 @@ include 'includes/header.php';
                             <div class="form-text">Please upload a valid ID or Barangay Certificate as proof of residency</div>
                         </div>
                         
+                        <!-- Enhanced selfie verification with camera capture -->
                         <div class="mb-3">
                             <label class="form-label">Selfie Verification</label>
-                            <div class="input-group mb-3">
-                                <input type="file" class="form-control" id="selfie_photo" name="selfie_photo" accept="image/*" required>
-                                <label class="input-group-text" for="selfie_photo">Upload</label>
+                            <div class="card border-primary">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="card-title">Option 1: Take Photo with Camera</h6>
+                                            <div id="camera-section">
+                                                <video id="video" width="100%" height="200" autoplay style="border-radius: 8px; background: #f8f9fa;"></video>
+                                                <div class="text-center mt-2">
+                                                    <button type="button" class="btn btn-primary" id="start-camera">
+                                                        <i class="fas fa-camera me-2"></i>Start Camera
+                                                    </button>
+                                                    <button type="button" class="btn btn-success" id="capture-photo" style="display: none;">
+                                                        <i class="fas fa-camera-retro me-2"></i>Capture Photo
+                                                    </button>
+                                                    <button type="button" class="btn btn-secondary" id="retake-photo" style="display: none;">
+                                                        <i class="fas fa-redo me-2"></i>Retake
+                                                    </button>
+                                                </div>
+                                                <canvas id="canvas" style="display: none;"></canvas>
+                                                <div id="captured-preview" style="display: none;" class="mt-3">
+                                                    <h6>Captured Photo:</h6>
+                                                    <img id="captured-image" src="/placeholder.svg" alt="Captured Selfie" class="img-fluid rounded" style="max-height: 200px;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="card-title">Option 2: Upload Photo File</h6>
+                                            <div class="input-group">
+                                                <input type="file" class="form-control" id="selfie_photo" name="selfie_photo" accept="image/*">
+                                                <label class="input-group-text" for="selfie_photo">Upload</label>
+                                            </div>
+                                            <div class="form-text mt-2">Please upload a clear selfie for identity verification</div>
+                                            
+                                            <div class="alert alert-info mt-3">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                <strong>Selfie Guidelines:</strong>
+                                                <ul class="mb-0 mt-2">
+                                                    <li>Face should be clearly visible</li>
+                                                    <li>Good lighting conditions</li>
+                                                    <li>Look directly at the camera</li>
+                                                    <li>Remove sunglasses or hat</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="form-text">Please upload a clear selfie for identity verification</div>
+                            <input type="hidden" id="captured_selfie" name="captured_selfie">
                         </div>
                         
                         <div class="mb-3">
@@ -238,5 +300,112 @@ include 'includes/header.php';
         </div>
     </div>
 </div>
+
+<!-- Added camera functionality JavaScript -->
+<script>
+let video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let capturedImage = document.getElementById('captured-image');
+let capturedPreview = document.getElementById('captured-preview');
+let capturedSelfieInput = document.getElementById('captured_selfie');
+let stream = null;
+
+document.getElementById('start-camera').addEventListener('click', async function() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                facingMode: 'user' // Front camera for selfies
+            } 
+        });
+        video.srcObject = stream;
+        
+        document.getElementById('start-camera').style.display = 'none';
+        document.getElementById('capture-photo').style.display = 'inline-block';
+        
+        // Disable file upload when camera is active
+        document.getElementById('selfie_photo').disabled = true;
+    } catch (err) {
+        alert('Error accessing camera: ' + err.message);
+        console.error('Error accessing camera:', err);
+    }
+});
+
+document.getElementById('capture-photo').addEventListener('click', function() {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    let context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0);
+    
+    // Convert to base64
+    let dataURL = canvas.toDataURL('image/png');
+    capturedSelfieInput.value = dataURL;
+    
+    // Show preview
+    capturedImage.src = dataURL;
+    capturedPreview.style.display = 'block';
+    
+    // Update buttons
+    document.getElementById('capture-photo').style.display = 'none';
+    document.getElementById('retake-photo').style.display = 'inline-block';
+    
+    // Stop camera
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+    video.srcObject = null;
+});
+
+document.getElementById('retake-photo').addEventListener('click', function() {
+    // Reset everything
+    capturedPreview.style.display = 'none';
+    capturedSelfieInput.value = '';
+    
+    document.getElementById('retake-photo').style.display = 'none';
+    document.getElementById('start-camera').style.display = 'inline-block';
+    
+    // Re-enable file upload
+    document.getElementById('selfie_photo').disabled = false;
+});
+
+// Disable camera when file is selected
+document.getElementById('selfie_photo').addEventListener('change', function() {
+    if (this.files.length > 0) {
+        // Stop camera if running
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        video.srcObject = null;
+        
+        // Reset camera UI
+        document.getElementById('start-camera').style.display = 'inline-block';
+        document.getElementById('capture-photo').style.display = 'none';
+        document.getElementById('retake-photo').style.display = 'none';
+        capturedPreview.style.display = 'none';
+        capturedSelfieInput.value = '';
+    }
+});
+
+// Form validation
+document.getElementById('registrationForm').addEventListener('submit', function(e) {
+    let fileUpload = document.getElementById('selfie_photo').files.length > 0;
+    let cameraCapture = capturedSelfieInput.value !== '';
+    
+    if (!fileUpload && !cameraCapture) {
+        e.preventDefault();
+        alert('Please either upload a selfie photo or capture one using the camera.');
+        return false;
+    }
+});
+
+// Clean up camera stream when page unloads
+window.addEventListener('beforeunload', function() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+});
+</script>
 
 <?php include 'includes/footer.php'; ?>

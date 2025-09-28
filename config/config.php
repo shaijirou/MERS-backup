@@ -35,11 +35,35 @@ ini_set('display_errors', 1);
 
 // Helper functions
 function redirect($url) {
-    // If BASE_URL is not defined, use relative URL
+    // Clean the URL to prevent double slashes
+    $url = ltrim($url, '/');
+    
+    // If BASE_URL is defined and not empty, use it
     if (defined('BASE_URL') && BASE_URL !== '') {
-        header("Location: " . rtrim(BASE_URL, '/') . '/' . ltrim($url, '/'));
+        $base_url = rtrim(BASE_URL, '/');
+        header("Location: $base_url/$url");
     } else {
-        header("Location: " . $url);
+        // For relative URLs, use absolute path from document root
+        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'];
+        $script_dir = dirname($_SERVER['SCRIPT_NAME']);
+        
+        // Remove the current subdirectory from the script path to get the base path
+        $base_path = '';
+        if ($script_dir !== '/') {
+            // If we're in a subdirectory like /admin, /barangay, etc., go to root
+            $path_parts = explode('/', trim($script_dir, '/'));
+            if (count($path_parts) > 0 && in_array($path_parts[count($path_parts) - 1], ['admin', 'barangay', 'police', 'emergency', 'firefighter', 'user'])) {
+                // We're in a module directory, so base path should go up one level
+                $base_path = '/' . implode('/', array_slice($path_parts, 0, -1));
+                if ($base_path === '/') $base_path = '';
+            } else {
+                $base_path = $script_dir;
+            }
+        }
+        
+        $full_url = $protocol . '://' . $host . $base_path . '/' . $url;
+        header("Location: $full_url");
     }
     exit();
 }
@@ -52,16 +76,71 @@ function isAdmin() {
     return isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin';
 }
 
+function isPolice() {
+    return isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'police';
+}
+
+function isEmergency() {
+    return isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'emergency';
+}
+
+function isBarangay() {
+    return isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'barangay';
+}
+
+function isFirefighter() {
+    return isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'firefighter';
+}
+
 function requireLogin() {
     if (!isLoggedIn()) {
-          redirect('login.php');
+        redirect('login.php');
+    }
+}
+
+function requirePolice() {
+    requireLogin();
+    if (!isPolice()) {
+        redirect('login.php');
+    }
+}
+
+function requireEmergency() {
+    requireLogin();
+    if (!isEmergency()) {
+        redirect('login.php');
+    }
+}
+
+function requireBarangay() {
+    requireLogin();
+    if (!isBarangay()) {
+        redirect('login.php');
+    }
+}
+
+function requireFirefighter() {
+    requireLogin();
+    if (!isFirefighter()) {
+        redirect('login.php');
     }
 }
 
 function requireAdmin() {
     requireLogin();
-    if (!isAdmin()) {
-         redirect('user/dashboard.php');
+    if (isAdmin()) {
+        // Admin stays
+        return;
+    } elseif (isPolice()) {
+        redirect('police/dashboard.php');
+    } elseif (isBarangay()) {
+        redirect('barangay/dashboard.php');
+    } elseif (isEmergency()) {
+        redirect('emergency/dashboard.php');
+    } elseif (isFirefighter()) {
+        redirect('firefighter/dashboard.php');
+    } else {
+        redirect('user/dashboard.php');
     }
 }
 

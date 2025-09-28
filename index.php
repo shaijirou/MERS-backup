@@ -5,10 +5,25 @@ $page_title = 'Login';
 
 // If user is already logged in, redirect to appropriate dashboard
 if (isLoggedIn()) {
-    if (isAdmin()) {
-        redirect('admin/dashboard.php');
-    } else {
-        redirect('user/dashboard.php');
+    switch ($_SESSION['user_type']) {
+        case 'admin':
+            header("Location: admin/dashboard.php");
+            exit();
+        case 'police':
+            header("Location: police/dashboard.php");
+            exit();
+        case 'emergency':
+            header("Location: emergency/dashboard.php");
+            exit();
+        case 'barangay':
+            header("Location: barangay/dashboard.php");
+            exit();
+        case 'firefighter':
+            header("Location: firefighter/dashboard.php");
+            exit();
+        default:
+            header("Location: user/dashboard.php");
+            exit();
     }
 }
 
@@ -42,10 +57,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     
                     logActivity($user['id'], 'User logged in');
                     
-                    if ($user['user_type'] == 'admin') {
-                        redirect('admin/dashboard.php');
-                    } else {
-                        redirect('user/dashboard.php');
+                    switch ($user['user_type']) {
+                        case 'admin':
+                            header("Location: admin/dashboard.php");
+                            exit();
+                        case 'police':
+                            header("Location: police/dashboard.php");
+                            exit();
+                        case 'emergency':
+                            header("Location: emergency/dashboard.php");
+                            exit();
+                        case 'barangay':
+                            header("Location: barangay/dashboard.php");
+                            exit();
+                        case 'firefighter':
+                            header("Location: firefighter/dashboard.php");
+                            exit();
+                        default:
+                            header("Location: user/dashboard.php");
+                            exit();
                     }
                 } else {
                     $error_message = 'Your account is pending verification. Please wait for admin approval.';
