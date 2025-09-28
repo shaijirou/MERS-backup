@@ -17,6 +17,13 @@ if (!file_exists($upload_dir)) {
     mkdir($upload_dir, 0755, true);
 }
 
+// Get admin profile data (fetch before handling POST to avoid undefined variable)
+$profile_query = "SELECT * FROM users WHERE id = :user_id";
+$profile_stmt = $db->prepare($profile_query);
+$profile_stmt->bindParam(':user_id', $_SESSION['user_id']);
+$profile_stmt->execute();
+$admin_profile = $profile_stmt->fetch();
+
 // Handle profile update
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['action'])) {
@@ -72,27 +79,63 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 }
                 
                 if (empty($errors)) {
-                    $update_query = "UPDATE users SET 
-                                   first_name = :first_name,
-                                   last_name = :last_name,
-                                   email = :email,
-                                   phone = :phone,
-                                   updated_at = NOW()
-                                   WHERE id = :user_id";
-                    
-                    $update_stmt = $db->prepare($update_query);
-                    $update_stmt->bindParam(':first_name', $first_name);
-                    $update_stmt->bindParam(':last_name', $last_name);
-                    $update_stmt->bindParam(':email', $email);
-                    $update_stmt->bindParam(':phone', $phone);
-                    $update_stmt->bindParam(':user_id', $_SESSION['user_id']);
-                    
-                    if ($update_stmt->execute()) {
-                        $_SESSION['user_name'] = $first_name . ' ' . $last_name;
-                        $success_message = "Profile updated successfully!";
-                        logActivity($_SESSION['user_id'], 'UPDATE_PROFILE', 'users', $_SESSION['user_id']);
+                    // If super_admin, allow user_type change
+                    if ($admin_profile['user_type'] === 'super_admin' && isset($_POST['user_type'])) {
+                        $user_type = sanitizeInput($_POST['user_type']);
+                        // Only allow valid user types
+                        $allowed_types = ['super_admin', 'admin', 'user'];
+                        if (in_array($user_type, $allowed_types)) {
+                            $update_query = "UPDATE users SET 
+                                           first_name = :first_name,
+                                           last_name = :last_name,
+                                           email = :email,
+                                           phone = :phone,
+                                           user_type = :user_type,
+                                           updated_at = NOW()
+                                           WHERE id = :user_id";
+                            
+                            $update_stmt = $db->prepare($update_query);
+                            $update_stmt->bindParam(':first_name', $first_name);
+                            $update_stmt->bindParam(':last_name', $last_name);
+                            $update_stmt->bindParam(':email', $email);
+                            $update_stmt->bindParam(':phone', $phone);
+                            $update_stmt->bindParam(':user_type', $user_type);
+                            $update_stmt->bindParam(':user_id', $_SESSION['user_id']);
+                            
+                            if ($update_stmt->execute()) {
+                                $_SESSION['user_name'] = $first_name . ' ' . $last_name;
+                                $success_message = "Profile updated successfully!";
+                                logActivity($_SESSION['user_id'], 'UPDATE_PROFILE', 'users', $_SESSION['user_id']);
+                            } else {
+                                $error_message = "Error updating profile.";
+                            }
+                        } else {
+                            $error_message = "Invalid user type selected.";
+                        }
                     } else {
-                        $error_message = "Error updating profile.";
+                        // Not super_admin or user_type not set, update without changing user_type
+                        $update_query = "UPDATE users SET 
+                                       first_name = :first_name,
+                                       last_name = :last_name,
+                                       email = :email,
+                                       phone = :phone,
+                                       updated_at = NOW()
+                                       WHERE id = :user_id";
+                        
+                        $update_stmt = $db->prepare($update_query);
+                        $update_stmt->bindParam(':first_name', $first_name);
+                        $update_stmt->bindParam(':last_name', $last_name);
+                        $update_stmt->bindParam(':email', $email);
+                        $update_stmt->bindParam(':phone', $phone);
+                        $update_stmt->bindParam(':user_id', $_SESSION['user_id']);
+                        
+                        if ($update_stmt->execute()) {
+                            $_SESSION['user_name'] = $first_name . ' ' . $last_name;
+                            $success_message = "Profile updated successfully!";
+                            logActivity($_SESSION['user_id'], 'UPDATE_PROFILE', 'users', $_SESSION['user_id']);
+                        } else {
+                            $error_message = "Error updating profile.";
+                        }
                     }
                 } else {
                     $error_message = implode('<br>', $errors);
@@ -605,9 +648,18 @@ include '../includes/header.php';
                                         
                                         <div class="mb-3">
                                             <label class="form-label">Role</label>
-                                            <input type="text" class="form-control" 
-                                                   value="<?php echo ucfirst($admin_profile['user_type']); ?>" readonly>
-                                            <small class="form-text text-muted">Contact a Super Admin to change your role.</small>
+                                            <?php if ($admin_profile['user_type'] === 'super_admin'): ?>
+                                                <select class="form-select" name="user_type" id="user_type">
+                                                    <option value="super_admin" <?php if ($admin_profile['user_type'] === 'super_admin') echo 'selected'; ?>>Super Admin</option>
+                                                    <option value="admin" <?php if ($admin_profile['user_type'] === 'admin') echo 'selected'; ?>>Admin</option>
+                                                    <option value="user" <?php if ($admin_profile['user_type'] === 'user') echo 'selected'; ?>>User</option>
+                                                </select>
+                                                <small class="form-text text-muted">You can change your role as Super Admin.</small>
+                                            <?php else: ?>
+                                                <input type="text" class="form-control" 
+                                                       value="<?php echo ucfirst($admin_profile['user_type']); ?>" readonly>
+                                                <small class="form-text text-muted">Contact a Super Admin to change your role.</small>
+                                            <?php endif; ?>
                                         </div>
                                         
                                         <button type="submit" class="btn btn-primary">

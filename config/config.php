@@ -53,7 +53,7 @@ function redirect($url) {
         if ($script_dir !== '/') {
             // If we're in a subdirectory like /admin, /barangay, etc., go to root
             $path_parts = explode('/', trim($script_dir, '/'));
-            if (count($path_parts) > 0 && in_array($path_parts[count($path_parts) - 1], ['admin', 'barangay', 'police', 'emergency', 'firefighter', 'user'])) {
+            if (count($path_parts) > 0 && in_array($path_parts[count($path_parts) - 1], ['super_admin','admin', 'barangay', 'police', 'emergency', 'firefighter', 'user'])) {
                 // We're in a module directory, so base path should go up one level
                 $base_path = '/' . implode('/', array_slice($path_parts, 0, -1));
                 if ($base_path === '/') $base_path = '';
@@ -75,6 +75,9 @@ function isLoggedIn() {
 function isAdmin() {
     return isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin';
 }
+function isSuperAdmin() {
+    return isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'super_admin';
+}
 
 function isPolice() {
     return isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'police';
@@ -94,44 +97,48 @@ function isFirefighter() {
 
 function requireLogin() {
     if (!isLoggedIn()) {
-        redirect('login.php');
+        redirect('index.php');
     }
 }
 
 function requirePolice() {
     requireLogin();
     if (!isPolice()) {
-        redirect('login.php');
+        redirect('index.php');
     }
 }
 
 function requireEmergency() {
     requireLogin();
     if (!isEmergency()) {
-        redirect('login.php');
+        redirect('index.php');
     }
 }
 
 function requireBarangay() {
     requireLogin();
     if (!isBarangay()) {
-        redirect('login.php');
+        redirect('index.php');
     }
 }
 
 function requireFirefighter() {
     requireLogin();
     if (!isFirefighter()) {
-        redirect('login.php');
+        redirect('index.php');
     }
 }
 
 function requireAdmin() {
     requireLogin();
     if (isAdmin()) {
-        // Admin stays
+        // Super admin stays
         return;
-    } elseif (isPolice()) {
+    } elseif (isSuperAdmin()) {
+        // Super admin stays
+        return;
+    }
+    elseif (isPolice()) {
         redirect('police/dashboard.php');
     } elseif (isBarangay()) {
         redirect('barangay/dashboard.php');
@@ -141,6 +148,24 @@ function requireAdmin() {
         redirect('firefighter/dashboard.php');
     } else {
         redirect('user/dashboard.php');
+    }
+}
+function requireSuperAdmin() {
+    requireLogin();
+    if (!isSuperAdmin()) {
+        if (isAdmin()) {
+            redirect('admin/dashboard.php');
+        } elseif (isPolice()) {
+            redirect('police/dashboard.php');
+        } elseif (isBarangay()) {
+            redirect('barangay/dashboard.php');
+        } elseif (isEmergency()) {
+            redirect('emergency/dashboard.php');
+        } elseif (isFirefighter()) {
+            redirect('firefighter/dashboard.php');
+        } else {
+            redirect('user/dashboard.php');
+        }
     }
 }
 

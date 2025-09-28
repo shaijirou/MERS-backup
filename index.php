@@ -6,6 +6,9 @@ $page_title = 'Login';
 // If user is already logged in, redirect to appropriate dashboard
 if (isLoggedIn()) {
     switch ($_SESSION['user_type']) {
+        case 'super_admin':
+            header("Location: admin/dashboard.php");
+            exit();
         case 'admin':
             header("Location: admin/dashboard.php");
             exit();
@@ -58,6 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     logActivity($user['id'], 'User logged in');
                     
                     switch ($user['user_type']) {
+                         case 'super_admin':
+                            header("Location: admin/dashboard.php");
+                            exit();
                         case 'admin':
                             header("Location: admin/dashboard.php");
                             exit();

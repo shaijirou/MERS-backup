@@ -202,15 +202,35 @@ include '../includes/header.php';
                     </div>
                 </div>
 
-                <!-- Evacuation Centers Status -->
+                <!-- Evacuation Centers Status with Pagination -->
                 <div class="col-lg-4 mb-4">
                     <div class="card shadow-sm">
-                        <div class="card-header bg-white">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
                             <h5 class="card-title mb-0">Evacuation Centers Status</h5>
                         </div>
                         <div class="card-body">
-                            <?php if (count($evacuation_centers) > 0): ?>
-                                <?php foreach ($evacuation_centers as $center): ?>
+                            <?php
+                            // Pagination setup
+                            $per_page = 5;
+                            $page = isset($_GET['evac_page']) && is_numeric($_GET['evac_page']) ? (int)$_GET['evac_page'] : 1;
+                            $offset = ($page - 1) * $per_page;
+
+                            // Get total count
+                            $count_stmt = $db->query("SELECT COUNT(*) FROM evacuation_centers");
+                            $total_centers = $count_stmt->fetchColumn();
+                            $total_pages = ceil($total_centers / $per_page);
+
+                            // Get paginated data
+                            $evacuation_query = "SELECT name, capacity, current_occupancy, status FROM evacuation_centers ORDER BY current_occupancy DESC LIMIT :offset, :per_page";
+                            $stmt = $db->prepare($evacuation_query);
+                            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+                            $stmt->bindValue(':per_page', $per_page, PDO::PARAM_INT);
+                            $stmt->execute();
+                            $evacuation_centers_paginated = $stmt->fetchAll();
+                            ?>
+
+                            <?php if (count($evacuation_centers_paginated) > 0): ?>
+                                <?php foreach ($evacuation_centers_paginated as $center): ?>
                                     <div class="d-flex justify-content-between align-items-center mb-3 p-2 border rounded">
                                         <div>
                                             <h6 class="mb-1"><?php echo htmlspecialchars($center['name']); ?></h6>
@@ -220,7 +240,7 @@ include '../includes/header.php';
                                         </div>
                                         <div>
                                             <?php 
-                                            $occupancy_percentage = ($center['current_occupancy'] / $center['capacity']) * 100;
+                                            $occupancy_percentage = ($center['capacity'] > 0) ? ($center['current_occupancy'] / $center['capacity']) * 100 : 0;
                                             $status_color = 'success';
                                             if ($occupancy_percentage > 80) $status_color = 'danger';
                                             elseif ($occupancy_percentage > 60) $status_color = 'warning';
@@ -231,9 +251,63 @@ include '../includes/header.php';
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
-                                <div class="text-center mt-3">
-                                    <a href="evacuation.php" class="btn btn-outline-primary btn-sm">View All Centers</a>
-                                </div>
+
+                                <!-- Modern Centered Pagination Controls -->
+                                <nav>
+                                    <ul class="pagination justify-content-center mt-3 mb-0" style="width:100%;">
+                                        <!-- Previous button -->
+                                        <li class="page-item<?php if ($page <= 1) echo ' disabled'; ?>" style="flex:1;">
+                                            <a class="page-link rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width:2.5rem;height:2.5rem;" href="?evac_page=<?php echo max(1, $page - 1); ?>" aria-label="Previous">
+                                                <span aria-hidden="true"><i class="bi bi-chevron-left"></i></span>
+                                            </a>
+                                        </li>
+                                        <?php
+                                        $max_pages_to_show = 4;
+                                        $start_page = max(1, $page - floor($max_pages_to_show / 2));
+                                        $end_page = $start_page + $max_pages_to_show - 1;
+                                        if ($end_page > $total_pages) {
+                                            $end_page = $total_pages;
+                                            $start_page = max(1, $end_page - $max_pages_to_show + 1);
+                                        }
+                                        // Show first page and ellipsis if needed
+                                        if ($start_page > 1) {
+                                            ?>
+                                            <li class="page-item" style="flex:1;">
+                                                <a class="page-link rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width:2.5rem;height:2.5rem;" href="?evac_page=1">1</a>
+                                            </li>
+                                            <?php if ($start_page > 2): ?>
+                                                <li class="page-item disabled" style="flex:1;">
+                                                    <span class="page-link" style="width:2.5rem;height:2.5rem;">...</span>
+                                                </li>
+                                            <?php endif; ?>
+                                        <?php
+                                        }
+                                        // Main page numbers
+                                        for ($i = $start_page; $i <= $end_page; $i++): ?>
+                                            <li class="page-item<?php if ($i == $page) echo ' active'; ?>" style="flex:1;">
+                                                <a class="page-link rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width:2.5rem;height:2.5rem;" href="?evac_page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                            </li>
+                                        <?php endfor;
+                                        // Show ellipsis and last page if needed
+                                        if ($end_page < $total_pages) {
+                                            if ($end_page < $total_pages - 1): ?>
+                                                <li class="page-item disabled" style="flex:1;">
+                                                    <span class="page-link" style="width:2.5rem;height:2.5rem;">...</span>
+                                                </li>
+                                            <?php endif; ?>
+                                            <li class="page-item" style="flex:1;">
+                                                <a class="page-link rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width:2.5rem;height:2.5rem;" href="?evac_page=<?php echo $total_pages; ?>"><?php echo $total_pages; ?></a>
+                                            </li>
+                                        <?php } ?>
+                                        <!-- Next button -->
+                                        <li class="page-item<?php if ($page >= $total_pages) echo ' disabled'; ?>" style="flex:1;">
+                                            <a class="page-link rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width:2.5rem;height:2.5rem;" href="?evac_page=<?php echo min($total_pages, $page + 1); ?>" aria-label="Next">
+                                                <span aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+
                             <?php else: ?>
                                 <div class="text-center py-3">
                                     <i class="bi bi-house fa-2x text-muted mb-2"></i>
