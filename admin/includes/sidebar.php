@@ -3,19 +3,28 @@
         <img src="../assets/img/logo.png" alt="Logo" class="me-2" style="height: 30px;">
         <span class="fw-bold">Admin Panel</span>
     </div>
+    <?php
+    // Assume $_SESSION['user_role'] contains the role, e.g., 'admin' or 'super_admin'
+    $user_role = isset($_SESSION['user_type']) ? $_SESSION['user_type'] : '';
+
+    ?>
     <div class="list-group list-group-flush">
         <a href="dashboard.php" class="list-group-item list-group-item-action bg-dark text-white border-0">
             <i class="bi bi-speedometer2 me-2"></i>Dashboard
         </a>
-        <a href="alerts.php" class="list-group-item list-group-item-action bg-dark text-white border-0">
-            <i class="bi bi-bell-fill me-2"></i>Alert Management
-        </a>
+        <?php if (trim(strtolower($user_role)) === 'super_admin'): ?>
+            <a href="alerts.php" class="list-group-item list-group-item-action bg-dark text-white border-0">
+                <i class="bi bi-bell-fill me-2"></i>Alert Management
+            </a>
+        <?php endif; ?>
         <a href="incidents.php" class="list-group-item list-group-item-action bg-dark text-white border-0">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>Incident Reports
         </a>
-        <a href="users.php" class="list-group-item list-group-item-action bg-dark text-white border-0">
-            <i class="bi bi-people-fill me-2"></i>User Management
-        </a>
+        <?php if (trim(strtolower($user_role)) === 'super_admin'): ?>
+            <a href="users.php" class="list-group-item list-group-item-action bg-dark text-white border-0">
+                <i class="bi bi-people-fill me-2"></i>User Management
+            </a>
+        <?php endif; ?>
         <a href="evacuation.php" class="list-group-item list-group-item-action bg-dark text-white border-0">
             <i class="bi bi-house-fill me-2"></i>Evacuation Centers
         </a>

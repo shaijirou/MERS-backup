@@ -40,12 +40,12 @@ include '../includes/header.php';
 <link href="../assets/css/admin.css" rel="stylesheet">
 
 <div class="d-flex" id="wrapper">
-    
+     <!-- Sidebar  -->
     <?php include 'includes/sidebar.php'; ?>
     
-    
+     <!-- Page Content  -->
     <div id="page-content-wrapper">
-        
+         <!-- Navigation  -->
         <?php include 'includes/navbar.php'; ?>
 
         <div class="container-fluid px-4">
@@ -63,6 +63,7 @@ include '../includes/header.php';
                 </div>
             </div>
 
+             <!-- Fire Safety Alert  -->
             <div class="alert alert-warning border-start border-warning border-4 shadow-sm mb-4">
                 <div class="d-flex align-items-center">
                     <i class="bi bi-exclamation-triangle fs-2 text-warning me-3"></i>
@@ -73,6 +74,7 @@ include '../includes/header.php';
                 </div>
             </div>
 
+             <!-- Statistics Cards  -->
             <div class="row g-3 mb-4">
                 <div class="col-md-3">
                     <div class="card bg-danger text-white shadow-sm">
@@ -128,6 +130,7 @@ include '../includes/header.php';
                 </div>
             </div>
 
+             <!-- Incidents Table  -->
             <div class="card shadow-sm">
                 <div class="card-header bg-danger text-white">
                     <h5 class="mb-0"><i class="bi bi-list me-2"></i>Fire Incident Reports</h5>
@@ -165,7 +168,7 @@ include '../includes/header.php';
     </div>
 </div>
 
- 
+ <!-- Incident Details Modal  -->
 <div class="modal fade" id="incidentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -174,7 +177,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="incident-details">
-                 Details will be loaded here 
+                 <!-- Details will be loaded here  -->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -233,7 +236,7 @@ function loadStatistics() {
 }
 
 function loadIncidents() {
-    fetch('ajax/get_incidents.php')
+    fetch('ajax/get_fire_incidents.php')
         .then(response => response.json())
         .then(data => {
             const tbody = document.getElementById('incidents-tbody');
@@ -281,87 +284,16 @@ function viewIncident(incidentId) {
     currentIncidentId = incidentId;
     
     fetch(`ajax/get_incident.php?id=${incidentId}`)
-        .then(response => response.json())
+        .then(response => response.text())
         .then(data => {
-            if (data.success) {
-                const incident = data.incident;
-                const isFireRelated = incident.incident_type.toLowerCase().includes('fire') || 
-                                     incident.incident_type.toLowerCase().includes('explosion') ||
-                                     incident.incident_type.toLowerCase().includes('burn');
-                
-                document.getElementById('incident-details').innerHTML = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Incident Information</h6>
-                            <table class="table table-sm">
-                                <tr><td><strong>Report #:</strong></td><td>${incident.report_number}</td></tr>
-                                <tr><td><strong>Type:</strong></td><td>${isFireRelated ? '<i class="bi bi-fire text-danger me-1"></i>' : ''}${incident.incident_type}</td></tr>
-                                <tr><td><strong>Urgency:</strong></td><td><span class="badge ${getUrgencyClass(incident.urgency_level)} rounded-pill">${incident.urgency_level}</span></td></tr>
-                                <tr><td><strong>Date/Time:</strong></td><td>${new Date(incident.created_at).toLocaleString()}</td></tr>
-                                <tr><td><strong>Location:</strong></td><td>${incident.location}</td></tr>
-                                <tr><td><strong>Barangay:</strong></td><td>${incident.barangay || 'N/A'}</td></tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Reporter Information</h6>
-                            <table class="table table-sm">
-                                <tr><td><strong>Name:</strong></td><td>${incident.first_name} ${incident.last_name}</td></tr>
-                                <tr><td><strong>Phone:</strong></td><td>${incident.phone}</td></tr>
-                                <tr><td><strong>Email:</strong></td><td>${incident.email || 'N/A'}</td></tr>
-                            </table>
-                            
-                            <h6 class="mt-3">Fire Department Status</h6>
-                            <p><span class="badge ${getStatusClass(incident.response_status)} rounded-pill">${getStatusText(incident.response_status)}</span></p>
-                        </div>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <h6>Description</h6>
-                            <p class="border p-3 bg-light rounded">${incident.description}</p>
-                        </div>
-                    </div>
-                    ${isFireRelated ? `
-                    <div class="alert alert-danger">
-                        <i class="bi bi-fire me-2"></i>
-                        <strong>Fire Emergency:</strong> This incident requires immediate fire department response. Follow RECEO-VS protocols.
-                    </div>
-                    ` : ''}
-                `;
-                
-                // Show appropriate action buttons based on current status
-                updateActionButtons(incident.response_status);
-                
-                new bootstrap.Modal(document.getElementById('incidentModal')).show();
-            }
+            document.getElementById('incident-details').innerHTML = data;
+            new bootstrap.Modal(document.getElementById('incidentModal')).show();
         })
         .catch(error => {
             console.error('Error loading incident details:', error);
+            document.getElementById('incident-details').innerHTML = 
+                '<div class="alert alert-danger">Error loading incident details</div>';
         });
-}
-
-function updateActionButtons(currentStatus) {
-    const respondBtn = document.getElementById('respond-btn');
-    const fightingBtn = document.getElementById('fighting-btn');
-    const resolveBtn = document.getElementById('resolve-btn');
-    
-    // Hide all buttons first
-    respondBtn.style.display = 'none';
-    fightingBtn.style.display = 'none';
-    resolveBtn.style.display = 'none';
-    
-    // Show appropriate buttons based on current status
-    switch(currentStatus) {
-        case 'notified':
-            respondBtn.style.display = 'inline-block';
-            break;
-        case 'responding':
-            fightingBtn.style.display = 'inline-block';
-            resolveBtn.style.display = 'inline-block';
-            break;
-        case 'on_scene':
-            resolveBtn.style.display = 'inline-block';
-            break;
-    }
 }
 
 function updateStatus(newStatus) {
