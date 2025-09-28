@@ -36,6 +36,7 @@ $stmt = $db->prepare($query);
 $stmt->execute();
 $recent_incidents = $stmt->fetchAll();
 
+// Get hazard zones
 $query = "SELECT * FROM hazard_zones ORDER BY risk_level DESC, name";
 $stmt = $db->prepare($query);
 $stmt->execute();
@@ -43,6 +44,49 @@ $hazard_zones = $stmt->fetchAll();
 
 include '../includes/header.php';
 ?>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- Custom CSS for the new Map Controls -->
+<style>
+.map-controls-container {
+    /* Position controls over the map in the top right corner */
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1001; /* Increased z-index to ensure it sits above the map and Leaflet controls */
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    max-width: 300px;
+}
+/* Styles for the collapsible body (copied from dashboard fix) */
+.map-controls-container .collapsed {
+    max-height: 0 !important;
+    overflow: hidden !important;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+.map-controls-container #mapControlsBody {
+    max-height: 500px; /* A safe maximum height for transition */
+    transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
+}
+/* Ensure the map container can properly contain the absolute element */
+#map-container {
+    position: relative;
+}
+/* Ensure the Leaflet map occupies the full space */
+#leaflet-map {
+    height: 500px; 
+    width: 100%;
+}
+</style>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
     <div class="container">
@@ -108,33 +152,58 @@ include '../includes/header.php';
             <div class="card shadow-sm">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Interactive Map</h5>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-secondary active" onclick="toggleLayer('evacuation')">
-                            <i class="bi bi-shield-check me-1"></i>Evacuation Centers
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="toggleLayer('incidents')">
-                            <i class="bi bi-exclamation-triangle me-1"></i>Recent Incidents
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="toggleLayer('routes')">
-                            <i class="bi bi-signpost-2 me-1"></i>Emergency Routes
-                        </button>
-                        <!-- Replace single hazard zones toggle with individual hazard type toggles -->
-                        <button type="button" class="btn btn-outline-secondary" onclick="toggleLayer('flood')">
-                            <i class="bi bi-droplet me-1"></i>Flood Zones
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="toggleLayer('landslide')">
-                            <i class="bi bi-triangle me-1"></i>Landslide Zones
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="toggleLayer('accident')">
-                            <i class="bi bi-exclamation-diamond me-1"></i>Accident Prone Areas
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="toggleLayer('volcanic')">
-                            <i class="bi bi-fire me-1"></i>Volcanic Risk Areas
-                        </button>
-                    </div>
                 </div>
                 <div class="card-body p-0">
                     <div id="map-container" style="height: 500px; background: #f8f9fa; position: relative;">
+                        
+                        <!-- MAP LAYER CONTROLS (Burger Menu Style) -->
+                        <div class="map-controls-container">
+                            <!-- Header/Toggle Button -->
+                            <div class="controls-header d-flex justify-content-between align-items-center mb-2">
+                                <strong>Map Layers</strong>
+                                <button class="btn btn-sm btn-light toggle-btn" id="toggleMapControlsBtn">
+                                    <!-- Default icon is 'x' (bi-x-lg) because controls start open -->
+                                    <i class="bi bi-x-lg" id="toggleMapIcon"></i> 
+                                </button>
+                            </div>
+                            
+                            <!-- Collapsible Body with Checkboxes -->
+                            <div id="mapControlsBody">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="toggleEvacuation" checked>
+                                    <label class="form-check-label" for="toggleEvacuation"><small><i class="bi bi-shield-check me-1"></i>Evacuation Centers</small></label>
+                                </div>
+                                
+                                <h6 class="mt-2 mb-1 small text-muted border-top pt-2">Hazard Zones</h6>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="toggleFlood">
+                                    <label class="form-check-label" for="toggleFlood"><small><i class="bi bi-droplet me-1"></i>Flood Prone Areas</small></label>
+                                </div>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="toggleLandslide">
+                                    <label class="form-check-label" for="toggleLandslide"><small><i class="bi bi-triangle me-1"></i>Landslide Prone Areas</small></label>
+                                </div>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="toggleAccident">
+                                    <label class="form-check-label" for="toggleAccident"><small><i class="bi bi-exclamation-diamond me-1"></i>Accident Prone Areas</small></label>
+                                </div>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="toggleVolcanic" checked>
+                                    <label class="form-check-label" for="toggleVolcanic"><small><i class="bi bi-fire me-1"></i>Volcanic Risk</small></label>
+                                </div>
+
+                                <h6 class="mt-2 mb-1 small text-muted border-top pt-2">Other Layers</h6>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="toggleRoutes">
+                                    <label class="form-check-label" for="toggleRoutes"><small><i class="bi bi-signpost-2 me-1"></i>Emergency Routes</small></label>
+                                </div>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="toggleIncidents">
+                                    <label class="form-check-label" for="toggleIncidents"><small><i class="bi bi-exclamation-triangle me-1"></i>Recent Incidents</small></label>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Interactive Map will be loaded here -->
                         <div id="map-placeholder" class="d-flex align-items-center justify-content-center h-100">
                             <div class="text-center">
@@ -144,29 +213,14 @@ include '../includes/header.php';
                                 <p class="text-muted">Loading interactive map...</p>
                             </div>
                         </div>
-                        
-                        <!-- Map Controls -->
-                        <div class="position-absolute top-0 start-0 m-3">
-                            <div class="btn-group-vertical" role="group">
-                                <button class="btn btn-light border" onclick="zoomIn()" title="Zoom In">
-                                    <i class="bi bi-plus"></i>
-                                </button>
-                                <button class="btn btn-light border" onclick="zoomOut()" title="Zoom Out">
-                                    <i class="bi bi-dash"></i>
-                                </button>
-                                <button class="btn btn-light border" onclick="resetView()" title="Reset View">
-                                    <i class="bi bi-house"></i>
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Sidebar -->
+        <!-- Sidebar (Unchanged) -->
         <div class="col-lg-4">
-            <!-- Evacuation Centers List -->
+            <!-- Evacuation Centers List (Unchanged) -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white">
                     <h5 class="card-title mb-0">
@@ -208,7 +262,7 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Emergency Contacts -->
+            <!-- Emergency Contacts (Unchanged) -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white">
                     <h5 class="card-title mb-0">
@@ -255,7 +309,7 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Weather Information -->
+            <!-- Weather Information (Unchanged) -->
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
                     <h5 class="card-title mb-0">
@@ -295,7 +349,7 @@ include '../includes/header.php';
     </div>
 </div>
 
-<!-- Legend Modal -->
+<!-- Legend Modal (Unchanged) -->
 <div class="modal fade" id="legendModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -380,14 +434,27 @@ let map;
 let userLocationMarker;
 let evacuationCenterMarkers = [];
 let incidentMarkers = [];
-let layersControl;
-let evacuationLayer, incidentLayer, routeLayer, floodLayer, landslideLayer, accidentLayer, volcanicLayer;
+let evacuationLayer, incidentLayer, routeLayer, floodLayer, landslideLayer, accidentLayer, volcanicLayer; 
 
 // Agoncillo coordinates (approximate center)
 const AGONCILLO_CENTER = [13.9333, 120.9333];
 
+// --- Map Utility Functions (Zoom/Reset) ---
+
+// zoomIn/zoomOut/resetView functions are kept as they are called from the Leaflet control buttons
+function zoomIn() { map.zoomIn(); }
+function zoomOut() { map.zoomOut(); }
+function resetView() {
+    if (map) {
+        map.setView(AGONCILLO_CENTER, 13);
+        AgoncilloAlert.showInAppNotification('View Reset', 'Map view has been reset', 'info');
+    }
+}
+
 // Initialize map on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Wait for the DOM to be fully ready before setting timeout for map init
+    // This timeout is usually needed in embedded environments like Canvas.
     setTimeout(() => {
         initializeMap();
     }, 1000);
@@ -403,7 +470,7 @@ function initializeMap() {
     }
     
     // Create map div
-    mapContainer.innerHTML = '<div id="leaflet-map" style="height: 500px; width: 100%;"></div>';
+    mapContainer.innerHTML += '<div id="leaflet-map"></div>';
     
     // Initialize Leaflet map
     map = L.map('leaflet-map').setView(AGONCILLO_CENTER, 13);
@@ -413,14 +480,14 @@ function initializeMap() {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
     
-    // Create layer groups
+    // Create layer groups. ONLY Evacuation and Volcanic are added to map by default.
     evacuationLayer = L.layerGroup().addTo(map);
     incidentLayer = L.layerGroup();
     routeLayer = L.layerGroup();
     floodLayer = L.layerGroup();
     landslideLayer = L.layerGroup();
     accidentLayer = L.layerGroup();
-    volcanicLayer = L.layerGroup().addTo(map); // Add volcanic layer by default as background
+    volcanicLayer = L.layerGroup().addTo(map); // Volcanic layer as background, added by default
     
     // Add evacuation center markers
     addEvacuationCenterMarkers();
@@ -430,8 +497,19 @@ function initializeMap() {
     
     addHazardZones();
     
-    // Add custom controls
+    // Add custom controls (Zoom buttons)
     addCustomControls();
+
+    // *** FIX: Prevent Leaflet from capturing clicks on the Map Controls container ***
+    const controlsContainer = document.querySelector(".map-controls-container");
+    if (controlsContainer && typeof L !== 'undefined') {
+        // Disable click and scroll propagation to allow interaction with the controls
+        L.DomEvent.disableClickPropagation(controlsContainer);
+        L.DomEvent.disableScrollPropagation(controlsContainer);
+    }
+
+    // Initialize the burger menu and layer toggle logic
+    initializeMapControls(); 
     
     AgoncilloAlert.showInAppNotification('Map Loaded', 'Interactive map is now ready', 'success');
 }
@@ -681,7 +759,7 @@ function getPolygonRadius(latLngs, center) {
 }
 
 function addCustomControls() {
-    // Add custom zoom controls (Leaflet has default ones, but we can customize)
+    // Add custom zoom controls (re-implements the standard zoom buttons removed from HTML)
     const customControl = L.control({position: 'topleft'});
     
     customControl.onAdd = function(map) {
@@ -768,70 +846,6 @@ function getDirections(lat, lng) {
     window.open(url, '_blank');
 }
 
-function toggleLayer(layerType) {
-    const buttons = document.querySelectorAll('.btn-group .btn');
-    buttons.forEach(btn => btn.classList.remove('active'));
-    
-    event.target.classList.add('active');
-    
-    if (!map) return;
-    
-    switch(layerType) {
-        case 'evacuation':
-            if (map.hasLayer(evacuationLayer)) {
-                map.removeLayer(evacuationLayer);
-            } else {
-                map.addLayer(evacuationLayer);
-            }
-            break;
-        case 'incidents':
-            if (map.hasLayer(incidentLayer)) {
-                map.removeLayer(incidentLayer);
-            } else {
-                map.addLayer(incidentLayer);
-            }
-            break;
-        case 'routes':
-            if (map.hasLayer(routeLayer)) {
-                map.removeLayer(routeLayer);
-            } else {
-                map.addLayer(routeLayer);
-                addSampleRoutes();
-            }
-            break;
-        case 'flood':
-            if (map.hasLayer(floodLayer)) {
-                map.removeLayer(floodLayer);
-            } else {
-                map.addLayer(floodLayer);
-            }
-            break;
-        case 'landslide':
-            if (map.hasLayer(landslideLayer)) {
-                map.removeLayer(landslideLayer);
-            } else {
-                map.addLayer(landslideLayer);
-            }
-            break;
-        case 'accident':
-            if (map.hasLayer(accidentLayer)) {
-                map.removeLayer(accidentLayer);
-            } else {
-                map.addLayer(accidentLayer);
-            }
-            break;
-        case 'volcanic':
-            if (map.hasLayer(volcanicLayer)) {
-                map.removeLayer(volcanicLayer);
-            } else {
-                map.addLayer(volcanicLayer);
-            }
-            break;
-    }
-    
-    AgoncilloAlert.showInAppNotification('Layer Toggle', `${layerType} layer toggled`, 'info');
-}
-
 function addSampleRoutes() {
     // Clear existing routes
     routeLayer.clearLayers();
@@ -871,26 +885,11 @@ function addSampleRoutes() {
     });
 }
 
-function resetView() {
-    if (map) {
-        map.setView(AGONCILLO_CENTER, 13);
-        AgoncilloAlert.showInAppNotification('View Reset', 'Map view has been reset', 'info');
-    }
-}
-
 function callEmergency(number) {
-    if (confirm(`Call ${number}?`)) {
-        window.location.href = `tel:${number}`;
-    }
+    // FIX: Replaced banned 'confirm()' with custom notification.
+    AgoncilloAlert.showInAppNotification('Call Attempted', `Attempting to call ${number}...`, 'info');
+    window.location.href = `tel:${number}`;
 }
-
-// Initialize tooltips
-document.addEventListener('DOMContentLoaded', function() {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-});
 
 const apiKey = "b94c896f1adfd27f17a915b9422e4db9"; // <-- OpenWeatherMap API key
 
@@ -940,6 +939,67 @@ function getLocationAndFetch() {
 // Run on page load + refresh every 10 minutes
 getLocationAndFetch();
 setInterval(getLocationAndFetch, 600000);
+
+// NEW FUNCTION: Initializes all map controls, runs AFTER map is created.
+function initializeMapControls() {
+    // 1. BURGER MENU TOGGLE LOGIC
+    const toggleBtn = document.getElementById("toggleMapControlsBtn");
+    const toggleIcon = document.getElementById("toggleMapIcon");
+    const controlsBody = document.getElementById("mapControlsBody");
+
+    if (toggleBtn && toggleIcon && controlsBody) {
+        toggleBtn.addEventListener("click", () => {
+            
+            // Toggle the 'collapsed' class
+            controlsBody.classList.toggle("collapsed");
+
+            // Switch icon
+            if (controlsBody.classList.contains("collapsed")) {
+                toggleIcon.classList.remove("bi-x-lg");
+                toggleIcon.classList.add("bi-list");
+            } else {
+                toggleIcon.classList.remove("bi-list");
+                toggleIcon.classList.add("bi-x-lg");
+            }
+        });
+    }
+
+    // 2. LAYER TOGGLE LOGIC (Event Listeners for Checkboxes)
+    const layerControls = [
+        { id: 'toggleEvacuation', layer: evacuationLayer },
+        { id: 'toggleIncidents', layer: incidentLayer },
+        { id: 'toggleRoutes', layer: routeLayer, callback: addSampleRoutes }, // Call addSampleRoutes on activation
+        { id: 'toggleFlood', layer: floodLayer },
+        { id: 'toggleLandslide', layer: landslideLayer },
+        { id: 'toggleAccident', layer: accidentLayer },
+        { id: 'toggleVolcanic', layer: volcanicLayer }
+    ];
+
+    layerControls.forEach(control => {
+        const checkbox = document.getElementById(control.id);
+        if (checkbox) {
+            checkbox.addEventListener('change', function() {
+                // Since this runs after map initialization, 'map' should be defined.
+                if (this.checked) {
+                    if (control.callback) {
+                        control.callback(); 
+                    }
+                    map.addLayer(control.layer);
+                } else {
+                    map.removeLayer(control.layer);
+                }
+            });
+        }
+    });
+}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
 
 </script>
 
