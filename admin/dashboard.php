@@ -178,19 +178,31 @@ include '../includes/header.php';
 .map-container {
     position: relative;
 }
+/* ADDED CSS FOR COLLAPSE FUNCTIONALITY */
+.map-controls-dashboard .collapsed {
+    max-height: 0 !important;
+    overflow: hidden !important;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+.map-controls-dashboard #controlsBody {
+    max-height: 500px; /* A safe maximum height for transition */
+    transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
+}
 </style>
 
 <div class="d-flex" id="wrapper">
-    <!-- Sidebar -->
     <?php include 'includes/sidebar.php'; ?>
     
-    <!-- Page Content -->
     <div id="page-content-wrapper">
-        <!-- Navigation -->
         <?php include 'includes/navbar.php'; ?>
 
         <div class="container-fluid px-4">
-            <!-- Statistics Cards -->
             <div class="row g-3 my-3">
                 <div class="col-md-3">
                     <div class="p-3 bg-primary shadow-sm d-flex justify-content-around align-items-center rounded">
@@ -233,7 +245,6 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Main Content Row -->
             <div class="row my-4">
                 <div class="col-md-8">
                     <div class="card shadow-sm">
@@ -241,67 +252,82 @@ include '../includes/header.php';
                             <div class="d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0">Emergency Response Map</h5>
                                 <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="filterMapData('flood')">Flood</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="filterMapData('volcanic')">Volcanic</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="filterMapData('earthquake')">Earthquake</button>
                                     <a href="map.php" class="btn btn-sm btn-primary">Full Map</a>
                                 </div>
                             </div>
                         </div>
                         <div class="card-body p-0">
-                            <div class="map-container">
-                                <div class="map-controls-dashboard">
-                                    <div class="form-check form-switch mb-1">
-                                        <input class="form-check-input" type="checkbox" id="showDashIncidents" checked>
-                                        <label class="form-check-label" for="showDashIncidents">
-                                            <small>Incidents</small>
-                                        </label>
-                                    </div>
-                                    <div class="form-check form-switch mb-1">
-                                        <input class="form-check-input" type="checkbox" id="showDashEvacuation" checked>
-                                        <label class="form-check-label" for="showDashEvacuation">
-                                            <small>Centers</small>
-                                        </label>
-                                    </div>
-                                    <div class="form-check form-switch mb-1">
-                                        <input class="form-check-input" type="checkbox" id="showDashAlerts" checked>
-                                        <label class="form-check-label" for="showDashAlerts">
-                                            <small>Alerts</small>
-                                        </label>
-                                    </div>
-                                    <div class="form-check form-switch mb-1">
-                                        <input class="form-check-input" type="checkbox" id="showDashFlood" checked>
-                                        <label class="form-check-label" for="showDashFlood">
-                                            <small>Flood Zones</small>
-                                        </label>
-                                    </div>
-                                    <div class="form-check form-switch mb-1">
-                                        <input class="form-check-input" type="checkbox" id="showDashLandslide" checked>
-                                        <label class="form-check-label" for="showDashLandslide">
-                                            <small>Landslide Zones</small>
-                                        </label>
-                                    </div>
-                                    <div class="form-check form-switch mb-1">
-                                        <input class="form-check-input" type="checkbox" id="showDashAccident" checked>
-                                        <label class="form-check-label" for="showDashAccident">
-                                            <small>Accident Prone</small>
-                                        </label>
-                                    </div>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="showDashVolcanic" checked>
-                                        <label class="form-check-label" for="showDashVolcanic">
-                                            <small>Volcanic Risk</small>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div id="dashboardMap"></div>
-                                <div class="map-overlay">
-                                    <a href="map.php" class="btn btn-primary">
-                                        <i class="bi bi-arrows-fullscreen"></i> Open Full Map
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
+    <div class="map-container">
+        <div class="map-controls-dashboard" id="mapControls">
+            <div class="controls-header d-flex justify-content-between align-items-center mb-2">
+                <strong>Map Layers</strong>
+                <button class="btn btn-sm btn-light toggle-btn" id="toggleControlsBtn">
+                    <i class="bi bi-x-lg" id="toggleIcon"></i>
+                </button>
+            </div>
+
+            <div class="controls-body" id="controlsBody">
+                <div class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" id="showIncidents" checked>
+    <label class="form-check-label" for="showIncidents">
+        <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>
+        <small>Incidents</small>
+    </label>
+</div>
+<div class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" id="showEvacuation" checked>
+    <label class="form-check-label" for="showEvacuation">
+        <i class="bi bi-house-heart-fill text-success me-1"></i>
+        <small>Evacuation Centers</small>
+    </label>
+</div>
+<div class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" id="showAlerts" checked>
+    <label class="form-check-label" for="showAlerts">
+        <i class="bi bi-bell-fill text-warning me-1"></i>
+        <small>Alerts</small>
+    </label>
+</div>
+<div class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" id="showFloodZones" checked>
+    <label class="form-check-label" for="showFloodZones">
+        <i class="bi bi-water text-info me-1"></i>
+        <small>Flood Prone Areas</small>
+    </label>
+</div>
+<div class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" id="showLandslideZones" checked>
+    <label class="form-check-label" for="showLandslideZones">
+        <i class="bi bi-triangle text-secondary me-1"></i>
+        <small>Landslide Prone Areas</small>
+    </label>
+</div>
+<div class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" id="showAccidentAreas" checked>
+    <label class="form-check-label" for="showAccidentAreas">
+        <i class="bi bi-car-front-fill text-primary me-1"></i>
+        <small>Accident Prone Areas</small>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" id="showVolcanicRisk" checked>
+    <label class="form-check-label" for="showVolcanicRisk">
+        <i class="bi bi-fire text-danger me-1"></i>
+        <small>Volcanic Risk</small>
+    </label>
+</div>
+            </div>
+        </div>
+
+        <div id="dashboardMap"></div>
+        <div class="map-overlay">
+            <a href="map.php" class="btn btn-primary">
+                <i class="bi bi-arrows-fullscreen"></i> Open Full Map
+            </a>
+        </div>
+    </div>
+</div>
+
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -332,7 +358,6 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Additional Content Row -->
             <div class="row my-4">
                 <div class="col-md-6">
                     <div class="card shadow-sm">
@@ -379,7 +404,6 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Population Statistics Row -->
             <div class="row my-4">
                 <div class="col-md-12">
                     <div class="card shadow-sm">
@@ -420,7 +444,6 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Quick Actions -->
             <div class="row my-4">
                 <div class="col-12">
                     <div class="card shadow-sm">
@@ -461,7 +484,6 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -907,5 +929,32 @@ const populationChart = new Chart(populationCtx, {
     }
 });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const toggleBtn = document.getElementById("toggleControlsBtn");
+    const toggleIcon = document.getElementById("toggleIcon");
+    const controlsBody = document.getElementById("controlsBody");
+
+    if (toggleBtn && toggleIcon && controlsBody) {
+        toggleBtn.addEventListener("click", () => {
+            
+            // Toggle the 'collapsed' class to hide/show the body with CSS transition
+            controlsBody.classList.toggle("collapsed");
+
+            // Switch icon based on the *new* state of the controlsBody
+            if (controlsBody.classList.contains("collapsed")) {
+                // Menu is now hidden, show the burger icon (bi-list)
+                toggleIcon.classList.remove("bi-x-lg");
+                toggleIcon.classList.add("bi-list");
+            } else {
+                // Menu is now visible, show the close icon (bi-x-lg)
+                toggleIcon.classList.remove("bi-list");
+                toggleIcon.classList.add("bi-x-lg");
+            }
+        });
+    }
+});
+</script>
+
 
 <?php include '../includes/footer.php'; ?>

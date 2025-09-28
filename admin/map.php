@@ -82,6 +82,23 @@ include '../includes/header.php';
     border-radius: 5px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
+/* --- NEW STYLES FOR COLLAPSIBLE CONTROLS --- */
+.map-controls .collapsed {
+    max-height: 0 !important;
+    overflow: hidden !important;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+.map-controls #mapControlsBody {
+    max-height: 500px; /* A safe maximum height for transition */
+    transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
+}
+/* ------------------------------------------- */
 .legend {
     background: white;
     padding: 15px;
@@ -110,16 +127,12 @@ include '../includes/header.php';
 </style>
 
 <div class="d-flex" id="wrapper">
-    <!-- Sidebar -->
     <?php include 'includes/sidebar.php'; ?>
     
-    <!-- Page Content -->
     <div id="page-content-wrapper">
-        <!-- Navigation -->
         <?php include 'includes/navbar.php'; ?>
 
         <div class="container-fluid px-4">
-            <!-- Page Header -->
             <div class="d-flex justify-content-between align-items-center py-3">
                 <h1 class="h3 mb-0">Emergency Response Map</h1>
                 <div>
@@ -137,47 +150,63 @@ include '../includes/header.php';
                     <div class="card">
                         <div class="card-body p-0 position-relative">
                             <div class="map-controls">
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="showIncidents" checked>
-                                    <label class="form-check-label" for="showIncidents">
-                                        <small>Show Incidents</small>
-                                    </label>
+                                <div class="controls-header d-flex justify-content-between align-items-center mb-2">
+                                    <strong>Map Layers</strong>
+                                    <button class="btn btn-sm btn-light toggle-btn" id="mapToggleControlsBtn">
+                                        <i class="bi bi-x-lg" id="mapToggleIcon"></i> 
+                                    </button>
                                 </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="showEvacuation" checked>
-                                    <label class="form-check-label" for="showEvacuation">
-                                        <small>Show Evacuation Centers</small>
-                                    </label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="showAlerts" checked>
-                                    <label class="form-check-label" for="showAlerts">
-                                        <small>Show Alert Areas</small>
-                                    </label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="showFloodZones" checked>
-                                    <label class="form-check-label" for="showFloodZones">
-                                        <small>Show Flood Zones</small>
-                                    </label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="showLandslideZones" checked>
-                                    <label class="form-check-label" for="showLandslideZones">
-                                        <small>Show Landslide Zones</small>
-                                    </label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="showAccidentAreas" checked>
-                                    <label class="form-check-label" for="showAccidentAreas">
-                                        <small>Show Accident Prone Areas</small>
-                                    </label>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="showVolcanicRisk" checked>
-                                    <label class="form-check-label" for="showVolcanicRisk">
-                                        <small>Show Volcanic Risk Areas</small>
-                                    </label>
+                                
+                                <div id="mapControlsBody">
+                                    <div class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" id="showIncidents" checked>
+    <label class="form-check-label" for="showIncidents">
+        <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>
+        <small>Incidents</small>
+    </label>
+</div>
+<div class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" id="showEvacuation" checked>
+    <label class="form-check-label" for="showEvacuation">
+        <i class="bi bi-house-heart-fill text-success me-1"></i>
+        <small>Evacuation Centers</small>
+    </label>
+</div>
+<div class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" id="showAlerts" checked>
+    <label class="form-check-label" for="showAlerts">
+        <i class="bi bi-bell-fill text-warning me-1"></i>
+        <small>Alerts</small>
+    </label>
+</div>
+<div class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" id="showFloodZones" checked>
+    <label class="form-check-label" for="showFloodZones">
+        <i class="bi bi-water text-info me-1"></i>
+        <small>Flood Prone Areas</small>
+    </label>
+</div>
+<div class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" id="showLandslideZones" checked>
+    <label class="form-check-label" for="showLandslideZones">
+        <i class="bi bi-triangle text-secondary me-1"></i>
+        <small>Landslide Prone Areas</small>
+    </label>
+</div>
+<div class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" id="showAccidentAreas" checked>
+    <label class="form-check-label" for="showAccidentAreas">
+        <i class="bi bi-car-front-fill text-primary me-1"></i>
+        <small>Accident Prone Areas</small>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" id="showVolcanicRisk" checked>
+    <label class="form-check-label" for="showVolcanicRisk">
+        <i class="bi bi-fire text-danger me-1"></i>
+        <small>Volcanic Risk</small>
+    </label>
+</div>
                                 </div>
                             </div>
                             <div id="map"></div>
@@ -186,7 +215,6 @@ include '../includes/header.php';
                 </div>
                 
                 <div class="col-md-3">
-                    <!-- Legend -->
                     <div class="legend">
                         <h6><i class="bi bi-geo-alt"></i> Map Legend</h6>
                         <div class="legend-item">
@@ -219,7 +247,6 @@ include '../includes/header.php';
                         </div>
                     </div>
 
-                    <!-- Recent Incidents -->
                     <div class="card mt-3">
                         <div class="card-header">
                             <h6 class="card-title mb-0">
@@ -242,7 +269,6 @@ include '../includes/header.php';
                         </div>
                     </div>
 
-                    <!-- Active Alerts -->
                     <div class="card mt-3">
                         <div class="card-header">
                             <h6 class="card-title mb-0">
@@ -653,6 +679,31 @@ function toggleFullscreen() {
         mapContainer.msRequestFullscreen();
     }
 }
+
+// --- NEW JAVASCRIPT FOR BURGER MENU TOGGLE ---
+document.addEventListener("DOMContentLoaded", function () {
+    const toggleBtn = document.getElementById("mapToggleControlsBtn");
+    const toggleIcon = document.getElementById("mapToggleIcon");
+    const controlsBody = document.getElementById("mapControlsBody");
+
+    if (toggleBtn && toggleIcon && controlsBody) {
+        toggleBtn.addEventListener("click", () => {
+            
+            // Toggle the 'collapsed' class to hide/show the body with CSS transition
+            if (controlsBody.classList.contains("collapsed")) {
+                controlsBody.classList.remove("collapsed");
+                // Set icon to 'X' (close) when controls are open
+                toggleIcon.classList.remove("bi-list");
+                toggleIcon.classList.add("bi-x-lg");
+            } else {
+                controlsBody.classList.add("collapsed");
+                // Set icon to 'burger' (list) when controls are collapsed
+                toggleIcon.classList.remove("bi-x-lg");
+                toggleIcon.classList.add("bi-list");
+            }
+        });
+    }
+});
 </script>
 
 <?php include '../includes/footer.php'; ?>
