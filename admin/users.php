@@ -305,9 +305,18 @@ include '../includes/header.php';
                                     </td>
                                     <td>
                                         <div><?php echo $user['barangay']; ?></div>
-                                        <?php if ($user['address']): ?>
-                                            <small class="text-muted"><?php echo substr($user['address'], 0, 30) . '...'; ?></small>
-                                        <?php endif; ?>
+                                    <?php if (!empty($user['house_number']) || !empty($user['street']) || !empty($user['landmark'])): ?>
+                                    <small class="text-muted">
+                                    <?php 
+                                    $fullAddress = $user['house_number'] . ' ' . $user['street'];
+                                    if (!empty($user['landmark'])) {
+                                    $fullAddress .= ' (Near ' . $user['landmark'] . ')';
+                                    }
+                                     echo substr($fullAddress, 0, 30) . (strlen($fullAddress) > 30 ? '...' : '');
+                                    ?>
+                                    </small>
+                                    <?php endif; ?>
+
                                     </td>
                                   
                                     <td>
@@ -461,14 +470,22 @@ include '../includes/header.php';
                                 <option value="Subic Ibaba">Subic Ibaba</option>
                             </select>
                         </div>
-                        <!-- <div class="col-md-6">
-                            <label class="form-label">Emergency Contact</label>
-                            <input type="tel" class="form-control" name="emergency_contact">
-                        </div> -->
-                        <div class="col-md-6">
-                            <label class="form-label">Address</label>
-                            <textarea class="form-control" name="address" rows="2"></textarea>
-                        </div>
+                        
+                        <div class="col-md-4">
+    <label class="form-label">House Number <span class="text-danger">*</span></label>
+    <input type="text" class="form-control" name="house_number" required>
+</div>
+
+<div class="col-md-4">
+    <label class="form-label">Street <span class="text-danger">*</span></label>
+    <input type="text" class="form-control" name="street" required>
+</div>
+
+<div class="col-md-4">
+    <label class="form-label">Landmark</label>
+    <input type="text" class="form-control" name="landmark" placeholder="e.g. Near the market">
+</div>
+
                         <div class="col-md-6">
                             <label class="form-label">Password *</label>
                             <input type="password" class="form-control" name="password" required>
@@ -477,14 +494,7 @@ include '../includes/header.php';
                             <label class="form-label">Confirm Password *</label>
                             <input type="password" class="form-control" name="confirm_password" required>
                         </div>
-                        <!-- <div class="col-12">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="verification_status" id="verification_status">
-                                <label class="form-check-label" for="verification_status" value="verified">
-                                    Mark as verified
-                                </label>
-                            </div>
-                        </div> -->
+                      
                     </div>
                 </div>
                 <div class="modal-footer">

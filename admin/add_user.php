@@ -13,8 +13,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $last_name = trim($_POST['last_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
-    $address = trim($_POST['address'] ?? '');
+    $house_number = trim($_POST['house_number'] ?? '');
+    $street = trim($_POST['street'] ?? '');
     $barangay = trim($_POST['barangay'] ?? '');
+    $landmark = trim($_POST['landmark'] ?? '');
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
     // $verification_status = $_POST['verification_status'] ?? '';
@@ -41,8 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $errors[] = "Phone number is required";
     }
 
-    if (empty($address)) {
-        $errors[] = "Address is required";
+    if (empty($house_number) || empty($street)) {
+        $errors[] = "House number and street is required";
     }
 
     if (empty($barangay)) {
@@ -82,16 +84,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
         // Insert user
-        $insert_query = "INSERT INTO users (first_name, last_name, email, phone, address, barangay, password, user_type, created_at) 
-                        VALUES (:first_name, :last_name, :email, :phone, :address, :barangay, :password, 'resident', NOW())";
+        $insert_query = "INSERT INTO users (first_name, last_name, email, phone, house_number, street, barangay, landmark, password, user_type, created_at) 
+                        VALUES (:first_name, :last_name, :email, :phone, :house_number, :street, :barangay, :landmark, :password, 'resident', NOW())";
 
         $stmt = $db->prepare($insert_query);
         $stmt->bindParam(':first_name', $first_name);
         $stmt->bindParam(':last_name', $last_name);
         $stmt->bindParam(':email', $email);
         $stmt->bindParam(':phone', $phone);
-        $stmt->bindParam(':address', $address);
+        $stmt->bindParam(':house_number', $house_number);
+        $stmt->bindParam(':street', $street);
         $stmt->bindParam(':barangay', $barangay);
+        $stmt->bindParam(':landmark', $landmark);
         $stmt->bindParam(':password', $hashed_password);
         // $stmt->bindParam(':verification_status', $verification_status);
         

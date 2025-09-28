@@ -33,10 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $last_name = sanitizeInput($_POST['last_name']);
         $email = sanitizeInput($_POST['email']);
         $phone = sanitizeInput($_POST['phone']);
+        $house_number = sanitizeInput($_POST['house_number']);
+        $street = sanitizeInput($_POST['street']);
         $barangay = sanitizeInput($_POST['barangay']);
-        $address = sanitizeInput($_POST['address']);
+         $landmark = sanitizeInput($_POST['landmark']);
         
-        if (empty($first_name) || empty($last_name) || empty($email) || empty($phone)) {
+        if (empty($first_name) || empty($last_name) || empty($email) || empty($phone) || empty($house_number) || empty($street) || empty($barangay)) {
             $error_message = 'Please fill in all required fields.';
         } else {
             // Check if email already exists for other users
@@ -80,8 +82,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                           last_name = :last_name,
                           email = :email,
                           phone = :phone,
+                          house_number = :house_number,
+                          street = :street,
                           barangay = :barangay,
-                          address = :address,
+                          landmark = :landmark,
                           selfie_photo = :selfie_photo,
                           updated_at = NOW()
                           WHERE id = :user_id";
@@ -91,8 +95,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $stmt->bindParam(':last_name', $last_name);
                 $stmt->bindParam(':email', $email);
                 $stmt->bindParam(':phone', $phone);
+                $stmt->bindParam(':house_number', $house_number);
+                $stmt->bindParam(':street', $street);
                 $stmt->bindParam(':barangay', $barangay);
-                $stmt->bindParam(':address', $address);
+                $stmt->bindParam(':landmark', $landmark);
                 $stmt->bindParam(':selfie_photo', $selfie_photo);
                 $stmt->bindParam(':user_id', $_SESSION['user_id']);
                 
@@ -283,12 +289,27 @@ include '../includes/header.php';
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6">
-                                <label for="address" class="form-label">Complete Address</label>
-                                <input type="text" class="form-control" id="address" name="address" 
-                                       value="<?php echo htmlspecialchars($user['address']); ?>" 
-                                       placeholder="Street, House Number, etc.">
-                            </div>
+                            <div class="col-md-4">
+    <label for="house_number" class="form-label">House Number</label>
+    <input type="text" class="form-control" id="house_number" name="house_number" 
+           value="<?php echo htmlspecialchars($user['house_number']); ?>" 
+           placeholder="Enter house number">
+</div>
+
+<div class="col-md-4">
+    <label for="street" class="form-label">Street</label>
+    <input type="text" class="form-control" id="street" name="street" 
+           value="<?php echo htmlspecialchars($user['street']); ?>" 
+           placeholder="Enter street">
+</div>
+
+<div class="col-md-4">
+    <label for="landmark" class="form-label">Landmark</label>
+    <input type="text" class="form-control" id="landmark" name="landmark" 
+           value="<?php echo htmlspecialchars($user['landmark']); ?>" 
+           placeholder="e.g. Near plaza, school">
+</div>
+
                         </div>
 
                         

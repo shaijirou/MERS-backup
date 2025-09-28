@@ -29,14 +29,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $last_name = sanitizeInput($_POST['last_name']);
     $email = sanitizeInput($_POST['email']);
     $phone = sanitizeInput($_POST['phone']);
-    $address = sanitizeInput($_POST['address']);
+    $house_number = sanitizeInput($_POST['house_number']);
+    $street = sanitizeInput($_POST['street']);
     $barangay = sanitizeInput($_POST['barangay']);
+    $landmark = sanitizeInput($_POST['landmark']);
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
     
     // Validation
     if (empty($first_name) || empty($last_name) || empty($email) || empty($phone) || 
-        empty($address) || empty($barangay) || empty($password) || empty($confirm_password)) {
+        empty($house_number) || empty($street) || empty($barangay) || empty($password) || empty($confirm_password)) {
         $error_message = 'Please fill in all required fields.';
     } elseif ($password !== $confirm_password) {
         $error_message = 'Passwords do not match.';
@@ -108,8 +110,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Insert user
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             
-            $query = "INSERT INTO users (first_name, last_name, email, phone, password, address, barangay, id_document, selfie_photo) 
-                      VALUES (:first_name, :last_name, :email, :phone, :password, :address, :barangay, :id_document, :selfie_photo)";
+            $query = "INSERT INTO users (first_name, last_name, email, phone, password, house_number, street,  barangay, landmark, id_document, selfie_photo) 
+                      VALUES (:first_name, :last_name, :email, :phone, :password, :house_number, :street, :barangay, :landmark, :id_document, :selfie_photo)";
             
             $stmt = $db->prepare($query);
             $stmt->bindParam(':first_name', $first_name);
@@ -117,8 +119,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->bindParam(':email', $email);
             $stmt->bindParam(':phone', $phone);
             $stmt->bindParam(':password', $hashed_password);
-            $stmt->bindParam(':address', $address);
+            $stmt->bindParam(':house_number', $house_number);
+            $stmt->bindParam(':street', $street);
             $stmt->bindParam(':barangay', $barangay);
+            $stmt->bindParam(':landmark', $landmark);
             $stmt->bindParam(':id_document', $id_document);
             $stmt->bindParam(':selfie_photo', $selfie_photo);
             
@@ -164,22 +168,22 @@ include 'includes/header.php';
                     <form method="POST" enctype="multipart/form-data" id="registrationForm">
                         <div class="row mb-3">
                             <div class="col-md-6 mb-3 mb-md-0">
-                                <label for="first_name" class="form-label">First Name</label>
+                                <label for="first_name" class="form-label">First Name *</label>
                                 <input type="text" class="form-control" id="first_name" name="first_name" placeholder="Enter your first name" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="last_name" class="form-label">Last Name</label>
+                                <label for="last_name" class="form-label">Last Name *</label>
                                 <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Enter your last name" required>
                             </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
+                            <label for="email" class="form-label">Email Address *</label>
                             <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email address" required>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="phone" class="form-label">Mobile Number</label>
+                            <label for="phone" class="form-label">Mobile Number *</label>
                             <div class="input-group">
                                 <span class="input-group-text">+63</span>
                                 <input type="tel" class="form-control" id="phone" name="phone" placeholder="9XX XXX XXXX" required>
@@ -187,13 +191,19 @@ include 'includes/header.php';
                             <div class="form-text">We'll send a verification code to this number</div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="address" class="form-label">Complete Address</label>
-                            <textarea class="form-control" id="address" name="address" rows="2" placeholder="Enter your complete address in Agoncillo, Batangas" required></textarea>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="house_number" class="form-label">House No. *</label>
+                                <input type="text" class="form-control" id="house_number" name="house_number" placeholder="e.g., 123" required>
+                            </div>
+                            <div class="col-md-8">
+                                <label for="street" class="form-label">Street *</label>
+                                <input type="text" class="form-control" id="street" name="street" placeholder="e.g., Rizal St." required>
+                            </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="barangay" class="form-label">Barangay</label>
+                            <label for="barangay" class="form-label">Barangay *</label>
                             <select class="form-select" id="barangay" name="barangay" required>
                                 <option value="" selected disabled>Select your barangay</option>
                                 <?php foreach ($barangays as $barangay): ?>
@@ -203,7 +213,12 @@ include 'includes/header.php';
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label">ID Verification</label>
+                            <label for="landmark" class="form-label">Landmark (Optional)</label>
+                            <input type="text" class="form-control" id="landmark" name="landmark" placeholder="e.g., Near the market">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">ID Verification *</label>
                             <div class="input-group mb-3">
                                 <input type="file" class="form-control" id="id_document" name="id_document" accept="image/*" required>
                                 <label class="input-group-text" for="id_document">Upload</label>
@@ -213,12 +228,12 @@ include 'includes/header.php';
                         
                         <!-- Enhanced selfie verification with camera capture -->
                         <div class="mb-3">
-                            <label class="form-label">Selfie Verification</label>
+                            <label class="form-label">Selfie Verification *</label>
                             <div class="card border-primary">
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <h6 class="card-title">Option 1: Take Photo with Camera</h6>
+                                            <h6 class="card-title">Take Photo with Camera</h6>
                                             <div id="camera-section">
                                                 <video id="video" width="100%" height="200" autoplay style="border-radius: 8px; background: #f8f9fa;"></video>
                                                 <div class="text-center mt-2">
@@ -240,14 +255,7 @@ include 'includes/header.php';
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <h6 class="card-title">Option 2: Upload Photo File</h6>
-                                            <div class="input-group">
-                                                <input type="file" class="form-control" id="selfie_photo" name="selfie_photo" accept="image/*">
-                                                <label class="input-group-text" for="selfie_photo">Upload</label>
-                                            </div>
-                                            <div class="form-text mt-2">Please upload a clear selfie for identity verification</div>
-                                            
-                                            <div class="alert alert-info mt-3">
+                                            <div>
                                                 <i class="fas fa-info-circle me-2"></i>
                                                 <strong>Selfie Guidelines:</strong>
                                                 <ul class="mb-0 mt-2">
@@ -265,12 +273,12 @@ include 'includes/header.php';
                         </div>
                         
                         <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
+                            <label for="password" class="form-label">Password *</label>
                             <input type="password" class="form-control" id="password" name="password" placeholder="Create a password" required>
                         </div>
                         
                         <div class="mb-4">
-                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                            <label for="confirm_password" class="form-label">Confirm Password *</label>
                             <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
                         </div>
                         
@@ -407,5 +415,14 @@ window.addEventListener('beforeunload', function() {
     }
 });
 </script>
-
+<script>
+document.querySelectorAll('.password-input').forEach(input => {
+    input.addEventListener('focus', () => {
+        input.style.borderColor = 'red';
+    });
+    input.addEventListener('blur', () => {
+        input.style.borderColor = '';
+    });
+});
+</script>
 <?php include 'includes/footer.php'; ?>

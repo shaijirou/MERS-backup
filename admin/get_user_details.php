@@ -70,9 +70,20 @@ $recent_reports = $reports_stmt->fetchAll(PDO::FETCH_ASSOC);
                         <p class="mb-2"><?php echo htmlspecialchars($user['barangay']); ?></p>
                     </div>
                     <div class="col-12">
-                        <label class="form-label fw-bold">Address</label>
-                        <p class="mb-2"><?php echo $user['address'] ? htmlspecialchars($user['address']) : '<em class="text-muted">Not specified</em>'; ?></p>
-                    </div>
+    <label class="form-label fw-bold">Complete Address</label>
+    <p class="mb-2">
+        <?php 
+            if (!empty($user['house_number']) || !empty($user['street']) || !empty($user['landmark'])) {
+                echo htmlspecialchars($user['house_number'] . ' ' . $user['street']);
+                if (!empty($user['landmark'])) {
+                    echo ' (Near ' . htmlspecialchars($user['landmark']) . ')';
+                }
+            } else {
+                echo '<em class="text-muted">Not specified</em>';
+            }
+        ?>
+    </p>
+</div>
                 </div>
             </div>
         </div>

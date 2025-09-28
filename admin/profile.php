@@ -26,6 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $last_name = sanitizeInput($_POST['last_name']);
                 $email = sanitizeInput($_POST['email']);
                 $phone = sanitizeInput($_POST['phone']);
+                $house_number = sanitizeInput($_POST['house_number']);
+                $street = sanitizeInput($_POST['street']);
+                $barangay = sanitizeInput($_POST['barangay']);
+                $landmark = sanitizeInput($_POST['landmark']);
                 
                 // Validation
                 $errors = [];
@@ -40,6 +44,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 if (empty($email)) {
                     $errors[] = "Email is required";
+                }
+                if (empty($phone)) {
+                    $errors[] = "Phone number is required";
+                }
+                if (empty($house_number)) {
+                    $errors[] = "House number is required";
+                }
+                if (empty($street)) {
+                    $errors[] = "Street is required";
+                }
+                if (empty($barangay)) {
+                    $errors[] = "Barangay is required";
                 } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     $errors[] = "Invalid email format";
                 }
@@ -543,10 +559,49 @@ include '../includes/header.php';
                                         </div>
                                         
                                         <div class="mb-3">
-                                            <label for="phone" class="form-label">Phone Number</label>
+                                            <label for="phone" class="form-label">Phone Number *</label>
                                             <input type="text" class="form-control" id="phone" name="phone" 
                                                    value="<?php echo htmlspecialchars($admin_profile['phone']); ?>">
                                         </div>
+
+                                         <div class="mb-3">
+                            <div class="col-md-4">
+    <label for="house_number" class="form-label">House No. *</label>
+    <input type="text" class="form-control" id="house_number" name="house_number" 
+           value="<?php echo htmlspecialchars($admin_profile['house_number'] ?? '', ENT_QUOTES); ?>" required>
+</div>
+
+                            <div class="col-md-8">
+    <label for="street" class="form-label">Street *</label>
+    <input type="text" class="form-control" id="street" name="street" 
+           value="<?php echo htmlspecialchars($admin_profile['street'] ?? '', ENT_QUOTES); ?>" 
+           required>
+</div>
+
+
+                       <div class="mb-3">
+    <label for="barangay" class="form-label">Barangay *</label>
+    <select class="form-select" id="barangay" name="barangays" required>
+        <option value="" disabled <?php echo empty($admin_profile['barangays']) ? 'selected' : ''; ?>>
+            Select your barangay
+        </option>
+        <?php foreach ($barangays as $barangay): ?>
+            <option value="<?php echo htmlspecialchars($barangay['name'], ENT_QUOTES); ?>"
+                <?php echo ($admin_profile['barangays'] ?? '') === $barangay['name'] ? 'selected' : ''; ?>>
+                <?php echo htmlspecialchars($barangay['name']); ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+</div>
+
+
+                        
+                       <div class="mb-3">
+    <label for="landmark" class="form-label">Landmark (Optional)</label>
+    <input type="text" class="form-control" id="landmark" name="landmark" 
+           value="<?php echo htmlspecialchars($admin_profile['landmark'] ?? '', ENT_QUOTES); ?>">
+</div>
+
                                         
                                         <div class="mb-3">
                                             <label class="form-label">Role</label>
