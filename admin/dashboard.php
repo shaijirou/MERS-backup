@@ -8,6 +8,7 @@ $additional_css = ['assets/css/admin.css'];
 $database = new Database();
 $db = $database->getConnection();
 
+
 // Get statistics
 $stats = [];
 
@@ -98,7 +99,7 @@ $map_alerts_stmt = $db->prepare($map_alerts_query);
 $map_alerts_stmt->execute();
 $map_alerts_result = $map_alerts_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$dashboard_hazard_zones_query = "SELECT * FROM hazard_zones ORDER BY risk_level DESC, name LIMIT 25";
+$dashboard_hazard_zones_query = "SELECT * FROM hazard_zones ORDER BY risk_level DESC, name";
 $dashboard_hazard_zones_stmt = $db->prepare($dashboard_hazard_zones_query);
 $dashboard_hazard_zones_stmt->execute();
 $dashboard_hazard_zones_result = $dashboard_hazard_zones_stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -163,14 +164,14 @@ include '../includes/header.php';
     border-radius: 8px;
     opacity: 0;
     transition: opacity 0.3s;
-    pointer-events: none; /* Allow mouse events to pass through */
+    pointer-events: none;
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 999;
 }
 .map-overlay .btn {
-    pointer-events: auto; /* Re-enable pointer events for the button */
+    pointer-events: auto;
 }
 .map-container:hover .map-overlay {
     opacity: 1;
@@ -178,7 +179,6 @@ include '../includes/header.php';
 .map-container {
     position: relative;
 }
-/* ADDED CSS FOR COLLAPSE FUNCTIONALITY */
 .map-controls-dashboard .collapsed {
     max-height: 0 !important;
     overflow: hidden !important;
@@ -191,7 +191,7 @@ include '../includes/header.php';
     pointer-events: none !important;
 }
 .map-controls-dashboard #controlsBody {
-    max-height: 500px; /* A safe maximum height for transition */
+    max-height: 500px;
     transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
 }
 </style>
@@ -257,77 +257,76 @@ include '../includes/header.php';
                             </div>
                         </div>
                         <div class="card-body p-0">
-    <div class="map-container">
-        <div class="map-controls-dashboard" id="mapControls">
-            <div class="controls-header d-flex justify-content-between align-items-center mb-2">
-                <strong>Map Layers</strong>
-                <button class="btn btn-sm btn-light toggle-btn" id="toggleControlsBtn">
-                    <i class="bi bi-x-lg" id="toggleIcon"></i>
-                </button>
-            </div>
+                            <div class="map-container">
+                                <div class="map-controls-dashboard" id="mapControls">
+                                    <div class="controls-header d-flex justify-content-between align-items-center mb-2">
+                                        <strong>Map Layers</strong>
+                                        <button class="btn btn-sm btn-light toggle-btn" id="toggleControlsBtn">
+                                            <i class="bi bi-x-lg" id="toggleIcon"></i>
+                                        </button>
+                                    </div>
 
-            <div class="controls-body" id="controlsBody">
-                <div class="form-check form-switch mb-2">
-    <input class="form-check-input" type="checkbox" id="showIncidents" checked>
-    <label class="form-check-label" for="showIncidents">
-        <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>
-        <small>Incidents</small>
-    </label>
-</div>
-<div class="form-check form-switch mb-2">
-    <input class="form-check-input" type="checkbox" id="showEvacuation" checked>
-    <label class="form-check-label" for="showEvacuation">
-        <i class="bi bi-house-heart-fill text-success me-1"></i>
-        <small>Evacuation Centers</small>
-    </label>
-</div>
-<div class="form-check form-switch mb-2">
-    <input class="form-check-input" type="checkbox" id="showAlerts" checked>
-    <label class="form-check-label" for="showAlerts">
-        <i class="bi bi-bell-fill text-warning me-1"></i>
-        <small>Alerts</small>
-    </label>
-</div>
-<div class="form-check form-switch mb-2">
-    <input class="form-check-input" type="checkbox" id="showFloodZones" checked>
-    <label class="form-check-label" for="showFloodZones">
-        <i class="bi bi-water text-info me-1"></i>
-        <small>Flood Prone Areas</small>
-    </label>
-</div>
-<div class="form-check form-switch mb-2">
-    <input class="form-check-input" type="checkbox" id="showLandslideZones" checked>
-    <label class="form-check-label" for="showLandslideZones">
-        <i class="bi bi-triangle text-secondary me-1"></i>
-        <small>Landslide Prone Areas</small>
-    </label>
-</div>
-<div class="form-check form-switch mb-2">
-    <input class="form-check-input" type="checkbox" id="showAccidentAreas" checked>
-    <label class="form-check-label" for="showAccidentAreas">
-        <i class="bi bi-car-front-fill text-primary me-1"></i>
-        <small>Accident Prone Areas</small>
-    </label>
-</div>
-<div class="form-check form-switch">
-    <input class="form-check-input" type="checkbox" id="showVolcanicRisk" checked>
-    <label class="form-check-label" for="showVolcanicRisk">
-        <i class="bi bi-fire text-danger me-1"></i>
-        <small>Volcanic Risk</small>
-    </label>
-</div>
-            </div>
-        </div>
+                                    <div class="controls-body" id="controlsBody">
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="showIncidents" checked>
+                                            <label class="form-check-label" for="showIncidents">
+                                                <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>
+                                                <small>Incidents</small>
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="showEvacuation" checked>
+                                            <label class="form-check-label" for="showEvacuation">
+                                                <i class="bi bi-house-heart-fill text-success me-1"></i>
+                                                <small>Evacuation Centers</small>
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="showAlerts" checked>
+                                            <label class="form-check-label" for="showAlerts">
+                                                <i class="bi bi-bell-fill text-warning me-1"></i>
+                                                <small>Alerts</small>
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="showFloodZones" checked>
+                                            <label class="form-check-label" for="showFloodZones">
+                                                <i class="bi bi-water text-info me-1"></i>
+                                                <small>Flood Prone Areas</small>
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="showLandslideZones" checked>
+                                            <label class="form-check-label" for="showLandslideZones">
+                                                <i class="bi bi-triangle text-secondary me-1"></i>
+                                                <small>Landslide Prone Areas</small>
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="showAccidentAreas" checked>
+                                            <label class="form-check-label" for="showAccidentAreas">
+                                                <i class="bi bi-car-front-fill text-primary me-1"></i>
+                                                <small>Accident Prone Areas</small>
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="showVolcanicRisk" checked>
+                                            <label class="form-check-label" for="showVolcanicRisk">
+                                                <i class="bi bi-fire text-danger me-1"></i>
+                                                <small>Volcanic Risk</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
 
-        <div id="dashboardMap"></div>
-        <div class="map-overlay">
-            <a href="map.php" class="btn btn-primary">
-                <i class="bi bi-arrows-fullscreen"></i> Open Full Map
-            </a>
-        </div>
-    </div>
-</div>
-
+                                <div id="dashboardMap"></div>
+                                <div class="map-overlay">
+                                    <a href="map.php" class="btn btn-primary">
+                                        <i class="bi bi-arrows-fullscreen"></i> Open Full Map
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -484,470 +483,508 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Toggle sidebar
-document.getElementById("menu-toggle").addEventListener("click", function(e) {
-    e.preventDefault();
-    document.getElementById("wrapper").classList.toggle("toggled");
-});
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle sidebar
+    const menuToggle = document.getElementById("menu-toggle");
+    if (menuToggle) {
+        menuToggle.addEventListener("click", function(e) {
+            e.preventDefault();
+            document.getElementById("wrapper").classList.toggle("toggled");
+        });
+    }
 
-// Initialize dashboard map with proper settings
-var dashboardMap = L.map('dashboardMap', {
-    dragging: true,
-    touchZoom: true,
-    doubleClickZoom: true,
-    scrollWheelZoom: true,
-    boxZoom: true,
-    keyboard: true,
-    zoomControl: true
-}).setView([13.934542301563013, 120.92846530878772], 15);
+    // Initialize dashboard map with proper settings
+    var dashboardMap = L.map('dashboardMap', {
+        dragging: true,
+        touchZoom: true,
+        doubleClickZoom: true,
+        scrollWheelZoom: true,
+        boxZoom: true,
+        keyboard: true,
+        zoomControl: true
+    }).setView([13.934542301563013, 120.92846530878772], 13);
 
-// Add OpenStreetMap tiles
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-}).addTo(dashboardMap);
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(dashboardMap);
 
-// Layer groups for different marker types
-var dashIncidentLayer = L.layerGroup().addTo(dashboardMap);
-var dashEvacuationLayer = L.layerGroup().addTo(dashboardMap);
-var dashAlertLayer = L.layerGroup().addTo(dashboardMap);
-var dashFloodLayer = L.layerGroup().addTo(dashboardMap);
-var dashLandslideLayer = L.layerGroup().addTo(dashboardMap);
-var dashAccidentLayer = L.layerGroup().addTo(dashboardMap);
-var dashVolcanicLayer = L.layerGroup().addTo(dashboardMap);
+    // Layer groups for different marker types
+    var dashIncidentLayer = L.layerGroup().addTo(dashboardMap);
+    var dashEvacuationLayer = L.layerGroup().addTo(dashboardMap);
+    var dashAlertLayer = L.layerGroup().addTo(dashboardMap);
+    var dashFloodLayer = L.layerGroup().addTo(dashboardMap);
+    var dashLandslideLayer = L.layerGroup().addTo(dashboardMap);
+    var dashAccidentLayer = L.layerGroup().addTo(dashboardMap);
+    var dashVolcanicLayer = L.layerGroup().addTo(dashboardMap);
 
-// Barangay coordinates
-var barangayCoords = <?php echo json_encode($barangay_coords); ?>;
+    // Barangay coordinates
+    var barangayCoords = <?php echo json_encode($barangay_coords); ?>;
 
-// Map data
-var evacuationCenters = <?php echo json_encode($centers_result); ?>;
-var mapIncidents = <?php echo json_encode($map_incidents_result); ?>;
-var mapAlerts = <?php echo json_encode($map_alerts_result); ?>;
-var dashboardHazardZones = <?php echo json_encode($dashboard_hazard_zones_result); ?>;
-var populationStats = <?php echo json_encode($population_stats); ?>;
+    // Map data
+    var evacuationCenters = <?php echo json_encode($centers_result); ?>;
+    var mapIncidents = <?php echo json_encode($map_incidents_result); ?>;
+    var mapAlerts = <?php echo json_encode($map_alerts_result); ?>;
+    var dashboardHazardZones = <?php echo json_encode($dashboard_hazard_zones_result); ?>;
 
-// Add evacuation center markers
-evacuationCenters.forEach(function(center) {
-    var occupancyRate = center.capacity > 0 ? (center.current_occupancy / center.capacity * 100) : 0;
-    var markerColor = center.status === 'active' ? '#28a745' : '#6c757d';
-    
-    var marker = L.circleMarker([center.latitude, center.longitude], {
-        radius: 6,
-        fillColor: markerColor,
-        color: '#fff',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.8
-    });
-    
-    var popupContent = `
-        <div class="popup-content">
-            <h6><i class="bi bi-house"></i> ${center.name}</h6>
-            <p><strong>Capacity:</strong> ${center.current_occupancy}/${center.capacity}</p>
-            <p><strong>Status:</strong> <span class="badge bg-${center.status === 'active' ? 'success' : 'secondary'}">${center.status}</span></p>
-        </div>
-    `;
-    
-    marker.bindPopup(popupContent);
-    dashEvacuationLayer.addLayer(marker);
-});
+    console.log('[v0] Total hazard zones loaded:', dashboardHazardZones.length);
 
-// Add incident markers
-mapIncidents.forEach(function(incident) {
-    if (incident.barangay && barangayCoords[incident.barangay]) {
-        var coords = barangayCoords[incident.barangay];
-        var markerColor = getSeverityColor(incident.severity);
+    // Add evacuation center markers
+    evacuationCenters.forEach(function(center) {
+        var occupancyRate = center.capacity > 0 ? (center.current_occupancy / center.capacity * 100) : 0;
+        var markerColor = center.status === 'active' ? '#28a745' : '#6c757d';
         
-        var lat = coords.lat + (Math.random() - 0.5) * 0.01;
-        var lng = coords.lng + (Math.random() - 0.5) * 0.01;
-        
-        var marker = L.circleMarker([lat, lng], {
-            radius: 5,
+        var marker = L.circleMarker([center.latitude, center.longitude], {
+            radius: 8,
             fillColor: markerColor,
             color: '#fff',
-            weight: 1,
+            weight: 2,
             opacity: 1,
             fillOpacity: 0.8
         });
         
         var popupContent = `
             <div class="popup-content">
-                <h6><i class="bi bi-exclamation-triangle"></i> ${incident.incident_type.charAt(0).toUpperCase() + incident.incident_type.slice(1)} Incident</h6>
-                <p><strong>Location:</strong> ${incident.location || incident.barangay}, ${incident.barangay}</p>
-                <p><strong>Description:</strong> ${(incident.description || 'No description available').substring(0, 100)}...</p>
-                <p><strong>Severity:</strong> <span class="badge bg-${getSeverityBadgeClass(incident.severity)}">${incident.severity || 'Not specified'}</span></p>
-                <p><strong>Status:</strong> <span class="badge bg-${getStatusBadgeClass(incident.status)}">${(incident.status || 'pending').replace('_', ' ')}</span></p>
-                <p><strong>Reported by:</strong> ${incident.first_name} ${incident.last_name}</p>
-                <p><strong>Date:</strong> ${new Date(incident.created_at).toLocaleDateString()}</p>
+                <h6><i class="bi bi-house-heart-fill"></i> ${center.name}</h6>
+                <p><strong>Capacity:</strong> ${center.current_occupancy}/${center.capacity}</p>
+                <p><strong>Status:</strong> <span class="badge bg-${center.status === 'active' ? 'success' : 'secondary'}">${center.status}</span></p>
             </div>
         `;
         
         marker.bindPopup(popupContent);
-        dashIncidentLayer.addLayer(marker);
-    }
-});
+        dashEvacuationLayer.addLayer(marker);
+    });
 
-// Add alert area markers
-mapAlerts.forEach(function(alert) {
-    if (alert.affected_barangays && barangayCoords[alert.affected_barangays]) {
-        var coords = barangayCoords[alert.affected_barangays];
-        var markerColor = getSeverityColor(alert.severity_level);
-        
-        var marker = L.circle([coords.lat, coords.lng], {
-            radius: 800,
-            fillColor: markerColor,
-            color: markerColor,
-            weight: 2,
-            opacity: 0.6,
-            fillOpacity: 0.2
-        });
-        
-        var popupContent = `
-            <div class="popup-content">
-                <h6><i class="bi bi-bell"></i> ${alert.title}</h6>
-                <p><strong>Area:</strong> ${alert.affected_barangays}</p>
-                <p><strong>Severity:</strong> <span class="badge bg-${getSeverityBadgeClass(alert.severity_level)}">${alert.severity_level || 'Not specified'}</span></p>
-            </div>
-        `;
-        
-        marker.bindPopup(popupContent);
-        dashAlertLayer.addLayer(marker);
-    }
-});
+    // Add incident markers
+    mapIncidents.forEach(function(incident) {
+        if (incident.barangay && barangayCoords[incident.barangay]) {
+            var coords = barangayCoords[incident.barangay];
+            var markerColor = getSeverityColor(incident.severity);
+            
+            var lat = coords.lat + (Math.random() - 0.5) * 0.01;
+            var lng = coords.lng + (Math.random() - 0.5) * 0.01;
+            
+            var marker = L.circleMarker([lat, lng], {
+                radius: 6,
+                fillColor: markerColor,
+                color: '#fff',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            });
+            
+            var popupContent = `
+                <div class="popup-content">
+                    <h6><i class="bi bi-exclamation-triangle-fill"></i> ${incident.incident_type.charAt(0).toUpperCase() + incident.incident_type.slice(1)} Incident</h6>
+                    <p><strong>Location:</strong> ${incident.location || incident.barangay}, ${incident.barangay}</p>
+                    <p><strong>Description:</strong> ${(incident.description || 'No description available').substring(0, 100)}...</p>
+                    <p><strong>Severity:</strong> <span class="badge bg-${getSeverityBadgeClass(incident.severity)}">${incident.severity || 'Not specified'}</span></p>
+                    <p><strong>Status:</strong> <span class="badge bg-${getStatusBadgeClass(incident.status)}">${(incident.status || 'pending').replace('_', ' ')}</span></p>
+                    <p><strong>Reported by:</strong> ${incident.first_name} ${incident.last_name}</p>
+                    <p><strong>Date:</strong> ${new Date(incident.created_at).toLocaleDateString()}</p>
+                </div>
+            `;
+            
+            marker.bindPopup(popupContent);
+            dashIncidentLayer.addLayer(marker);
+        }
+    });
 
-dashboardHazardZones.forEach(function(zone) {
-    if (zone.coordinates) {
-        var coordinates;
-        try {
-            coordinates = JSON.parse(zone.coordinates);
-        } catch (e) {
-            console.error('Invalid coordinates for zone:', zone.name);
-            return;
+    // Add alert area markers
+    mapAlerts.forEach(function(alert) {
+        if (alert.affected_barangays && barangayCoords[alert.affected_barangays]) {
+            var coords = barangayCoords[alert.affected_barangays];
+            var markerColor = getSeverityColor(alert.severity_level);
+            
+            var marker = L.circle([coords.lat, coords.lng], {
+                radius: 800,
+                fillColor: markerColor,
+                color: markerColor,
+                weight: 2,
+                opacity: 0.6,
+                fillOpacity: 0.2
+            });
+            
+            var popupContent = `
+                <div class="popup-content">
+                    <h6><i class="bi bi-bell-fill"></i> ${alert.title}</h6>
+                    <p><strong>Area:</strong> ${alert.affected_barangays}</p>
+                    <p><strong>Severity:</strong> <span class="badge bg-${getSeverityBadgeClass(alert.severity_level)}">${alert.severity_level || 'Not specified'}</span></p>
+                </div>
+            `;
+            
+            marker.bindPopup(popupContent);
+            dashAlertLayer.addLayer(marker);
         }
-        
-        var latLngs = coordinates.map(function(coord) {
-            return [coord.lat, coord.lng];
+    });
+
+    dashboardHazardZones.forEach(function(zone) {
+        if (zone.coordinates) {
+            var coordinates;
+            try {
+                coordinates = JSON.parse(zone.coordinates);
+            } catch (e) {
+                console.error('Invalid coordinates for zone:', zone.name);
+                return;
+            }
+            
+            var latLngs = coordinates.map(function(coord) {
+                return [coord.lat, coord.lng];
+            });
+            
+            var fillColor, borderColor, fillOpacity, weight;
+            switch (zone.zone_type) {
+                case 'flood_prone':
+                    fillColor = '#3b82f6';
+                    borderColor = '#1e40af';
+                    fillOpacity = 0.4;
+                    weight = 2;
+                    break;
+                case 'landslide_prone':
+                    fillColor = '#d97706';
+                    borderColor = '#92400e';
+                    fillOpacity = 0.4;
+                    weight = 2;
+                    break;
+                case 'fault_line': // Accident-prone roadways
+                    fillColor = '#ef4444';
+                    borderColor = '#dc2626';
+                    fillOpacity = 0.6;
+                    weight = 4;
+                    break;
+                case 'volcanic_risk':
+                    fillColor = '#ea580c';
+                    borderColor = '#7c2d12';
+                    fillOpacity = 0.15;
+                    weight = 1;
+                    break;
+                default:
+                    fillColor = '#6b7280';
+                    borderColor = '#374151';
+                    fillOpacity = 0.3;
+                    weight = 2;
+            }
+            
+            var hazardShape;
+            if (zone.zone_type === 'fault_line') {
+                hazardShape = L.polyline(latLngs, {
+                    color: borderColor,
+                    weight: weight,
+                    opacity: 0.8,
+                    dashArray: zone.risk_level === 'critical' ? '8, 4' : null
+                });
+            } else if (zone.zone_type === 'volcanic_risk') {
+                var center = getPolygonCenter(latLngs);
+                var radius = getPolygonRadius(latLngs, center);
+                hazardShape = L.circle(center, {
+                    radius: radius,
+                    fillColor: fillColor,
+                    fillOpacity: fillOpacity,
+                    color: borderColor,
+                    weight: weight,
+                    opacity: 0.7
+                });
+            } else {
+                hazardShape = L.polygon(latLngs, {
+                    fillColor: fillColor,
+                    fillOpacity: fillOpacity,
+                    color: borderColor,
+                    weight: weight,
+                    opacity: 0.7
+                });
+            }
+            
+            var popupContent = `
+                <div class="popup-content">
+                    <h6>${zone.name}</h6>
+                    <p><strong>Type:</strong> ${zone.zone_type === 'fault_line' ? 'Accident Prone Road' : 
+                                               zone.zone_type === 'volcanic_risk' ? 'Volcanic Risk' :
+                                               zone.zone_type === 'flood_prone' ? 'Flood Prone' : 'Landslide Prone'}</p>
+                    <p><strong>Risk:</strong> ${zone.risk_level}</p>
+                    <p>${zone.description.substring(0, 80)}...</p>
+                </div>
+            `;
+            
+            hazardShape.bindPopup(popupContent);
+            
+            switch (zone.zone_type) {
+                case 'flood_prone':
+                    dashFloodLayer.addLayer(hazardShape);
+                    break;
+                case 'landslide_prone':
+                    dashLandslideLayer.addLayer(hazardShape);
+                    break;
+                case 'fault_line':
+                    dashAccidentLayer.addLayer(hazardShape);
+                    break;
+                case 'volcanic_risk':
+                    dashVolcanicLayer.addLayer(hazardShape);
+                    break;
+            }
+        }
+    });
+
+    // Helper functions
+    function getSeverityColor(severity) {
+        switch(severity) {
+            case 'low': return '#28a745';
+            case 'medium': return '#ffc107';
+            case 'high': return '#fd7e14';
+            case 'critical': return '#dc3545';
+            default: return '#6c757d';
+        }
+    }
+
+    function getSeverityBadgeClass(severity) {
+        switch(severity) {
+            case 'low': return 'success';
+            case 'medium': return 'warning';
+            case 'high': return 'warning';
+            case 'critical': return 'danger';
+            default: return 'secondary';
+        }
+    }
+
+    function getStatusBadgeClass(status) {
+        switch(status) {
+            case 'pending': return 'warning';
+            case 'in_progress': return 'info';
+            case 'resolved': return 'success';
+            case 'closed': return 'secondary';
+            case 'active': return 'success';
+            default: return 'secondary';
+        }
+    }
+
+    function getPolygonCenter(latLngs) {
+        var lat = 0, lng = 0;
+        latLngs.forEach(function(coord) {
+            lat += coord[0];
+            lng += coord[1];
         });
-        
-        var fillColor, borderColor, fillOpacity, weight;
-        switch (zone.zone_type) {
-            case 'flood_prone':
-                fillColor = '#3b82f6';
-                borderColor = '#1e40af';
-                fillOpacity = 0.4;
-                weight = 2;
-                break;
-            case 'landslide_prone':
-                fillColor = '#d97706';
-                borderColor = '#92400e';
-                fillOpacity = 0.4;
-                weight = 2;
-                break;
-            case 'fault_line': // Accident-prone roadways
-                fillColor = '#ef4444';
-                borderColor = '#dc2626';
-                fillOpacity = 0.6;
-                weight = 4;
-                break;
-            case 'volcanic_risk':
-                fillColor = '#ea580c';
-                borderColor = '#7c2d12';
-                fillOpacity = 0.15; // Lower opacity for background layer
-                weight = 1;
-                break;
-            default:
-                fillColor = '#6b7280';
-                borderColor = '#374151';
-                fillOpacity = 0.3;
-                weight = 2;
-        }
-        
-        var hazardShape;
-        if (zone.zone_type === 'fault_line') {
-            hazardShape = L.polyline(latLngs, {
-                color: borderColor,
-                weight: weight,
-                opacity: 0.8,
-                dashArray: zone.risk_level === 'critical' ? '8, 4' : null
-            });
-        } else if (zone.zone_type === 'volcanic_risk') {
-            var center = getPolygonCenter(latLngs);
-            var radius = getPolygonRadius(latLngs, center);
-            hazardShape = L.circle(center, {
-                radius: radius,
-                fillColor: fillColor,
-                fillOpacity: fillOpacity,
-                color: borderColor,
-                weight: weight,
-                opacity: 0.7
-            });
+        return [lat / latLngs.length, lng / latLngs.length];
+    }
+
+    function getPolygonRadius(latLngs, center) {
+        var maxDistance = 0;
+        latLngs.forEach(function(coord) {
+            var distance = Math.sqrt(
+                Math.pow(coord[0] - center[0], 2) + Math.pow(coord[1] - center[1], 2)
+            );
+            maxDistance = Math.max(maxDistance, distance);
+        });
+        return maxDistance * 111000;
+    }
+
+    document.getElementById('showIncidents').addEventListener('change', function() {
+        if (this.checked) {
+            dashboardMap.addLayer(dashIncidentLayer);
         } else {
-            hazardShape = L.polygon(latLngs, {
-                fillColor: fillColor,
-                fillOpacity: fillOpacity,
-                color: borderColor,
-                weight: weight,
-                opacity: 0.7
-            });
+            dashboardMap.removeLayer(dashIncidentLayer);
         }
-        
-        var popupContent = `
-            <div class="popup-content">
-                <h6>${zone.name}</h6>
-                <p><strong>Type:</strong> ${zone.zone_type === 'fault_line' ? 'Accident Prone Road' : 
-                                           zone.zone_type === 'volcanic_risk' ? 'Volcanic Risk' :
-                                           zone.zone_type === 'flood_prone' ? 'Flood Prone' : 'Landslide Prone'}</p>
-                <p><strong>Risk:</strong> ${zone.risk_level}</p>
-                <p>${zone.description.substring(0, 80)}...</p>
-            </div>
-        `;
-        
-        hazardShape.bindPopup(popupContent);
-        
-        switch (zone.zone_type) {
-            case 'flood_prone':
-                dashFloodLayer.addLayer(hazardShape);
-                break;
-            case 'landslide_prone':
-                dashLandslideLayer.addLayer(hazardShape);
-                break;
-            case 'fault_line':
-                dashAccidentLayer.addLayer(hazardShape);
-                break;
-            case 'volcanic_risk':
-                dashVolcanicLayer.addLayer(hazardShape);
-                break;
-        }
-    }
-});
-
-// Helper functions
-function getSeverityColor(severity) {
-    switch(severity) {
-        case 'low': return '#28a745';
-        case 'medium': return '#ffc107';
-        case 'high': return '#fd7e14';
-        case 'critical': return '#dc3545';
-        default: return '#6c757d';
-    }
-}
-
-function getSeverityBadgeClass(severity) {
-    switch(severity) {
-        case 'low': return 'success';
-        case 'medium': return 'warning';
-        case 'high': return 'warning';
-        case 'critical': return 'danger';
-        default: return 'secondary';
-    }
-}
-
-function getStatusBadgeClass(status) {
-    switch(status) {
-        case 'pending': return 'warning';
-        case 'in_progress': return 'info';
-        case 'resolved': return 'success';
-        case 'closed': return 'secondary';
-        case 'active': return 'success';
-        default: return 'secondary';
-    }
-}
-
-function getPolygonCenter(latLngs) {
-    var lat = 0, lng = 0;
-    latLngs.forEach(function(coord) {
-        lat += coord[0];
-        lng += coord[1];
     });
-    return [lat / latLngs.length, lng / latLngs.length];
-}
 
-function getPolygonRadius(latLngs, center) {
-    var maxDistance = 0;
-    latLngs.forEach(function(coord) {
-        var distance = Math.sqrt(
-            Math.pow(coord[0] - center[0], 2) + Math.pow(coord[1] - center[1], 2)
-        );
-        maxDistance = Math.max(maxDistance, distance);
-    });
-    return maxDistance * 111000; // Convert to meters approximately
-}
-
-// Toggle layer visibility for dashboard map
-document.getElementById('showDashIncidents').addEventListener('change', function() {
-    if (this.checked) {
-        dashboardMap.addLayer(dashIncidentLayer);
-    } else {
-        dashboardMap.removeLayer(dashIncidentLayer);
-    }
-});
-
-document.getElementById('showDashEvacuation').addEventListener('change', function() {
-    if (this.checked) {
-        dashboardMap.addLayer(dashEvacuationLayer);
-    } else {
-        dashboardMap.removeLayer(dashEvacuationLayer);
-    }
-});
-
-document.getElementById('showDashAlerts').addEventListener('change', function() {
-    if (this.checked) {
-        dashboardMap.addLayer(dashAlertLayer);
-    } else {
-        dashboardMap.removeLayer(dashAlertLayer);
-    }
-});
-
-document.getElementById('showDashFlood').addEventListener('change', function() {
-    if (this.checked) {
-        dashboardMap.addLayer(dashFloodLayer);
-    } else {
-        dashboardMap.removeLayer(dashFloodLayer);
-    }
-});
-
-document.getElementById('showDashLandslide').addEventListener('change', function() {
-    if (this.checked) {
-        dashboardMap.addLayer(dashLandslideLayer);
-    } else {
-        dashboardMap.removeLayer(dashLandslideLayer);
-    }
-});
-
-document.getElementById('showDashAccident').addEventListener('change', function() {
-    if (this.checked) {
-        dashboardMap.addLayer(dashAccidentLayer);
-    } else {
-        dashboardMap.removeLayer(dashAccidentLayer);
-    }
-});
-
-document.getElementById('showDashVolcanic').addEventListener('change', function() {
-    if (this.checked) {
-        dashboardMap.addLayer(dashVolcanicLayer);
-    } else {
-        dashboardMap.removeLayer(dashVolcanicLayer);
-    }
-});
-
-// Ensure map renders properly after page load
-setTimeout(function() {
-    dashboardMap.invalidateSize();
-}, 100);
-
-// User statistics chart
-const ctx = document.getElementById('userStatsChart').getContext('2d');
-const userStatsChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: [<?php echo "'" . implode("','", array_column($user_stats, 'barangay')) . "'"; ?>],
-        datasets: [{
-            label: 'Registered Users by Barangay',
-            data: [<?php echo implode(',', array_column($user_stats, 'count')); ?>],
-            backgroundColor: 'rgba(13, 110, 253, 0.7)',
-            borderColor: 'rgba(13, 110, 253, 1)',
-            borderWidth: 1
-        }]
-    },
-    options: {
-        scales: {
-            y: {
-                beginAtZero: true
-            }
+    document.getElementById('showEvacuation').addEventListener('change', function() {
+        if (this.checked) {
+            dashboardMap.addLayer(dashEvacuationLayer);
+        } else {
+            dashboardMap.removeLayer(dashEvacuationLayer);
         }
-    }
-});
+    });
 
-// Population statistics chart
-const populationCtx = document.getElementById('populationChart').getContext('2d');
-const populationChart = new Chart(populationCtx, {
-    type: 'bar',
-    data: {
-        labels: [<?php echo "'" . implode("','", array_column($population_stats, 'name')) . "'"; ?>],
-        datasets: [{
-            label: 'Population',
-            data: [<?php echo implode(',', array_column($population_stats, 'population')); ?>],
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.8)',
-                'rgba(54, 162, 235, 0.8)',
-                'rgba(255, 205, 86, 0.8)',
-                'rgba(75, 192, 192, 0.8)',
-                'rgba(153, 102, 255, 0.8)',
-                'rgba(255, 159, 64, 0.8)',
-                'rgba(199, 199, 199, 0.8)',
-                'rgba(83, 102, 255, 0.8)',
-                'rgba(255, 99, 255, 0.8)',
-                'rgba(99, 255, 132, 0.8)'
-            ],
-            borderColor: [
-                'rgba(255, 99, 132, 1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 205, 86, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(153, 102, 255, 1)',
-                'rgba(255, 159, 64, 1)',
-                'rgba(199, 199, 199, 1)',
-                'rgba(83, 102, 255, 1)',
-                'rgba(255, 99, 255, 1)',
-                'rgba(99, 255, 132, 1)'
-            ],
-            borderWidth: 1
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                display: false
+    document.getElementById('showAlerts').addEventListener('change', function() {
+        if (this.checked) {
+            dashboardMap.addLayer(dashAlertLayer);
+        } else {
+            dashboardMap.removeLayer(dashAlertLayer);
+        }
+    });
+
+    document.getElementById('showFloodZones').addEventListener('change', function() {
+        if (this.checked) {
+            dashboardMap.addLayer(dashFloodLayer);
+        } else {
+            dashboardMap.removeLayer(dashFloodLayer);
+        }
+    });
+
+    document.getElementById('showLandslideZones').addEventListener('change', function() {
+        if (this.checked) {
+            dashboardMap.addLayer(dashLandslideLayer);
+        } else {
+            dashboardMap.removeLayer(dashLandslideLayer);
+        }
+    });
+
+    document.getElementById('showAccidentAreas').addEventListener('change', function() {
+        if (this.checked) {
+            dashboardMap.addLayer(dashAccidentLayer);
+        } else {
+            dashboardMap.removeLayer(dashAccidentLayer);
+        }
+    });
+
+    document.getElementById('showVolcanicRisk').addEventListener('change', function() {
+        if (this.checked) {
+            dashboardMap.addLayer(dashVolcanicLayer);
+        } else {
+            dashboardMap.removeLayer(dashVolcanicLayer);
+        }
+    });
+
+    // Ensure map renders properly after page load
+    setTimeout(function() {
+        dashboardMap.invalidateSize();
+    }, 100);
+
+    // User statistics chart
+    const userStatsCanvas = document.getElementById('userStatsChart');
+    if (userStatsCanvas) {
+        const ctx = userStatsCanvas.getContext('2d');
+        const userStatsChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [<?php echo "'" . implode("','", array_column($user_stats, 'barangay')) . "'"; ?>],
+                datasets: [{
+                    label: 'Registered Users by Barangay',
+                    data: [<?php echo implode(',', array_column($user_stats, 'count')); ?>],
+                    backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    borderWidth: 1
+                }]
             },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        return context.parsed.y.toLocaleString() + ' residents';
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true
                     }
                 }
             }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return value.toLocaleString();
+        });
+    }
+
+    // Population statistics chart
+    const populationCanvas = document.getElementById('populationChart');
+    if (populationCanvas) {
+        const populationCtx = populationCanvas.getContext('2d');
+        const populationChart = new Chart(populationCtx, {
+            type: 'bar',
+            data: {
+                labels: [<?php echo "'" . implode("','", array_column($population_stats, 'name')) . "'"; ?>],
+                datasets: [{
+                    label: 'Population',
+                    data: [<?php echo implode(',', array_column($population_stats, 'population')); ?>],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 205, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)',
+                        'rgba(255, 159, 64, 0.8)',
+                        'rgba(199, 199, 199, 0.8)',
+                        'rgba(83, 102, 255, 0.8)',
+                        'rgba(255, 99, 255, 0.8)',
+                        'rgba(99, 255, 132, 0.8)',
+                        'rgba(255, 159, 132, 0.8)',
+                        'rgba(132, 255, 235, 0.8)',
+                        'rgba(255, 132, 86, 0.8)',
+                        'rgba(192, 75, 192, 0.8)',
+                        'rgba(102, 153, 255, 0.8)',
+                        'rgba(64, 255, 159, 0.8)',
+                        'rgba(199, 132, 199, 0.8)',
+                        'rgba(255, 102, 83, 0.8)',
+                        'rgba(99, 132, 255, 0.8)',
+                        'rgba(255, 255, 99, 0.8)',
+                        'rgba(132, 99, 255, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 205, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(199, 199, 199, 1)',
+                        'rgba(83, 102, 255, 1)',
+                        'rgba(255, 99, 255, 1)',
+                        'rgba(99, 255, 132, 1)',
+                        'rgba(255, 159, 132, 1)',
+                        'rgba(132, 255, 235, 1)',
+                        'rgba(255, 132, 86, 1)',
+                        'rgba(192, 75, 192, 1)',
+                        'rgba(102, 153, 255, 1)',
+                        'rgba(64, 255, 159, 1)',
+                        'rgba(199, 132, 199, 1)',
+                        'rgba(255, 102, 83, 1)',
+                        'rgba(99, 132, 255, 1)',
+                        'rgba(255, 255, 99, 1)',
+                        'rgba(132, 99, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y.toLocaleString() + ' residents';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
                     }
                 }
-            },
-            x: {
-                ticks: {
-                    maxRotation: 45,
-                    minRotation: 45
-                }
             }
-        }
+        });
     }
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
+
+    // Toggle controls functionality
     const toggleBtn = document.getElementById("toggleControlsBtn");
     const toggleIcon = document.getElementById("toggleIcon");
     const controlsBody = document.getElementById("controlsBody");
 
     if (toggleBtn && toggleIcon && controlsBody) {
         toggleBtn.addEventListener("click", () => {
-            
-            // Toggle the 'collapsed' class to hide/show the body with CSS transition
             controlsBody.classList.toggle("collapsed");
 
-            // Switch icon based on the *new* state of the controlsBody
             if (controlsBody.classList.contains("collapsed")) {
-                // Menu is now hidden, show the burger icon (bi-list)
                 toggleIcon.classList.remove("bi-x-lg");
                 toggleIcon.classList.add("bi-list");
             } else {
-                // Menu is now visible, show the close icon (bi-x-lg)
                 toggleIcon.classList.remove("bi-list");
                 toggleIcon.classList.add("bi-x-lg");
             }
@@ -955,6 +992,5 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 </script>
-
 
 <?php include '../includes/footer.php'; ?>

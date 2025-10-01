@@ -144,7 +144,6 @@ $barangays = $barangay_stmt->fetchAll(PDO::FETCH_ASSOC);
 $stats_query = "SELECT 
                     COUNT(*) as total_users,
                     SUM(CASE WHEN verification_status = 'verified' THEN 1 ELSE 0 END) as verified_users,
-                    -- SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_users,
                     SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as new_users
                 FROM users WHERE user_type = 'resident'";
 $stats_stmt = $db->prepare($stats_query);
@@ -156,6 +155,31 @@ include '../includes/header.php';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="../assets/css/admin.css" rel="stylesheet">
+    <style>
+        /* Enhanced styles to ensure dropdowns work properly */
+        .table-responsive {
+            overflow: visible !important;
+        }
+        .dropdown-menu {
+            z-index: 1050 !important;
+            position: absolute !important;
+        }
+        .dropdown-toggle::after {
+            display: inline-block;
+            margin-left: 0.255em;
+            vertical-align: 0.255em;
+            content: "";
+            border-top: 0.3em solid;
+            border-right: 0.3em solid transparent;
+            border-bottom: 0;
+            border-left: 0.3em solid transparent;
+        }
+        /* Ensure dropdown button is clickable */
+        .btn-group .dropdown-toggle {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+        }
+    </style>
 <div class="d-flex" id="wrapper">
     <?php include 'includes/sidebar.php'; ?>
     
@@ -163,7 +187,6 @@ include '../includes/header.php';
         <?php include 'includes/navbar.php'; ?>
 
         <div class="container-fluid px-4">
-        
             <div class="d-flex justify-content-between align-items-center py-3">
                 <h1 class="h3 mb-0">User Management</h1>
                 <div>
@@ -176,14 +199,12 @@ include '../includes/header.php';
                 </div>
             </div>
 
-           
             <?php if (isset($success_message)): ?>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <?php echo $success_message; ?>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             <?php endif; ?>
-
 
             <div class="row g-3 mb-4">
                 <div class="col-md-4">
@@ -265,11 +286,7 @@ include '../includes/header.php';
                 </div>
             </div>
 
-
             <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Users (<?php echo $total_records; ?> total)</h5>
-                </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
@@ -345,29 +362,27 @@ include '../includes/header.php';
                                                 <i class="bi bi-eye"></i>
                                             </button>
                                             <div class="btn-group">
-                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                                     <i class="bi bi-three-dots"></i>
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <?php if ($user['verification_status'] === 'pending'): ?>
                                                         <li>
-                                                            <a class="dropdown-item" href="#" onclick="performAction('verify', <?php echo $user['id']; ?>)">
+                                                            <a class="dropdown-item" href="#" onclick="performAction('verify', <?php echo $user['id']; ?>); return false;">
                                                                 <i class="bi bi-check-circle text-success"></i> Verify User
                                                             </a>
                                                         </li>
                                                     <?php else: ?>
                                                         <li>
-                                                            <a class="dropdown-item" href="#" onclick="performAction('unverify', <?php echo $user['id']; ?>)">
+                                                            <a class="dropdown-item" href="#" onclick="performAction('unverify', <?php echo $user['id']; ?>); return false;">
                                                                 <i class="bi bi-x-circle text-warning"></i> Remove Verification
                                                             </a>
                                                         </li>
                                                     <?php endif; ?>
                                                     
-                                                   
-                                                    
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <a class="dropdown-item text-danger" href="#" onclick="performAction('delete', <?php echo $user['id']; ?>)">
+                                                        <a class="dropdown-item text-danger" href="#" onclick="performAction('delete', <?php echo $user['id']; ?>); return false;">
                                                             <i class="bi bi-trash"></i> Delete User
                                                         </a>
                                                     </li>
@@ -411,7 +426,7 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
- 
+
 <div class="modal fade" id="addUserModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -496,7 +511,6 @@ include '../includes/header.php';
   </div>
 </div>
 
-
 <div class="modal fade" id="userDetailsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -516,72 +530,81 @@ include '../includes/header.php';
     <input type="hidden" name="user_id" id="actionUserId">
 </form>
 
- 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    document.getElementById("menu-toggle").addEventListener("click", function(e) {
-    e.preventDefault();
-    document.getElementById("wrapper").classList.toggle("toggled");
-});
-
-function performAction(action, userId) {
-    let confirmMessage = '';
-    
-    switch(action) {
-        case 'verify':
-            confirmMessage = 'Are you sure you want to verify this user?';
-            break;
-        case 'unverify':
-            confirmMessage = 'Are you sure you want to remove verification from this user?';
-            break;
-        case 'activate':
-            confirmMessage = 'Are you sure you want to activate this user?';
-            break;
-        case 'deactivate':
-            confirmMessage = 'Are you sure you want to deactivate this user?';
-            break;
-        case 'delete':
-            confirmMessage = 'Are you sure you want to delete this user? This action cannot be undone.';
-            break;
-    }
-    
-    if (confirm(confirmMessage)) {
-        document.getElementById('actionType').value = action;
-        document.getElementById('actionUserId').value = userId;
-        document.getElementById('actionForm').submit();
-    }
-}
-
-function viewUser(userId) {
-    // Load user details via AJAX
-    fetch(`get_user_details.php?id=${userId}`)
-        .then(response => response.text())
-        .then(data => {
-            document.getElementById('userDetailsContent').innerHTML = data;
-            new bootstrap.Modal(document.getElementById('userDetailsModal')).show();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error loading user details');
+    const menuToggle = document.getElementById("menu-toggle");
+    if (menuToggle) {
+        menuToggle.addEventListener("click", function(e) {
+            e.preventDefault();
+            document.getElementById("wrapper").classList.toggle("toggled");
         });
-}
+    }
 
-function exportUsers() {
-    const params = new URLSearchParams(window.location.search);
-    params.set('export', '1');
-    window.location.href = 'export_users.php?' + params.toString();
-}
+    function performAction(action, userId) {
+        let confirmMessage = '';
+        
+        switch(action) {
+            case 'verify':
+                confirmMessage = 'Are you sure you want to verify this user?';
+                break;
+            case 'unverify':
+                confirmMessage = 'Are you sure you want to remove verification from this user?';
+                break;
+            case 'activate':
+                confirmMessage = 'Are you sure you want to activate this user?';
+                break;
+            case 'deactivate':
+                confirmMessage = 'Are you sure you want to deactivate this user?';
+                break;
+            case 'delete':
+                confirmMessage = 'Are you sure you want to delete this user? This action cannot be undone.';
+                break;
+        }
+        
+        Swal.fire({
+            title: 'Confirm Action',
+            text: confirmMessage,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, proceed!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('actionType').value = action;
+                document.getElementById('actionUserId').value = userId;
+                document.getElementById('actionForm').submit();
+            }
+        });
+        
+        return false;
+    }
 
-$(document).ready(function() {
-    // Form validation
-    $('#addUserForm').on('submit', function(e) {
+    function viewUser(userId) {
+        fetch(`get_user_details.php?id=${userId}`)
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('userDetailsContent').innerHTML = data;
+                new bootstrap.Modal(document.getElementById('userDetailsModal')).show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error loading user details');
+            });
+    }
+
+    function exportUsers() {
+        const params = new URLSearchParams(window.location.search);
+        params.set('export', '1');
+        window.location.href = 'export_users.php?' + params.toString();
+    }
+
+    document.getElementById('addUserForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const password = $('input[name="password"]').val();
-        const confirmPassword = $('input[name="confirm_password"]').val();
+        const password = document.querySelector('input[name="password"]').value;
+        const confirmPassword = document.querySelector('input[name="confirm_password"]').value;
         
         if (password !== confirmPassword) {
             Swal.fire({
@@ -601,43 +624,43 @@ $(document).ready(function() {
             return false;
         }
         
-        $.ajax({
-            url: "add_user.php",
-            type: "POST",
-            data: $(this).serialize(),
-            dataType: "json",
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        title: "Success",
-                        text: response.message,
-                        icon: "success"
-                    }).then(() => {
-                        $("#addUserForm")[0].reset();
-                        $("#addUserModal").modal("hide");
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire({
-                        title: "Error",
-                        html: response.message,
-                        icon: "error"
-                    });
-                    if (response.field) {
-                        $(`[name='${response.field}']`).focus();
-                    }
-                }
-            },
-            error: function(xhr, status, error) {
+        const formData = new FormData(this);
+        
+        fetch("add_user.php", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(response => {
+            if (response.success) {
+                Swal.fire({
+                    title: "Success",
+                    text: response.message,
+                    icon: "success"
+                }).then(() => {
+                    document.getElementById('addUserForm').reset();
+                    bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+                    location.reload();
+                });
+            } else {
                 Swal.fire({
                     title: "Error",
-                    text: "An error occurred while processing your request.",
+                    html: response.message,
                     icon: "error"
                 });
+                if (response.field) {
+                    document.querySelector(`[name='${response.field}']`).focus();
+                }
             }
+        })
+        .catch(error => {
+            Swal.fire({
+                title: "Error",
+                text: "An error occurred while processing your request.",
+                icon: "error"
+            });
         });
     });
-});
 </script>
 
 <?php include '../includes/footer.php'; ?>
