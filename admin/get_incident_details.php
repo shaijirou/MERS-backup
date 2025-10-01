@@ -16,7 +16,7 @@ $incident_id = $_GET['id'];
 $query = "SELECT ir.*, 
                  u.first_name as reporter_first_name, u.last_name as reporter_last_name, 
                  u.email as reporter_email, u.phone as reporter_phone, u.barangay as reporter_barangay,
-                 u.address as reporter_address,
+                 CONCAT_WS(' ', u.house_number, u.street, u.landmark, u.barangay) AS reporter_address,
                  admin.first_name as reviewed_by_name, admin.last_name as reviewed_by_lastname
           FROM incident_reports ir 
           LEFT JOIN users u ON ir.user_id = u.id 

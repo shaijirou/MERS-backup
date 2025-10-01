@@ -67,6 +67,7 @@ if ($_POST) {
     }
 }
 
+
 // Pagination and filtering
 $page = $_GET['page'] ?? 1;
 $limit = RECORDS_PER_PAGE;
@@ -156,16 +157,13 @@ include '../includes/header.php';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="../assets/css/admin.css" rel="stylesheet">
 <div class="d-flex" id="wrapper">
-    <!-- Sidebar -->
     <?php include 'includes/sidebar.php'; ?>
     
-    <!-- Page Content -->
     <div id="page-content-wrapper">
-        <!-- Navigation -->
         <?php include 'includes/navbar.php'; ?>
 
         <div class="container-fluid px-4">
-            <!-- Page Header -->
+        
             <div class="d-flex justify-content-between align-items-center py-3">
                 <h1 class="h3 mb-0">User Management</h1>
                 <div>
@@ -178,7 +176,7 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Success/Error Messages -->
+           
             <?php if (isset($success_message)): ?>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <?php echo $success_message; ?>
@@ -186,7 +184,7 @@ include '../includes/header.php';
                 </div>
             <?php endif; ?>
 
-            <!-- Statistics Cards -->
+
             <div class="row g-3 mb-4">
                 <div class="col-md-4">
                     <div class="card bg-primary text-white">
@@ -230,7 +228,6 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Filters -->
             <div class="card mb-4">
                 <div class="card-body">
                     <form method="GET" class="row g-3">
@@ -268,7 +265,7 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Users Table -->
+
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Users (<?php echo $total_records; ?> total)</h5>
@@ -384,8 +381,7 @@ include '../includes/header.php';
                         </table>
                     </div>
                 </div>
-                
-                <!-- Pagination -->
+          
                 <?php if ($total_pages > 1): ?>
                 <div class="card-footer">
                     <nav>
@@ -415,98 +411,92 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
-
-<!-- Add User Modal -->
+ 
 <div class="modal fade" id="addUserModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add New User</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add New User</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="addUserForm">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">First Name *</label>
+              <input type="text" class="form-control" name="first_name" required>
             </div>
-            <form id="addUserForm" method="POST" action="add_user.php">
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">First Name *</label>
-                            <input type="text" class="form-control" name="first_name" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Last Name *</label>
-                            <input type="text" class="form-control" name="last_name" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Email *</label>
-                            <input type="email" class="form-control" name="email" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Phone *</label>
-                            <input type="tel" class="form-control" name="phone" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Barangay *</label>
-                            <select class="form-select" name="barangay" required>
-                                <option value="">Select Barangay</option>
-                                <option value="Adia">Adia</option>
-                                <option value="Bagong Sikat">Bagong Sikat</option>
-                                <option value="Balangon">Balangon</option>
-                                <option value="Bangin">Bangin</option>
-                                <option value="Banyaga">Banyaga</option>
-                                <option value="Barigon">Barigon</option>
-                                <option value="Bilibinwang">Bilibinwang</option>
-                                <option value="Coral na Munti">Coral na Munti</option>
-                                <option value="Guitna">Guitna</option>
-                                <option value="Mabini">Mabini</option>
-                                <option value="Pamiga">Pamiga</option>
-                                <option value="Panhulan">Panhulan</option>
-                                <option value="Pansipit">Pansipit</option>
-                                <option value="Poblacion">Poblacion</option>
-                                <option value="Pook">Pook</option>
-                                <option value="San Jacinto">San Jacinto</option>
-                                <option value="San Teodoro">San Teodoro</option>
-                                <option value="Santa Cruz">Santa Cruz</option>
-                                <option value="Santo Tomas">Santo Tomas</option>
-                                <option value="Subic Ilaya">Subic Ilaya</option>
-                                <option value="Subic Ibaba">Subic Ibaba</option>
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-4">
-    <label class="form-label">House Number <span class="text-danger">*</span></label>
-    <input type="text" class="form-control" name="house_number" required>
-</div>
-
-<div class="col-md-4">
-    <label class="form-label">Street <span class="text-danger">*</span></label>
-    <input type="text" class="form-control" name="street" required>
-</div>
-
-<div class="col-md-4">
-    <label class="form-label">Landmark</label>
-    <input type="text" class="form-control" name="landmark" placeholder="e.g. Near the market">
-</div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Password *</label>
-                            <input type="password" class="form-control" name="password" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Confirm Password *</label>
-                            <input type="password" class="form-control" name="confirm_password" required>
-                        </div>
-                      
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add User</button>
-                </div>
-            </form>
+            <div class="col-md-6">
+              <label class="form-label">Last Name *</label>
+              <input type="text" class="form-control" name="last_name" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email *</label>
+              <input type="email" class="form-control" name="email" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone *</label>
+              <input type="tel" class="form-control" name="phone" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Barangay *</label>
+              <select class="form-select" name="barangay" required>
+                <option value="">Select Barangay</option>
+                <option value="Adia">Adia</option>
+                <option value="Bagong Sikat">Bagong Sikat</option>
+                <option value="Balangon">Balangon</option>
+                <option value="Bangin">Bangin</option>
+                <option value="Banyaga">Banyaga</option>
+                <option value="Barigon">Barigon</option>
+                <option value="Bilibinwang">Bilibinwang</option>
+                <option value="Coral na Munti">Coral na Munti</option>
+                <option value="Guitna">Guitna</option>
+                <option value="Mabini">Mabini</option>
+                <option value="Pamiga">Pamiga</option>
+                <option value="Panhulan">Panhulan</option>
+                <option value="Pansipit">Pansipit</option>
+                <option value="Poblacion">Poblacion</option>
+                <option value="Pook">Pook</option>
+                <option value="San Jacinto">San Jacinto</option>
+                <option value="San Teodoro">San Teodoro</option>
+                <option value="Santa Cruz">Santa Cruz</option>
+                <option value="Santo Tomas">Santo Tomas</option>
+                <option value="Subic Ilaya">Subic Ilaya</option>
+                <option value="Subic Ibaba">Subic Ibaba</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">House Number *</label>
+              <input type="text" class="form-control" name="house_number" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Street *</label>
+              <input type="text" class="form-control" name="street" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Landmark</label>
+              <input type="text" class="form-control" name="landmark" placeholder="e.g. Near the market">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Password *</label>
+              <input type="password" class="form-control" name="password" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Confirm Password *</label>
+              <input type="password" class="form-control" name="confirm_password" required>
+            </div>
+          </div>
         </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add User</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 
-<!-- User Details Modal -->
+
 <div class="modal fade" id="userDetailsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -515,23 +505,28 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="userDetailsContent">
-                <!-- Content will be loaded via AJAX -->
+                 Content will be loaded via AJAX 
             </div>
         </div>
     </div>
 </div>
 
-<!-- Hidden form for actions -->
 <form id="actionForm" method="POST" style="display: none;">
     <input type="hidden" name="action" id="actionType">
     <input type="hidden" name="user_id" id="actionUserId">
 </form>
+
+ 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
     document.getElementById("menu-toggle").addEventListener("click", function(e) {
     e.preventDefault();
     document.getElementById("wrapper").classList.toggle("toggled");
 });
+
 function performAction(action, userId) {
     let confirmMessage = '';
     
@@ -580,22 +575,68 @@ function exportUsers() {
     window.location.href = 'export_users.php?' + params.toString();
 }
 
-// Form validation
-document.getElementById('addUserForm').addEventListener('submit', function(e) {
-    const password = document.querySelector('input[name="password"]').value;
-    const confirmPassword = document.querySelector('input[name="confirm_password"]').value;
-    
-    if (password !== confirmPassword) {
+$(document).ready(function() {
+    // Form validation
+    $('#addUserForm').on('submit', function(e) {
         e.preventDefault();
-        alert('Passwords do not match');
-        return false;
-    }
-    
-    if (password.length < 6) {
-        e.preventDefault();
-        alert('Password must be at least 6 characters long');
-        return false;
-    }
+        
+        const password = $('input[name="password"]').val();
+        const confirmPassword = $('input[name="confirm_password"]').val();
+        
+        if (password !== confirmPassword) {
+            Swal.fire({
+                title: "Error",
+                text: "Passwords do not match",
+                icon: "error"
+            });
+            return false;
+        }
+        
+        if (password.length < 6) {
+            Swal.fire({
+                title: "Error", 
+                text: "Password must be at least 6 characters long",
+                icon: "error"
+            });
+            return false;
+        }
+        
+        $.ajax({
+            url: "add_user.php",
+            type: "POST",
+            data: $(this).serialize(),
+            dataType: "json",
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        title: "Success",
+                        text: response.message,
+                        icon: "success"
+                    }).then(() => {
+                        $("#addUserForm")[0].reset();
+                        $("#addUserModal").modal("hide");
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        title: "Error",
+                        html: response.message,
+                        icon: "error"
+                    });
+                    if (response.field) {
+                        $(`[name='${response.field}']`).focus();
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                Swal.fire({
+                    title: "Error",
+                    text: "An error occurred while processing your request.",
+                    icon: "error"
+                });
+            }
+        });
+    });
 });
 </script>
 
