@@ -42,7 +42,7 @@ if ($_POST && isset($_POST['update_settings'])) {
 }
 
 // Get current settings
-$stmt = $db->prepare("SELECT * FROM user_preferences WHERE user_id = :user_id");
+$stmt = $db->prepare("SELECT * FROM users WHERE id = :user_id");
 $stmt->bindParam(':user_id', $_SESSION['user_id']);
 $stmt->execute();
 $preferences = $stmt->fetch();
@@ -236,7 +236,6 @@ include '../includes/header.php';
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // Toggle sidebar
 $(document).ready(function () {
