@@ -122,7 +122,7 @@ include '../includes/header.php';
         <!-- Navigation -->
         <?php include 'includes/navbar.php'; ?>
     <div class="row my-4">
-                <div class="col-12">
+                <!-- <div class="col-12">
                     <div class="card shadow-sm">
                         <div class="card-header bg-white">
                             <h5 class="card-title mb-0">Quick Actions</h5>
@@ -151,7 +151,7 @@ include '../includes/header.php';
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> -->
             </div>
 
         <div class="container-fluid px-4">

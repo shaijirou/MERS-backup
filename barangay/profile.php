@@ -1,31 +1,9 @@
 <?php
 require_once '../config/config.php';
 
-// Check if user is logged in
-if (!isLoggedIn()) {
+// Check if user is logged in and is barangay personnel
+if (!isLoggedIn() || !isBarangay()) {
     redirect('../index.php');
-}
-
-// Check if user is barangay personnel
-if (!isBarangay()) {
-    // Redirect to appropriate dashboard based on user type
-    switch ($_SESSION['user_type']) {
-        case 'admin':
-            redirect('../admin/dashboard.php');
-            break;
-        case 'police':
-            redirect('../police/dashboard.php');
-            break;
-        case 'emergency':
-            redirect('../emergency/dashboard.php');
-            break;
-        case 'firefighter':
-            redirect('../firefighter/dashboard.php');
-            break;
-        default:
-            redirect('../user/dashboard.php');
-            break;
-    }
 }
 
 $page_title = 'Barangay Profile';
@@ -36,59 +14,82 @@ $database = new Database();
 $db = $database->getConnection();
 
 $user_id = $_SESSION['user_id'];
+$success_message = '';
+$error_message = '';
 
 // Handle profile update
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_profile'])) {
-    $first_name = $_POST['first_name'];
-    $last_name = $_POST['last_name'];
-    $email = $_POST['email'];
-    $phone = $_POST['phone'];
-    $assigned_barangay = $_POST['assigned_barangay'];
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $first_name = trim($_POST['first_name']);
+    $last_name = trim($_POST['last_name']);
+    $phone = trim($_POST['phone']);
+    $email = trim($_POST['email']);
+    $current_password = $_POST['current_password'];
+    $new_password = $_POST['new_password'];
+    $confirm_password = $_POST['confirm_password'];
     
-    $update_query = "UPDATE users SET first_name = :first_name, last_name = :last_name, 
-                     email = :email, phone = :phone, assigned_barangay = :assigned_barangay 
-                     WHERE id = :user_id";
-    $stmt = $db->prepare($update_query);
-    $stmt->bindParam(':first_name', $first_name);
-    $stmt->bindParam(':last_name', $last_name);
-    $stmt->bindParam(':email', $email);
-    $stmt->bindParam(':phone', $phone);
-    $stmt->bindParam(':assigned_barangay', $assigned_barangay);
-    $stmt->bindParam(':user_id', $user_id);
-    $stmt->execute();
-    
-    $_SESSION['first_name'] = $first_name;
-    $_SESSION['last_name'] = $last_name;
-    
-    $success_message = "Profile updated successfully!";
+    try {
+        // Verify current password if changing password
+        if (!empty($new_password)) {
+            $stmt = $db->prepare("SELECT password FROM users WHERE id = :user_id");
+            $stmt->bindParam(':user_id', $user_id);
+            $stmt->execute();
+            $user = $stmt->fetch();
+            
+            if (!password_verify($current_password, $user['password'])) {
+                throw new Exception("Current password is incorrect");
+            }
+            
+            if ($new_password !== $confirm_password) {
+                throw new Exception("New passwords do not match");
+            }
+            
+            if (strlen($new_password) < 6) {
+                throw new Exception("New password must be at least 6 characters long");
+            }
+        }
+        
+        // Update profile
+        if (!empty($new_password)) {
+            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+            $stmt = $db->prepare("UPDATE users SET first_name = :first_name, last_name = :last_name, phone = :phone, email = :email, password = :password WHERE id = :user_id");
+            $stmt->bindParam(':password', $hashed_password);
+        } else {
+            $stmt = $db->prepare("UPDATE users SET first_name = :first_name, last_name = :last_name, phone = :phone, email = :email WHERE id = :user_id");
+        }
+        $stmt->bindParam(':first_name', $first_name);
+        $stmt->bindParam(':last_name', $last_name);
+        $stmt->bindParam(':phone', $phone);
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':user_id', $user_id);
+        $stmt->execute();
+        
+        // Update session
+        $_SESSION['first_name'] = $first_name;
+        $_SESSION['last_name'] = $last_name;
+        
+        $success_message = "Profile updated successfully!";
+        
+    } catch (Exception $e) {
+        $error_message = $e->getMessage();
+    }
 }
 
-// Get user data
-$query = "SELECT * FROM users WHERE id = :user_id";
-$stmt = $db->prepare($query);
+// Get current user data
+$stmt = $db->prepare("SELECT * FROM users WHERE id = :user_id");
 $stmt->bindParam(':user_id', $user_id);
 $stmt->execute();
 $user = $stmt->fetch();
 
-// Get response statistics
+// Get barangay statistics
 $stats_query = "SELECT 
-                COUNT(*) as total_responses,
-                SUM(CASE WHEN response_status = 'resolved' THEN 1 ELSE 0 END) as resolved_count,
-                SUM(CASE WHEN response_status = 'responding' OR response_status = 'on_scene' THEN 1 ELSE 0 END) as active_count
-                FROM incident_reports ir
-                JOIN users u ON ir.user_id = u.id
-                WHERE ir.approval_status = 'approved' 
-                AND (ir.assigned_to = :user_id OR ir.responder_type = 'barangay')";
-
-if (!empty($user['assigned_barangay'])) {
-    $stats_query .= " AND u.barangay = :assigned_barangay";
-}
-
+    COUNT(*) as total_responses,
+    COUNT(CASE WHEN response_status = 'resolved' THEN 1 END) as resolved_incidents,
+    COUNT(CASE WHEN response_status = 'responding' OR response_status = 'on_scene' THEN 1 END) as active_responses,
+    COUNT(CASE WHEN DATE(updated_at) = CURDATE() THEN 1 END) as today_responses
+    FROM incident_reports 
+    WHERE approval_status = 'approved' 
+    AND responder_type = 'barangay'";
 $stmt = $db->prepare($stats_query);
-$stmt->bindParam(':user_id', $user_id);
-if (!empty($user['assigned_barangay'])) {
-    $stmt->bindParam(':assigned_barangay', $user['assigned_barangay']);
-}
 $stmt->execute();
 $stats = $stmt->fetch();
 
@@ -100,163 +101,147 @@ include '../includes/header.php';
 <link href="../assets/css/admin.css" rel="stylesheet">
 
 <div class="d-flex" id="wrapper">
-    
     <?php include 'includes/sidebar.php'; ?>
     
-    
     <div id="page-content-wrapper">
-        
         <?php include 'includes/navbar.php'; ?>
 
         <div class="container-fluid px-4">
-             
-            <div class="d-flex justify-content-between align-items-center my-4">
-                <div>
-                    <h1 class="h3 mb-0">👤 Barangay Profile</h1>
-                    <p class="text-muted">Manage your profile information and view response statistics</p>
+            <div class="row my-4">
+                <div class="col-12">
+                    <h2><i class="bi bi-person-badge text-success me-2"></i>Barangay Profile</h2>
+                    <p class="text-muted">Manage your barangay profile and account settings</p>
                 </div>
             </div>
-
-            <?php if (isset($success_message)): ?>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="bi bi-check-circle me-2"></i><?php echo $success_message; ?>
+            
+            <?php if ($success_message): ?>
+                <div class="alert alert-success alert-dismissible fade show">
+                    <i class="bi bi-check-circle me-2"></i><?php echo htmlspecialchars($success_message); ?>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             <?php endif; ?>
+            
+            <?php if ($error_message): ?>
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <i class="bi bi-exclamation-triangle me-2"></i><?php echo htmlspecialchars($error_message); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+            
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Response Statistics</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-6 mb-3">
+                                    <h4 class="text-success"><?php echo $stats['total_responses']; ?></h4>
+                                    <small class="text-muted">Total Responses</small>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <h4 class="text-success"><?php echo $stats['resolved_incidents']; ?></h4>
+                                    <small class="text-muted">Resolved Cases</small>
+                                </div>
+                                <div class="col-6">
+                                    <h4 class="text-warning"><?php echo $stats['active_responses']; ?></h4>
+                                    <small class="text-muted">Active Responses</small>
+                                </div>
+                                <div class="col-6">
+                                    <h4 class="text-info"><?php echo $stats['today_responses']; ?></h4>
+                                    <small class="text-muted">Today's Responses</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow-sm mt-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="mb-0"><i class="bi bi-bell me-2"></i>Important Reminders</h6>
+                        </div>
+                        <div class="card-body">
+    <div class="mb-2 py-2 border-bottom">
+        <small><i class="bi bi-megaphone me-1"></i><strong>Community Alert</strong></small>
+        <div class="small">Inform residents quickly during emergencies.</div>
+    </div>
+    <div class="mb-2 py-2 border-bottom">
+        <small><i class="bi bi-clipboard-check me-1"></i><strong>Area Patrol</strong></small>
+        <div class="small">Monitor key areas to keep peace and order.</div>
+    </div>
+    <div class="mb-2 py-2 border-bottom">
+        <small><i class="bi bi-chat-dots me-1"></i><strong>Resident Support</strong></small>
+        <div class="small">Listen and assist in local concerns promptly.</div>
+    </div>
+    <div class="py-2">
+        <small><i class="bi bi-house-heart me-1"></i><strong>Barangay Unity</strong></small>
+        <div class="small">Promote cooperation among residents and teams.</div>
+    </div>
+</div>
 
-            <div class="row g-4">
+                    </div>
+                </div>
                 
                 <div class="col-md-8">
                     <div class="card shadow-sm">
-                        <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">
-                                <i class="bi bi-person-circle me-2"></i>Profile Information
-                            </h5>
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="bi bi-pencil me-2"></i>Edit Profile</h5>
                         </div>
                         <div class="card-body">
                             <form method="POST">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">First Name</label>
-                                        <input type="text" name="first_name" class="form-control" 
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="first_name" class="form-label">First Name</label>
+                                        <input type="text" class="form-control" id="first_name" name="first_name" 
                                                value="<?php echo htmlspecialchars($user['first_name']); ?>" required>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Last Name</label>
-                                        <input type="text" name="last_name" class="form-control" 
+                                    <div class="col-md-6 mb-3">
+                                        <label for="last_name" class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" id="last_name" name="last_name" 
                                                value="<?php echo htmlspecialchars($user['last_name']); ?>" required>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Email</label>
-                                        <input type="email" name="email" class="form-control" 
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="phone" class="form-label">Phone Number</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone" 
+                                               value="<?php echo htmlspecialchars($user['phone']); ?>" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="email" class="form-label">Email Address</label>
+                                        <input type="email" class="form-control" id="email" name="email" 
                                                value="<?php echo htmlspecialchars($user['email']); ?>" required>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Phone</label>
-                                        <input type="text" name="phone" class="form-control" 
-                                               value="<?php echo htmlspecialchars($user['phone']); ?>">
+                                </div>
+                                
+                                <hr>
+                                <h6 class="text-success">Change Password (Optional)</h6>
+                                
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="current_password" class="form-label">Current Password</label>
+                                        <input type="password" class="form-control" id="current_password" name="current_password">
                                     </div>
-                                    <div class="col-12">
-                                        <label class="form-label fw-semibold">Assigned Barangay</label>
-                                        <select name="assigned_barangay" class="form-select" required>
-                                            <option value="">Select Barangay</option>
-                                            <?php
-                                            // Get barangays from database
-                                            $barangay_query = "SELECT name FROM barangays ORDER BY name";
-                                            $stmt = $db->prepare($barangay_query);
-                                            $stmt->execute();
-                                            $barangays = $stmt->fetchAll();
-                                            
-                                            foreach ($barangays as $brgy) {
-                                                $selected = ($user['assigned_barangay'] == $brgy['name']) ? 'selected' : '';
-                                                echo "<option value='{$brgy['name']}' $selected>{$brgy['name']}</option>";
-                                            }
-                                            ?>
-                                        </select>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="new_password" class="form-label">New Password</label>
+                                        <input type="password" class="form-control" id="new_password" name="new_password">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password">
                                     </div>
                                 </div>
-                                <div class="mt-4">
-                                    <button type="submit" name="update_profile" class="btn btn-primary">
-                                        <i class="bi bi-save me-2"></i>Update Profile
+                                
+                                <div class="d-flex justify-content-between">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-check me-1"></i> Update Profile
                                     </button>
+                                    <a href="dashboard.php" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+                                    </a>
                                 </div>
                             </form>
-                        </div>
-                    </div>
-                </div>
-
-              
-                <div class="col-md-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">
-                                <i class="bi bi-graph-up me-2"></i>Response Statistics
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <div class="p-3 bg-primary bg-opacity-10 rounded">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <h4 class="mb-0 text-primary"><?php echo $stats['total_responses'] ?? 0; ?></h4>
-                                                <small class="text-muted">Total Responses</small>
-                                            </div>
-                                            <i class="bi bi-exclamation-triangle text-primary fs-3"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="p-3 bg-success bg-opacity-10 rounded">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <h4 class="mb-0 text-success"><?php echo $stats['resolved_count'] ?? 0; ?></h4>
-                                                <small class="text-muted">Resolved Cases</small>
-                                            </div>
-                                            <i class="bi bi-check-circle text-success fs-3"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="p-3 bg-warning bg-opacity-10 rounded">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <h4 class="mb-0 text-warning"><?php echo $stats['active_count'] ?? 0; ?></h4>
-                                                <small class="text-muted">Active Cases</small>
-                                            </div>
-                                            <i class="bi bi-clock text-warning fs-3"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    
-                    <div class="card shadow-sm mt-4">
-                        <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">
-                                <i class="bi bi-shield-check me-2"></i>Role Information
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <strong class="text-success">Role:</strong>
-                                <p class="mb-0">Barangay Emergency Response Unit</p>
-                            </div>
-                            <div class="mb-3">
-                                <strong class="text-success">Responsibilities:</strong>
-                                <ul class="small mb-0 ps-3">
-                                    <li>Community-level emergency response</li>
-                                    <li>Evacuation coordination</li>
-                                    <li>Local disaster management</li>
-                                    <li>First aid and rescue operations</li>
-                                </ul>
-                            </div>
-                            <div>
-                                <strong class="text-success">Coverage Area:</strong>
-                                <p class="mb-0"><?php echo htmlspecialchars($user['assigned_barangay'] ?: 'Not assigned'); ?></p>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -265,12 +250,37 @@ include '../includes/header.php';
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
 // Toggle sidebar
 document.getElementById("menu-toggle").addEventListener("click", function(e) {
     e.preventDefault();
     document.getElementById("wrapper").classList.toggle("toggled");
+});
+
+// Password validation
+document.getElementById('new_password').addEventListener('input', function() {
+    const currentPassword = document.getElementById('current_password');
+    const confirmPassword = document.getElementById('confirm_password');
+    
+    if (this.value) {
+        currentPassword.required = true;
+        confirmPassword.required = true;
+    } else {
+        currentPassword.required = false;
+        confirmPassword.required = false;
+    }
+});
+
+// Confirm password validation
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const newPassword = document.getElementById('new_password').value;
+    
+    if (this.value !== newPassword) {
+        this.setCustomValidity('Passwords do not match');
+    } else {
+        this.setCustomValidity('');
+    }
 });
 </script>
 
