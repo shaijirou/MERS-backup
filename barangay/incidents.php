@@ -55,12 +55,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
     $stmt->execute();
     
     // Create notification for admin
-    $notification_query = "INSERT INTO user_notifications (user_id, title, message, type, created_at) 
-                          SELECT id, 'Incident Status Updated', 
-                          CONCAT('Barangay unit has updated incident #', :incident_id, ' status to ', :status), 
-                          'info', NOW() FROM users WHERE user_type = 'admin'";
+    $notification_query = "INSERT INTO user_notifications (user_id, incident_id, title, message, notification_type) 
+                          SELECT id, :incident_id, 'Incident Status Updated', 
+                          CONCAT('Barangay unit has updated incident #', :incident_id2, ' status to ', :status), 
+                          'status_update' FROM users WHERE user_type = 'admin'";
     $stmt = $db->prepare($notification_query);
     $stmt->bindParam(':incident_id', $incident_id);
+    $stmt->bindParam(':incident_id2', $incident_id);
     $stmt->bindParam(':status', $new_status);
     $stmt->execute();
     
@@ -204,8 +205,15 @@ include '../includes/header.php';
                                                     <div class="d-flex gap-2 flex-wrap">
                                                         <?php 
                                                         $response_status = $incident['response_status'] ?? 'notified';
-                                                        if ($response_status == 'notified'): 
-                                                        ?>
+                                                        if ($incident['latitude'] && $incident['longitude']): ?>
+                                                            <a href="https://www.google.com/maps/dir/?api=1&destination=<?php echo $incident['latitude']; ?>,<?php echo $incident['longitude']; ?>" 
+                                                               target="_blank" 
+                                                               class="btn btn-info btn-sm">
+                                                                <i class="bi bi-geo-alt-fill me-1"></i>Get Directions
+                                                            </a>
+                                                        <?php endif; ?>
+                                                        
+                                                        <?php if ($response_status == 'notified'): ?>
                                                             <form method="POST" class="d-inline">
                                                                 <input type="hidden" name="incident_id" value="<?php echo $incident['id']; ?>">
                                                                 <input type="hidden" name="status" value="responding">
@@ -258,11 +266,14 @@ include '../includes/header.php';
             <div class="modal-body" id="incidentDetails">
                  Incident details will be loaded here 
             </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
 
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // Toggle sidebar
 document.getElementById("menu-toggle").addEventListener("click", function(e) {
@@ -271,12 +282,16 @@ document.getElementById("menu-toggle").addEventListener("click", function(e) {
 });
 
 function viewIncident(incidentId) {
-    // Load incident details via AJAX
-    fetch('ajax/get_incident.php?id=' + incidentId)
+    fetch('get_incident_details.php?id=' + incidentId)
         .then(response => response.text())
         .then(data => {
             document.getElementById('incidentDetails').innerHTML = data;
             new bootstrap.Modal(document.getElementById('incidentModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('incidentDetails').innerHTML = 
+                '<div class="alert alert-danger">Error loading incident details</div>';
         });
 }
 </script>

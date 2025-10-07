@@ -14,7 +14,7 @@ if (isset($_GET['id'])) {
     $database = new Database();
     $db = $database->getConnection();
     
-    $query = "SELECT ir.*, u.first_name, u.last_name, u.phone, u.email, u.address, u.barangay 
+    $query = "SELECT ir.*, u.first_name, u.last_name, u.phone, u.email, u.barangay 
               FROM incident_reports ir 
               JOIN users u ON ir.user_id = u.id 
               WHERE ir.id = :incident_id";

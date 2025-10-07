@@ -113,6 +113,13 @@ include '../includes/header.php';
                                     
                                     <?php if ($incident['response_status'] == 'notified'): ?>
                                         <div class="d-flex gap-2 mt-3">
+                                            <?php if ($incident['latitude'] && $incident['longitude']): ?>
+                                                <a href="https://www.google.com/maps/dir/?api=1&destination=<?php echo $incident['latitude']; ?>,<?php echo $incident['longitude']; ?>" 
+                                                   target="_blank" 
+                                                   class="btn btn-info btn-sm">
+                                                    <i class="bi bi-geo-alt-fill me-1"></i>Get Directions
+                                                </a>
+                                            <?php endif; ?>
                                             <button class="btn btn-danger" onclick="updateStatus(<?php echo $incident['id']; ?>, 'responding')">
                                                 <i class="bi bi-truck me-1"></i>Dispatch Ambulance
                                             </button>
@@ -122,6 +129,13 @@ include '../includes/header.php';
                                         </div>
                                     <?php elseif ($incident['response_status'] == 'responding'): ?>
                                         <div class="d-flex gap-2 mt-3">
+                                            <?php if ($incident['latitude'] && $incident['longitude']): ?>
+                                                <a href="https://www.google.com/maps/dir/?api=1&destination=<?php echo $incident['latitude']; ?>,<?php echo $incident['longitude']; ?>" 
+                                                   target="_blank" 
+                                                   class="btn btn-info btn-sm">
+                                                    <i class="bi bi-geo-alt-fill me-1"></i>Get Directions
+                                                </a>
+                                            <?php endif; ?>
                                             <button class="btn btn-success" onclick="updateStatus(<?php echo $incident['id']; ?>, 'resolved')">
                                                 <i class="bi bi-check-circle me-1"></i>Patient Treated
                                             </button>
@@ -135,6 +149,23 @@ include '../includes/header.php';
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="incidentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Emergency Incident Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="incidentDetails">
+                 Incident details will be loaded here 
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -174,26 +205,16 @@ function updateStatus(incidentId, status) {
 }
 
 function viewDetails(incidentId) {
-    fetch('ajax/get_incident.php?id=' + incidentId)
+    fetch('get_incident_details.php?id=' + incidentId)
         .then(response => response.text())
         .then(data => {
-            // Create modal dynamically
-            const modal = document.createElement('div');
-            modal.innerHTML = `
-                <div class="modal fade" id="incidentModal" tabindex="-1">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Emergency Incident Details</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">${data}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
+            document.getElementById('incidentDetails').innerHTML = data;
             new bootstrap.Modal(document.getElementById('incidentModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('incidentDetails').innerHTML = 
+                '<div class="alert alert-danger">Error loading incident details</div>';
         });
 }
 </script>

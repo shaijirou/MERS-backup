@@ -107,6 +107,13 @@ include '../includes/header.php';
                                     
                                     <?php if ($incident['response_status'] == 'notified'): ?>
                                         <div class="d-flex gap-2 mt-3">
+                                            <?php if ($incident['latitude'] && $incident['longitude']): ?>
+                                                <a href="https://www.google.com/maps/dir/?api=1&destination=<?php echo $incident['latitude']; ?>,<?php echo $incident['longitude']; ?>" 
+                                                   target="_blank" 
+                                                   class="btn btn-info btn-sm">
+                                                    <i class="bi bi-geo-alt-fill me-1"></i>Get Directions
+                                                </a>
+                                            <?php endif; ?>
                                             <button class="btn btn-primary" onclick="updateStatus(<?php echo $incident['id']; ?>, 'responding')">
                                                 <i class="bi bi-car-front me-1"></i>Respond to Incident
                                             </button>
@@ -116,6 +123,13 @@ include '../includes/header.php';
                                         </div>
                                     <?php elseif ($incident['response_status'] == 'responding'): ?>
                                         <div class="d-flex gap-2 mt-3">
+                                            <?php if ($incident['latitude'] && $incident['longitude']): ?>
+                                                <a href="https://www.google.com/maps/dir/?api=1&destination=<?php echo $incident['latitude']; ?>,<?php echo $incident['longitude']; ?>" 
+                                                   target="_blank" 
+                                                   class="btn btn-info btn-sm">
+                                                    <i class="bi bi-geo-alt-fill me-1"></i>Get Directions
+                                                </a>
+                                            <?php endif; ?>
                                             <button class="btn btn-warning" onclick="updateStatus(<?php echo $incident['id']; ?>, 'on_scene')">
                                                 <i class="bi bi-geo-alt me-1"></i>Arrived On Scene
                                             </button>
@@ -125,6 +139,13 @@ include '../includes/header.php';
                                         </div>
                                     <?php elseif ($incident['response_status'] == 'on_scene'): ?>
                                         <div class="d-flex gap-2 mt-3">
+                                            <?php if ($incident['latitude'] && $incident['longitude']): ?>
+                                                <a href="https://www.google.com/maps/dir/?api=1&destination=<?php echo $incident['latitude']; ?>,<?php echo $incident['longitude']; ?>" 
+                                                   target="_blank" 
+                                                   class="btn btn-info btn-sm">
+                                                    <i class="bi bi-geo-alt-fill me-1"></i>Get Directions
+                                                </a>
+                                            <?php endif; ?>
                                             <button class="btn btn-success" onclick="updateStatus(<?php echo $incident['id']; ?>, 'resolved')">
                                                 <i class="bi bi-check-circle me-1"></i>Mark as Resolved
                                             </button>
@@ -143,7 +164,25 @@ include '../includes/header.php';
     </div>
 </div>
 
+<div class="modal fade" id="incidentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Police Incident Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="incidentDetails">
+                 Incident details will be loaded here 
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // Toggle sidebar
 $(document).ready(function () {
@@ -178,26 +217,16 @@ function updateStatus(incidentId, status) {
 }
 
 function viewDetails(incidentId) {
-    fetch('ajax/get_incident.php?id=' + incidentId)
+    fetch('get_incident_details.php?id=' + incidentId)
         .then(response => response.text())
         .then(data => {
-            // Create modal dynamically
-            const modal = document.createElement('div');
-            modal.innerHTML = `
-                <div class="modal fade" id="incidentModal" tabindex="-1">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Police Incident Details</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">${data}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
+            document.getElementById('incidentDetails').innerHTML = data;
             new bootstrap.Modal(document.getElementById('incidentModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('incidentDetails').innerHTML = 
+                '<div class="alert alert-danger">Error loading incident details</div>';
         });
 }
 </script>

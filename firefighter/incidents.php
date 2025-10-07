@@ -195,7 +195,7 @@ include '../includes/header.php';
     </div>
 </div>
 
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 let currentIncidentId = null;
 
@@ -261,9 +261,18 @@ function loadIncidents() {
                             <td><span class="badge ${urgencyClass} rounded-pill">${incident.urgency_level}</span></td>
                             <td><span class="badge ${statusClass} rounded-pill">${getStatusText(incident.response_status)}</span></td>
                             <td>
-                                <button class="btn btn-sm btn-outline-danger" onclick="viewIncident(${incident.id})">
-                                    <i class="bi bi-eye"></i> View
-                                </button>
+                                <div class="btn-group">
+                                    ${incident.latitude && incident.longitude ? 
+                                        `<a href="https://www.google.com/maps/dir/?api=1&destination=${incident.latitude},${incident.longitude}" 
+                                            target="_blank" 
+                                            class="btn btn-sm btn-info" 
+                                            title="Get Directions">
+                                            <i class="bi bi-geo-alt-fill"></i>
+                                        </a>` : ''}
+                                    <button class="btn btn-sm btn-outline-danger" onclick="viewIncident(${incident.id})">
+                                        <i class="bi bi-eye"></i> View
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `;
@@ -283,7 +292,7 @@ function loadIncidents() {
 function viewIncident(incidentId) {
     currentIncidentId = incidentId;
     
-    fetch(`ajax/get_incident.php?id=${incidentId}`)
+    fetch(`get_incident_details.php?id=${incidentId}`)
         .then(response => response.text())
         .then(data => {
             document.getElementById('incident-details').innerHTML = data;
