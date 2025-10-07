@@ -143,7 +143,7 @@ include '../includes/header.php';
                                     </a>
                                 </div>
                                 <div class="col-md-4">
-                                    <a href="evacuation.php" class="btn btn-warning w-100 py-3 text-dark">
+                                    <a href="map.php" class="btn btn-warning w-100 py-3 text-dark">
                                         <i class="bi bi-house-fill fs-4 d-block mb-2"></i>
                                         Evacuation Centers
                                     </a>

@@ -14,13 +14,130 @@ if ($_POST) {
     $incident_id = $_POST['incident_id'] ?? '';
     
     switch ($action) {
+        case 'approve_incident':
+            $incident_id = $_POST['incident_id'] ?? '';
+            $admin_id = $_SESSION['user_id'] ?? null;
+
+            if (empty($incident_id) || !$admin_id) {
+                $error_message = "Missing required data for approving incident.";
+                break;
+            }
+
+            $query = "UPDATE incident_reports SET 
+                     approval_status = 'approved',
+                     approved_by = :admin_id,
+                     approved_at = NOW(),
+                     updated_at = NOW() 
+                     WHERE id = :incident_id";
+            
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(':admin_id', $admin_id);
+            $stmt->bindParam(':incident_id', $incident_id, PDO::PARAM_INT);
+            
+            if ($stmt->execute()) {
+                $success_message = "Incident approved successfully!";
+                logActivity($admin_id, 'Incident approved', 'incident_reports', $incident_id);
+            } else {
+                $error_message = "Error approving incident.";
+            }
+            break;
+
+        case 'reject_incident':
+            $incident_id = $_POST['incident_id'] ?? '';
+            $rejection_reason = $_POST['rejection_reason'] ?? '';
+            $admin_id = $_SESSION['user_id'] ?? null;
+
+            if (empty($incident_id) || !$admin_id) {
+                $error_message = "Missing required data for rejecting incident.";
+                break;
+            }
+
+            $query = "UPDATE incident_reports SET 
+                     approval_status = 'rejected',
+                     approved_by = :admin_id,
+                     approved_at = NOW(),
+                     resolution_notes = :rejection_reason,
+                     updated_at = NOW() 
+                     WHERE id = :incident_id";
+            
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(':admin_id', $admin_id);
+            $stmt->bindParam(':rejection_reason', $rejection_reason);
+            $stmt->bindParam(':incident_id', $incident_id, PDO::PARAM_INT);
+            
+            if ($stmt->execute()) {
+                $success_message = "Incident rejected successfully!";
+                logActivity($admin_id, 'Incident rejected', 'incident_reports', $incident_id);
+            } else {
+                $error_message = "Error rejecting incident.";
+            }
+            break;
+
+        case 'assign_to_department':
+            $incident_id = $_POST['incident_id'] ?? '';
+            $responder_type = $_POST['responder_type'] ?? '';
+            $admin_id = $_SESSION['user_id'] ?? null;
+
+            if (empty($incident_id) || empty($responder_type) || !$admin_id) {
+                $error_message = "Missing required data for assigning incident.";
+                break;
+            }
+
+            $query = "UPDATE incident_reports SET 
+                     responder_type = :responder_type,
+                     response_status = 'notified',
+                     updated_at = NOW() 
+                     WHERE id = :incident_id";
+            
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(':responder_type', $responder_type);
+            $stmt->bindParam(':incident_id', $incident_id, PDO::PARAM_INT);
+            
+            if ($stmt->execute()) {
+                $success_message = "Incident assigned to " . ucfirst($responder_type) . " department successfully!";
+                logActivity($admin_id, "Incident assigned to $responder_type department", 'incident_reports', $incident_id);
+            } else {
+                $error_message = "Error assigning incident to department.";
+            }
+            break;
+
+        case 'assign_to_responder':
+            $incident_id = $_POST['incident_id'] ?? '';
+            $assigned_to = $_POST['assigned_to'] ?? '';
+            $responder_type = $_POST['responder_type'] ?? '';
+            $admin_id = $_SESSION['user_id'] ?? null;
+
+            if (empty($incident_id) || empty($assigned_to) || !$admin_id) {
+                $error_message = "Missing required data for assigning responder.";
+                break;
+            }
+
+            $query = "UPDATE incident_reports SET 
+                     assigned_to = :assigned_to,
+                     responder_type = :responder_type,
+                     response_status = 'notified',
+                     updated_at = NOW() 
+                     WHERE id = :incident_id";
+            
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(':assigned_to', $assigned_to, PDO::PARAM_INT);
+            $stmt->bindParam(':responder_type', $responder_type);
+            $stmt->bindParam(':incident_id', $incident_id, PDO::PARAM_INT);
+            
+            if ($stmt->execute()) {
+                $success_message = "Incident assigned to responder successfully!";
+                logActivity($admin_id, "Incident assigned to responder", 'incident_reports', $incident_id);
+            } else {
+                $error_message = "Error assigning incident to responder.";
+            }
+            break;
+            
         case 'update_status':
             $status = $_POST['status'] ?? '';
             $resolution_notes = $_POST['resolution_notes'] ?? '';
             $incident_id = $_POST['incident_id'] ?? '';
             $admin_id = $_SESSION['user_id'] ?? null;
 
-            // Validate required fields
             if (empty($incident_id) || empty($status) || !$admin_id) {
                 $error_message = "Missing required data for updating incident.";
                 break;
@@ -68,6 +185,7 @@ $status_filter = $_GET['status'] ?? '';
 $type_filter = $_GET['type'] ?? '';
 $severity_filter = $_GET['severity'] ?? '';
 $barangay_filter = $_GET['barangay'] ?? '';
+$approval_filter = $_GET['approval'] ?? '';
 $search = $_GET['search'] ?? '';
 $date_from = $_GET['date_from'] ?? '';
 $date_to = $_GET['date_to'] ?? '';
@@ -91,6 +209,10 @@ if ($severity_filter) {
 if ($barangay_filter) {
     $where_conditions[] = "u.barangay = :barangay";
     $params[':barangay'] = $barangay_filter;
+}
+if ($approval_filter) {
+    $where_conditions[] = "ir.approval_status = :approval";
+    $params[':approval'] = $approval_filter;
 }
 if ($search) {
     $where_conditions[] = "(ir.description LIKE :search OR ir.location LIKE :search OR u.first_name LIKE :search OR u.last_name LIKE :search)";
@@ -124,12 +246,16 @@ $count_stmt->execute();
 $total_records = $count_stmt->fetch()['total'];
 $total_pages = ceil($total_records / $limit);
 
-// Get incidents
 $query = "SELECT ir.*, u.first_name, u.last_name, u.email, u.phone, u.barangay,
-                 admin.first_name as reviewed_by_name, admin.last_name as reviewed_by_lastname
+                 admin.first_name as reviewed_by_name, admin.last_name as reviewed_by_lastname,
+                 approver.first_name as approved_by_name, approver.last_name as approved_by_lastname,
+                 responder.first_name as responder_first_name, responder.last_name as responder_last_name,
+                 responder.user_type as responder_user_type
           FROM incident_reports ir 
           LEFT JOIN users u ON ir.user_id = u.id 
           LEFT JOIN users admin ON ir.reviewed_by = admin.id
+          LEFT JOIN users approver ON ir.approved_by = approver.id
+          LEFT JOIN users responder ON ir.assigned_to = responder.id
           $where_clause 
           ORDER BY ir.created_at DESC 
           LIMIT :limit OFFSET :offset";
@@ -150,7 +276,9 @@ $stats_query = "SELECT
                 SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress_incidents,
                 SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved_incidents,
                 SUM(CASE WHEN urgency_level = 'critical' THEN 1 ELSE 0 END) as critical_incidents,
-                SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as today_incidents
+                SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as today_incidents,
+                SUM(CASE WHEN approval_status = 'pending' THEN 1 ELSE 0 END) as pending_approval,
+                SUM(CASE WHEN approval_status = 'approved' AND assigned_to IS NULL THEN 1 ELSE 0 END) as unassigned_incidents
                 FROM incident_reports";
 $stats_stmt = $db->prepare($stats_query);
 $stats_stmt->execute();
@@ -164,22 +292,42 @@ $barangays_stmt = $db->prepare($barangays_query);
 $barangays_stmt->execute();
 $barangays = $barangays_stmt->fetchAll();
 
+$responders_query = "SELECT id, first_name, last_name, user_type, department, badge_number, assigned_barangay 
+                     FROM users 
+                     WHERE user_type IN ('police', 'emergency', 'barangay', 'firefighter') 
+                     AND verification_status = 'verified'
+                     ORDER BY user_type, first_name";
+$responders_stmt = $db->prepare($responders_query);
+$responders_stmt->execute();
+$responders = $responders_stmt->fetchAll();
+
+// Group responders by type
+$responders_by_type = [
+    'police' => [],
+    'emergency' => [],
+    'barangay' => [],
+    'firefighter' => []
+];
+foreach ($responders as $responder) {
+    $responders_by_type[$responder['user_type']][] = $responder;
+}
+
 include '../includes/header.php';
 ?>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 <link href="../assets/css/admin.css" rel="stylesheet">
 <div class="d-flex" id="wrapper">
-    <!-- Sidebar -->
+     <!-- Sidebar  -->
     <?php include 'includes/sidebar.php'; ?>
     
-    <!-- Page Content -->
+     <!-- Page Content  -->
     <div id="page-content-wrapper">
-        <!-- Navigation -->
+         <!-- Navigation  -->
         <?php include 'includes/navbar.php'; ?>
 
         <div class="container-fluid px-4">
-            <!-- Page Header -->
+             <!-- Page Header  -->
             <div class="d-flex justify-content-between align-items-center py-3">
                 <h1 class="h3 mb-0">Incident Management</h1>
                 <div>
@@ -189,7 +337,7 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Success/Error Messages -->
+             <!-- Success/Error Messages  -->
             <?php if (isset($success_message)): ?>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <?php echo $success_message; ?>
@@ -204,7 +352,7 @@ include '../includes/header.php';
                 </div>
             <?php endif; ?>
 
-            <!-- Statistics Cards -->
+             <!-- Statistics Cards  -->
             <div class="row g-3 mb-4">
                 <div class="col-md-2">
                     <div class="card bg-primary text-white">
@@ -219,28 +367,30 @@ include '../includes/header.php';
                         </div>
                     </div>
                 </div>
+                 <!-- Added pending approval card  -->
                 <div class="col-md-2">
                     <div class="card bg-warning text-white">
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <h4><?php echo $stats['pending_incidents']; ?></h4>
-                                    <p class="mb-0">Pending</p>
+                                    <h4><?php echo $stats['pending_approval']; ?></h4>
+                                    <p class="mb-0">Pending Approval</p>
                                 </div>
-                                <i class="bi bi-clock fs-1"></i>
+                                <i class="bi bi-hourglass-split fs-1"></i>
                             </div>
                         </div>
                     </div>
                 </div>
+                 <!-- Added unassigned incidents card  -->
                 <div class="col-md-2">
                     <div class="card bg-info text-white">
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <h4><?php echo $stats['in_progress_incidents']; ?></h4>
-                                    <p class="mb-0">In Progress</p>
+                                    <h4><?php echo $stats['unassigned_incidents']; ?></h4>
+                                    <p class="mb-0">Unassigned</p>
                                 </div>
-                                <i class="bi bi-arrow-clockwise fs-1"></i>
+                                <i class="bi bi-person-x fs-1"></i>
                             </div>
                         </div>
                     </div>
@@ -286,13 +436,23 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Filters -->
+             <!-- Filters  -->
             <div class="card mb-4">
                 <div class="card-body">
                     <form method="GET" class="row g-3">
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label">Search</label>
                             <input type="text" class="form-control" name="search" placeholder="Search incidents..." value="<?php echo htmlspecialchars($search); ?>">
+                        </div>
+                         <!-- Added approval status filter  -->
+                        <div class="col-md-2">
+                            <label class="form-label">Approval Status</label>
+                            <select class="form-select" name="approval">
+                                <option value="">All Approvals</option>
+                                <option value="pending" <?php echo $approval_filter == 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                <option value="approved" <?php echo $approval_filter == 'approved' ? 'selected' : ''; ?>>Approved</option>
+                                <option value="rejected" <?php echo $approval_filter == 'rejected' ? 'selected' : ''; ?>>Rejected</option>
+                            </select>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Status</label>
@@ -327,10 +487,6 @@ include '../includes/header.php';
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label">From Date</label>
-                            <input type="date" class="form-control" name="date_from" value="<?php echo htmlspecialchars($date_from); ?>">
-                        </div>
-                        <div class="col-md-1">
                             <label class="form-label">&nbsp;</label>
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary">Filter</button>
@@ -340,7 +496,7 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Incidents Table -->
+             <!-- Incidents Table  -->
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Incidents (<?php echo $total_records; ?> total)</h5>
@@ -354,6 +510,12 @@ include '../includes/header.php';
                                     <th>Incident Type</th>
                                     <th>Location</th>
                                     <th>Severity</th>
+                                     <!-- Added approval status column  -->
+                                    <th>Approval</th>
+                                     <!-- Added assigned department column  -->
+                                    <th>Department</th>
+                                     <!-- Added assigned responder column  -->
+                                    <th>Assigned To</th>
                                     <th>Status</th>
                                     <th>Reported At</th>
                                     <th>Actions</th>
@@ -390,6 +552,36 @@ include '../includes/header.php';
                                         ?>
                                         <span class="badge <?php echo $urgency_class; ?>"><?php echo $urgency !== '' ? ucfirst($urgency) : 'N/A'; ?></span>
                                     </td>
+                                     <!-- Added approval status display  -->
+                                    <td>
+                                        <?php
+                                        $approval_status = $incident['approval_status'] ?? 'pending';
+                                        $approval_class = '';
+                                        switch ($approval_status) {
+                                            case 'pending': $approval_class = 'bg-warning'; break;
+                                            case 'approved': $approval_class = 'bg-success'; break;
+                                            case 'rejected': $approval_class = 'bg-danger'; break;
+                                        }
+                                        ?>
+                                        <span class="badge <?php echo $approval_class; ?>"><?php echo ucfirst($approval_status); ?></span>
+                                    </td>
+                                     <!-- Added department display  -->
+                                    <td>
+                                        <?php if ($incident['responder_type']): ?>
+                                            <span class="badge bg-info"><?php echo ucfirst($incident['responder_type']); ?></span>
+                                        <?php else: ?>
+                                            <span class="text-muted">Not assigned</span>
+                                        <?php endif; ?>
+                                    </td>
+                                     <!-- Added assigned responder display  -->
+                                    <td>
+                                        <?php if ($incident['assigned_to']): ?>
+                                            <div class="fw-bold"><?php echo htmlspecialchars($incident['responder_first_name'] . ' ' . $incident['responder_last_name']); ?></div>
+                                            <small class="text-muted"><?php echo ucfirst($incident['responder_user_type']); ?></small>
+                                        <?php else: ?>
+                                            <span class="text-muted">Unassigned</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <?php
                                         $status_class = '';
@@ -416,6 +608,34 @@ include '../includes/header.php';
                                                     <i class="bi bi-three-dots"></i>
                                                 </button>
                                                 <ul class="dropdown-menu">
+                                                     <!-- Added approval/rejection options  -->
+                                                    <?php if ($incident['approval_status'] == 'pending'): ?>
+                                                    <li>
+                                                        <a class="dropdown-item text-success" href="#" onclick="approveIncident(<?php echo $incident['id']; ?>)">
+                                                            <i class="bi bi-check-circle"></i> Approve Incident
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item text-danger" href="#" onclick="rejectIncident(<?php echo $incident['id']; ?>)">
+                                                            <i class="bi bi-x-circle"></i> Reject Incident
+                                                        </a>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <?php endif; ?>
+                                                     <!-- Added assignment options  -->
+                                                    <?php if ($incident['approval_status'] == 'approved'): ?>
+                                                    <li>
+                                                        <a class="dropdown-item" href="#" onclick="assignToDepartment(<?php echo $incident['id']; ?>, '<?php echo $incident['responder_type'] ?? ''; ?>')">
+                                                            <i class="bi bi-building text-primary"></i> Assign to Department
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="#" onclick="assignToResponder(<?php echo $incident['id']; ?>, '<?php echo $incident['responder_type'] ?? ''; ?>', <?php echo $incident['assigned_to'] ?? 'null'; ?>)">
+                                                            <i class="bi bi-person-plus text-info"></i> Assign to Responder
+                                                        </a>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <?php endif; ?>
                                                     <li>
                                                         <a class="dropdown-item" href="#" onclick="updateIncident(<?php echo $incident['id']; ?>, '<?php echo $incident['status']; ?>', '<?php echo htmlspecialchars($incident['resolution_notes']); ?>')">
                                                             <i class="bi bi-pencil text-warning"></i> Update Status
@@ -432,7 +652,7 @@ include '../includes/header.php';
                                                         <a class="dropdown-item" href="#" onclick="viewIncidentPhotos(<?php echo $incident['id']; ?>)">
                                                             <i class="bi bi-image"></i> View Photo
                                                         </a>
-                                                    </li>
+                                    </li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -444,7 +664,7 @@ include '../includes/header.php';
                     </div>
                 </div>
                 
-                <!-- Pagination -->
+                 <!-- Pagination  -->
                 <?php if ($total_pages > 1): ?>
                 <div class="card-footer">
                     <nav>
@@ -475,7 +695,120 @@ include '../includes/header.php';
     </div>
 </div>
 
-<!-- Update Incident Modal -->
+ <!-- Added Reject Incident Modal  -->
+<div class="modal fade" id="rejectIncidentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Reject Incident</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="reject_incident">
+                    <input type="hidden" name="incident_id" id="reject_incident_id">
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Are you sure you want to reject this incident?
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="rejection_reason" class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="4" placeholder="Explain why this incident is being rejected..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Reject Incident</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+ <!-- Added Assign to Department Modal  -->
+<div class="modal fade" id="assignDepartmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Assign to Department</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="assign_to_department">
+                    <input type="hidden" name="incident_id" id="assign_dept_incident_id">
+                    
+                    <div class="mb-3">
+                        <label for="responder_type" class="form-label">Select Department <span class="text-danger">*</span></label>
+                        <select class="form-select" id="responder_type" name="responder_type" required>
+                            <option value="">Choose department...</option>
+                            <option value="police">Police Department</option>
+                            <option value="firefighter">Fire Department</option>
+                            <option value="emergency">Emergency/Medical Services</option>
+                            <option value="barangay">Barangay Response Team</option>
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> This will notify all responders in the selected department.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Assign to Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+ <!-- Added Assign to Responder Modal  -->
+<div class="modal fade" id="assignResponderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Assign to Specific Responder</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="assign_to_responder">
+                    <input type="hidden" name="incident_id" id="assign_resp_incident_id">
+                    
+                    <div class="mb-3">
+                        <label for="assign_responder_type" class="form-label">Department <span class="text-danger">*</span></label>
+                        <select class="form-select" id="assign_responder_type" name="responder_type" required onchange="filterResponders(this.value)">
+                            <option value="">Choose department first...</option>
+                            <option value="police">Police Department</option>
+                            <option value="firefighter">Fire Department</option>
+                            <option value="emergency">Emergency/Medical Services</option>
+                            <option value="barangay">Barangay Response Team</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="assigned_to" class="form-label">Select Responder <span class="text-danger">*</span></label>
+                        <select class="form-select" id="assigned_to" name="assigned_to" required>
+                            <option value="">Select department first...</option>
+                        </select>
+                    </div>
+                    
+                    <div id="responderInfo" class="alert alert-light d-none">
+                        <h6>Responder Information:</h6>
+                        <div id="responderDetails"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">Assign to Responder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+ <!-- Update Incident Modal  -->
 <div class="modal fade" id="updateIncidentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -512,7 +845,7 @@ include '../includes/header.php';
     </div>
 </div>
 
-<!-- View Incident Modal -->
+ <!-- View Incident Modal  -->
 <div class="modal fade" id="viewIncidentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -521,7 +854,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="incidentDetails">
-                <!-- Incident details will be loaded here -->
+                 Incident details will be loaded here 
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -530,7 +863,7 @@ include '../includes/header.php';
     </div>
 </div>
 
-<!-- Image Modal for viewing photos -->
+ <!-- Image Modal for viewing photos  -->
 <div class="modal fade" id="imageModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -545,18 +878,96 @@ include '../includes/header.php';
     </div>
 </div>
 
-<!-- Hidden form for actions -->
+ <!-- Hidden form for actions  -->
 <form id="actionForm" method="POST" style="display: none;">
     <input type="hidden" name="action" id="actionType">
     <input type="hidden" name="incident_id" id="actionIncidentId">
 </form>
 
+ <!-- Added responders data for JavaScript  -->
 <script>
+    // Store responders data for filtering
+    const respondersData = <?php echo json_encode($responders_by_type); ?>;
+    
     document.getElementById("menu-toggle").addEventListener("click", function(e) {
         e.preventDefault();
         document.getElementById("wrapper").classList.toggle("toggled");
     });
     
+    function approveIncident(incidentId) {
+        if (confirm('Are you sure you want to approve this incident? It will be available for assignment to departments.')) {
+            document.getElementById('actionType').value = 'approve_incident';
+            document.getElementById('actionIncidentId').value = incidentId;
+            document.getElementById('actionForm').submit();
+        }
+    }
+    
+    function rejectIncident(incidentId) {
+        document.getElementById('reject_incident_id').value = incidentId;
+        new bootstrap.Modal(document.getElementById('rejectIncidentModal')).show();
+    }
+    
+    function assignToDepartment(incidentId, currentDept) {
+        document.getElementById('assign_dept_incident_id').value = incidentId;
+        if (currentDept) {
+            document.getElementById('responder_type').value = currentDept;
+        }
+        new bootstrap.Modal(document.getElementById('assignDepartmentModal')).show();
+    }
+    
+    function assignToResponder(incidentId, currentDept, currentResponder) {
+        document.getElementById('assign_resp_incident_id').value = incidentId;
+        if (currentDept) {
+            document.getElementById('assign_responder_type').value = currentDept;
+            filterResponders(currentDept);
+            if (currentResponder) {
+                document.getElementById('assigned_to').value = currentResponder;
+            }
+        }
+        new bootstrap.Modal(document.getElementById('assignResponderModal')).show();
+    }
+    
+    function filterResponders(responderType) {
+        const responderSelect = document.getElementById('assigned_to');
+        responderSelect.innerHTML = '<option value="">Choose a responder...</option>';
+        
+        if (responderType && respondersData[responderType]) {
+            respondersData[responderType].forEach(responder => {
+                const option = document.createElement('option');
+                option.value = responder.id;
+                option.textContent = `${responder.first_name} ${responder.last_name}`;
+                if (responder.badge_number) {
+                    option.textContent += ` (${responder.badge_number})`;
+                }
+                if (responder.assigned_barangay) {
+                    option.textContent += ` - ${responder.assigned_barangay}`;
+                }
+                option.dataset.department = responder.department || '';
+                option.dataset.badge = responder.badge_number || '';
+                option.dataset.barangay = responder.assigned_barangay || '';
+                responderSelect.appendChild(option);
+            });
+        }
+        
+        // Show responder info when selected
+        responderSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.value) {
+                const infoDiv = document.getElementById('responderInfo');
+                const detailsDiv = document.getElementById('responderDetails');
+                detailsDiv.innerHTML = `
+                    <p class="mb-1"><strong>Name:</strong> ${selectedOption.textContent.split('(')[0].trim()}</p>
+                    ${selectedOption.dataset.department ? `<p class="mb-1"><strong>Department:</strong> ${selectedOption.dataset.department}</p>` : ''}
+                    ${selectedOption.dataset.badge ? `<p class="mb-1"><strong>Badge:</strong> ${selectedOption.dataset.badge}</p>` : ''}
+                    ${selectedOption.dataset.barangay ? `<p class="mb-1"><strong>Assigned Barangay:</strong> ${selectedOption.dataset.barangay}</p>` : ''}
+                `;
+                infoDiv.classList.remove('d-none');
+            } else {
+                document.getElementById('responderInfo').classList.add('d-none');
+            }
+        });
+    }
+
     function updateIncident(incidentId, currentStatus, currentNotes) {
         document.getElementById('update_incident_id').value = incidentId;
         document.getElementById('update_status').value = currentStatus;
@@ -573,7 +984,6 @@ include '../includes/header.php';
     }
 
     function viewIncident(incidentId) {
-        // Load incident details via AJAX
         fetch(`get_incident_details.php?id=${incidentId}`)
             .then(response => response.text())
             .then(data => {
@@ -598,17 +1008,14 @@ include '../includes/header.php';
     }
 
     function viewIncidentPhotos(incidentId) {
-        // Fetch incident photos from database
         fetch(`get_incident_details.php?id=${incidentId}`)
             .then(response => response.text())
             .then(data => {
-                // Extract photos from the response
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = data;
                 const photoElements = tempDiv.querySelectorAll('img[onclick*="showImageModal"]');
                 
                 if (photoElements.length > 0) {
-                    // Show the first photo in modal
                     const firstPhotoSrc = photoElements[0].getAttribute('onclick').match(/'([^']+)'/)[1];
                     showImageModal(firstPhotoSrc);
                 } else {

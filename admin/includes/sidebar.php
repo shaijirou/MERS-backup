@@ -34,8 +34,10 @@
         <a href="reports.php" class="list-group-item list-group-item-action bg-dark text-white border-0">
             <i class="bi bi-file-earmark-text-fill me-2"></i>Reports
         </a>
+        <?php if (trim(strtolower($user_role)) === 'super_admin'): ?>
         <a href="settings.php" class="list-group-item list-group-item-action bg-dark text-white border-0">
             <i class="bi bi-gear-fill me-2"></i>Settings
         </a>
+        <?php endif; ?>
     </div>
 </div>

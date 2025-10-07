@@ -68,16 +68,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
     exit;
 }
 
-// Get assigned incidents (filter by barangay if assigned_barangay is set)
+// Get assigned incidents - show incidents that are either:
+// 1. Approved and assigned to this user, OR
+// 2. Approved with responder_type = 'barangay', OR
+// 3. Any incident from users in the same barangay (if assigned_barangay is set)
 $incidents_query = "SELECT ir.*, u.first_name, u.last_name, u.phone, u.barangay 
                    FROM incident_reports ir 
                    JOIN users u ON ir.user_id = u.id 
-                   WHERE ir.approval_status = 'approved' 
-                   AND (ir.assigned_to = :user_id OR ir.responder_type = 'barangay')";
+                   WHERE (
+                       ir.approval_status = 'approved' 
+                       AND (ir.assigned_to = :user_id OR ir.responder_type = 'barangay')
+                   )";
 
-// If user has assigned barangay, filter incidents by that barangay
+// If user has assigned barangay, also show incidents from that barangay regardless of approval
 if (!empty($current_user['assigned_barangay'])) {
-    $incidents_query .= " AND u.barangay = :assigned_barangay";
+    $incidents_query .= " OR (u.barangay = :assigned_barangay)";
 }
 
 $incidents_query .= " ORDER BY ir.created_at DESC";
@@ -160,8 +165,8 @@ include '../includes/header.php';
                                                             ?>
                                                             <i class="<?php echo $icon; ?> me-2"></i><?php echo htmlspecialchars($incident['incident_type']); ?>
                                                         </h6>
-                                                        <span class="badge bg-<?php echo getStatusColor($incident['response_status']); ?> rounded-pill">
-                                                            <?php echo ucfirst(str_replace('_', ' ', $incident['response_status'])); ?>
+                                                        <span class="badge bg-<?php echo getStatusColor($incident['response_status'] ?? 'notified'); ?> rounded-pill">
+                                                            <?php echo ucfirst(str_replace('_', ' ', $incident['response_status'] ?? 'notified')); ?>
                                                         </span>
                                                     </div>
                                                 </div>
@@ -197,7 +202,10 @@ include '../includes/header.php';
                                                 </div>
                                                 <div class="card-footer bg-white">
                                                     <div class="d-flex gap-2 flex-wrap">
-                                                        <?php if ($incident['response_status'] == 'notified'): ?>
+                                                        <?php 
+                                                        $response_status = $incident['response_status'] ?? 'notified';
+                                                        if ($response_status == 'notified'): 
+                                                        ?>
                                                             <form method="POST" class="d-inline">
                                                                 <input type="hidden" name="incident_id" value="<?php echo $incident['id']; ?>">
                                                                 <input type="hidden" name="status" value="responding">
@@ -205,7 +213,7 @@ include '../includes/header.php';
                                                                     <i class="bi bi-person-running me-1"></i>Start Response
                                                                 </button>
                                                             </form>
-                                                        <?php elseif ($incident['response_status'] == 'responding'): ?>
+                                                        <?php elseif ($response_status == 'responding'): ?>
                                                             <form method="POST" class="d-inline">
                                                                 <input type="hidden" name="incident_id" value="<?php echo $incident['id']; ?>">
                                                                 <input type="hidden" name="status" value="on_scene">
@@ -213,7 +221,7 @@ include '../includes/header.php';
                                                                     <i class="bi bi-geo-alt me-1"></i>On Scene
                                                                 </button>
                                                             </form>
-                                                        <?php elseif ($incident['response_status'] == 'on_scene'): ?>
+                                                        <?php elseif ($response_status == 'on_scene'): ?>
                                                             <form method="POST" class="d-inline">
                                                                 <input type="hidden" name="incident_id" value="<?php echo $incident['id']; ?>">
                                                                 <input type="hidden" name="status" value="resolved">
@@ -239,7 +247,6 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
-
 
 <div class="modal fade" id="incidentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">

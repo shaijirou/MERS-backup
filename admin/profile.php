@@ -91,6 +91,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                            email = :email,
                                            phone = :phone,
                                            user_type = :user_type,
+                                           house_number = :house_number,
+                                           street = :street,
+                                           barangay = :barangay,
+                                           landmark = :landmark,
                                            updated_at = NOW()
                                            WHERE id = :user_id";
                             
@@ -100,6 +104,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             $update_stmt->bindParam(':email', $email);
                             $update_stmt->bindParam(':phone', $phone);
                             $update_stmt->bindParam(':user_type', $user_type);
+                            $update_stmt->bindParam(':house_number', $house_number);
+                            $update_stmt->bindParam(':street', $street);
+                            $update_stmt->bindParam(':barangay', $barangay);
+                            $update_stmt->bindParam(':landmark', $landmark);
                             $update_stmt->bindParam(':user_id', $_SESSION['user_id']);
                             
                             if ($update_stmt->execute()) {
@@ -119,6 +127,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                        last_name = :last_name,
                                        email = :email,
                                        phone = :phone,
+                                       house_number = :house_number,
+                                       street = :street,
+                                       barangay = :barangay,
+                                       landmark = :landmark,
                                        updated_at = NOW()
                                        WHERE id = :user_id";
                         
@@ -127,6 +139,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         $update_stmt->bindParam(':last_name', $last_name);
                         $update_stmt->bindParam(':email', $email);
                         $update_stmt->bindParam(':phone', $phone);
+                        $update_stmt->bindParam(':house_number', $house_number);
+                        $update_stmt->bindParam(':street', $street);
+                        $update_stmt->bindParam(':barangay', $barangay);
+                        $update_stmt->bindParam(':landmark', $landmark);
                         $update_stmt->bindParam(':user_id', $_SESSION['user_id']);
                         
                         if ($update_stmt->execute()) {
@@ -330,6 +346,13 @@ $activity_stmt = $db->prepare($activity_query);
 $activity_stmt->bindParam(':user_id', $_SESSION['user_id']);
 $activity_stmt->execute();
 $recent_activities = $activity_stmt->fetchAll();
+
+// Fetch barangays for the dropdown
+$barangay_query = "SELECT name FROM barangays ORDER BY name ASC";
+$barangay_stmt = $db->prepare($barangay_query);
+$barangay_stmt->execute();
+$barangays = $barangay_stmt->fetchAll();
+
 
 include '../includes/header.php';
 ?>
@@ -557,28 +580,37 @@ include '../includes/header.php';
                     <!-- Profile Settings -->
                     <div class="card">
                         <div class="card-header">
+                            <!-- Fixed tab navigation with proper Bootstrap 5 attributes -->
                             <ul class="nav nav-tabs card-header-tabs" id="profileTabs" role="tablist">
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">
+                                    <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" 
+                                            data-bs-target="#profile" type="button" role="tab" 
+                                            aria-controls="profile" aria-selected="true">
                                         <i class="bi bi-person me-1"></i>Profile Information
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab">
+                                    <button class="nav-link" id="password-tab" data-bs-toggle="tab" 
+                                            data-bs-target="#password" type="button" role="tab" 
+                                            aria-controls="password" aria-selected="false">
                                         <i class="bi bi-lock me-1"></i>Change Password
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab">
+                                    <button class="nav-link" id="activity-tab" data-bs-toggle="tab" 
+                                            data-bs-target="#activity" type="button" role="tab" 
+                                            aria-controls="activity" aria-selected="false">
                                         <i class="bi bi-clock-history me-1"></i>Recent Activity
                                     </button>
                                 </li>
                             </ul>
                         </div>
                         <div class="card-body">
+                            <!-- Fixed tab content with proper aria-labelledby attributes -->
                             <div class="tab-content" id="profileTabsContent">
                                 <!-- Profile Information Tab -->
-                                <div class="tab-pane fade show active" id="profile" role="tabpanel">
+                                <div class="tab-pane fade show active" id="profile" role="tabpanel" 
+                                     aria-labelledby="profile-tab" tabindex="0">
                                     <form method="POST">
                                         <input type="hidden" name="action" value="update_profile">
                                         
@@ -607,43 +639,41 @@ include '../includes/header.php';
                                                    value="<?php echo htmlspecialchars($admin_profile['phone']); ?>">
                                         </div>
 
-                                         <div class="mb-3">
-                            <div class="col-md-4">
-    <label for="house_number" class="form-label">House No. *</label>
-    <input type="text" class="form-control" id="house_number" name="house_number" 
-           value="<?php echo htmlspecialchars($admin_profile['house_number'] ?? '', ENT_QUOTES); ?>" required>
-</div>
+                                         <div class="row g-3 mb-3">
+                                            <div class="col-md-4">
+                                                <label for="house_number" class="form-label">House No. *</label>
+                                                <input type="text" class="form-control" id="house_number" name="house_number" 
+                                                       value="<?php echo htmlspecialchars($admin_profile['house_number'] ?? '', ENT_QUOTES); ?>" required>
+                                            </div>
 
-                            <div class="col-md-8">
-    <label for="street" class="form-label">Street *</label>
-    <input type="text" class="form-control" id="street" name="street" 
-           value="<?php echo htmlspecialchars($admin_profile['street'] ?? '', ENT_QUOTES); ?>" 
-           required>
-</div>
-
-
-                       <div class="mb-3">
-    <label for="barangay" class="form-label">Barangay *</label>
-    <select class="form-select" id="barangay" name="barangays" required>
-        <option value="" disabled <?php echo empty($admin_profile['barangays']) ? 'selected' : ''; ?>>
-            Select your barangay
-        </option>
-        <?php foreach ($barangays as $barangay): ?>
-            <option value="<?php echo htmlspecialchars($barangay['name'], ENT_QUOTES); ?>"
-                <?php echo ($admin_profile['barangays'] ?? '') === $barangay['name'] ? 'selected' : ''; ?>>
-                <?php echo htmlspecialchars($barangay['name']); ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-</div>
-
-
+                                            <div class="col-md-8">
+                                                <label for="street" class="form-label">Street *</label>
+                                                <input type="text" class="form-control" id="street" name="street" 
+                                                       value="<?php echo htmlspecialchars($admin_profile['street'] ?? '', ENT_QUOTES); ?>" 
+                                                       required>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="barangay" class="form-label">Barangay *</label>
+                                            <select class="form-select" id="barangay" name="barangay" required>
+                                                <option value="" disabled <?php echo empty($admin_profile['barangay']) ? 'selected' : ''; ?>>
+                                                    Select your barangay
+                                                </option>
+                                                <?php foreach ($barangays as $barangay): ?>
+                                                    <option value="<?php echo htmlspecialchars($barangay['name'], ENT_QUOTES); ?>"
+                                                        <?php echo ($admin_profile['barangay'] ?? '') === $barangay['name'] ? 'selected' : ''; ?>>
+                                                        <?php echo htmlspecialchars($barangay['name']); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
                         
-                       <div class="mb-3">
-    <label for="landmark" class="form-label">Landmark (Optional)</label>
-    <input type="text" class="form-control" id="landmark" name="landmark" 
-           value="<?php echo htmlspecialchars($admin_profile['landmark'] ?? '', ENT_QUOTES); ?>">
-</div>
+                                       <div class="mb-3">
+                                            <label for="landmark" class="form-label">Landmark (Optional)</label>
+                                            <input type="text" class="form-control" id="landmark" name="landmark" 
+                                                   value="<?php echo htmlspecialchars($admin_profile['landmark'] ?? '', ENT_QUOTES); ?>">
+                                        </div>
 
                                         
                                         <div class="mb-3">
@@ -669,7 +699,8 @@ include '../includes/header.php';
                                 </div>
 
                                 <!-- Change Password Tab -->
-                                <div class="tab-pane fade" id="password" role="tabpanel">
+                                <div class="tab-pane fade" id="password" role="tabpanel" 
+                                     aria-labelledby="password-tab" tabindex="0">
                                     <form method="POST">
                                         <input type="hidden" name="action" value="change_password">
                                         
@@ -696,7 +727,8 @@ include '../includes/header.php';
                                 </div>
 
                                 <!-- Recent Activity Tab -->
-                                <div class="tab-pane fade" id="activity" role="tabpanel">
+                                <div class="tab-pane fade" id="activity" role="tabpanel" 
+                                     aria-labelledby="activity-tab" tabindex="0">
                                     <div class="table-responsive">
                                         <table class="table table-hover mb-0">
                                             <thead class="table-light">
