@@ -48,11 +48,5 @@ requireEmergency();
         <a href="reports.php" class="list-group-item list-group-item-action bg-dark text-white border-0 <?php echo basename($_SERVER['PHP_SELF']) == 'reports.php' ? 'active' : ''; ?>">
             <i class="bi bi-file-earmark-text-fill me-2"></i>Reports
         </a>
-        <a href="profile.php" class="list-group-item list-group-item-action bg-dark text-white border-0 <?php echo basename($_SERVER['PHP_SELF']) == 'profile.php' ? 'active' : ''; ?>">
-            <i class="bi bi-person-circle me-2"></i>Profile
-        </a>
-        <a href="settings.php" class="list-group-item list-group-item-action bg-dark text-white border-0 <?php echo basename($_SERVER['PHP_SELF']) == 'settings.php' ? 'active' : ''; ?>">
-            <i class="bi bi-gear-fill me-2"></i>Settings
-        </a>
     </div>
 </div>

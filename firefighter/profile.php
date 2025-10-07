@@ -164,23 +164,24 @@ include '../includes/header.php';
                             <h6 class="mb-0"><i class="bi bi-award me-2"></i>Fire Safety Certification</h6>
                         </div>
                         <div class="card-body">
-                            <div class="mb-2">
-                                <small class="text-muted">Firefighter Level:</small>
-                                <div><strong>Certified Firefighter</strong></div>
-                            </div>
-                            <div class="mb-2">
-                                <small class="text-muted">Last Training:</small>
-                                <div>Fire Safety Protocol - 2024</div>
-                            </div>
-                            <div class="mb-2">
-                                <small class="text-muted">Specializations:</small>
-                                <div>
-                                    <span class="badge bg-danger me-1">Fire Suppression</span>
-                                    <span class="badge bg-warning me-1">Rescue Operations</span>
-                                    <span class="badge bg-info">Emergency Medical</span>
-                                </div>
-                            </div>
-                        </div>
+    <div class="mb-2 py-2 border-bottom">
+        <small><i class="bi bi-fire me-1"></i><strong>Gear Check</strong></small>
+        <div class="small">Inspect safety gear before every response.</div>
+    </div>
+    <div class="mb-2 py-2 border-bottom">
+        <small><i class="bi bi-building me-1"></i><strong>Equipment Ready</strong></small>
+        <div class="small">Keep hoses and tools in top condition.</div>
+    </div>
+    <div class="mb-2 py-2 border-bottom">
+        <small><i class="bi bi-droplet me-1"></i><strong>Hydrant Access</strong></small>
+        <div class="small">Ensure hydrant areas are always clear.</div>
+    </div>
+    <div class="py-2">
+        <small><i class="bi bi-people-fill me-1"></i><strong>Team Safety</strong></small>
+        <div class="small">Always watch each other during operations.</div>
+    </div>
+</div>
+
                     </div>
                 </div>
                 
@@ -253,7 +254,7 @@ include '../includes/header.php';
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
 // Toggle sidebar
 document.getElementById("menu-toggle").addEventListener("click", function(e) {
