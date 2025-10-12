@@ -16,6 +16,7 @@ if ($_POST) {
         $last_name = sanitizeInput($_POST['last_name']);
         $email = sanitizeInput($_POST['email']);
         $phone = sanitizeInput($_POST['phone']);
+        $department = sanitizeInput($_POST['department']);
         $password = $_POST['password'];
         $confirm_password = $_POST['confirm_password'];
         $role = sanitizeInput($_POST['role']);
@@ -33,29 +34,39 @@ if ($_POST) {
             $check_stmt = $db->prepare($check_query);
             $check_stmt->bindParam(':email', $email);
             $check_stmt->execute();
+
+            // Check if phone already exists
+            $check_phone_query = "SELECT id FROM users WHERE phone = :phone";
+            $check_phone_stmt = $db->prepare($check_phone_query);
+            $check_phone_stmt->bindParam(':phone', $phone);
+            $check_phone_stmt->execute();
             
             if ($check_stmt->rowCount() > 0) {
                 $error_message = "Email address already exists.";
+            } elseif (!empty($phone) && $check_phone_stmt->rowCount() > 0) {
+                $error_message = "Phone number already exists.";
             } else {
                 // Insert new admin
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                $query = "INSERT INTO users (first_name, last_name, email, phone, password, user_type, phone_verified, verification_status) 
-                         VALUES (:first_name, :last_name, :email, :phone, :password, :user_type, 1, 'verified')";
+                $query = "INSERT INTO users (first_name, last_name, email, phone, department, password, user_type, phone_verified, verification_status) 
+                     VALUES (:first_name, :last_name, :email, :phone, :department, :password, :user_type, 1, 'verified')";
                 
                 $stmt = $db->prepare($query);
                 $stmt->bindParam(':first_name', $first_name);
                 $stmt->bindParam(':last_name', $last_name);
                 $stmt->bindParam(':email', $email);
                 $stmt->bindParam(':phone', $phone);
+                $stmt->bindParam(':department', $department);
                 $stmt->bindParam(':password', $hashed_password);
                 $stmt->bindParam(':user_type', $role);
                 
                 if ($stmt->execute()) {
                     $new_admin_id = $db->lastInsertId();
                     logActivity($_SESSION['user_id'], 'CREATE_ADMIN', 'users', $new_admin_id, null, [
-                        'name' => $first_name . ' ' . $last_name,
-                        'email' => $email,
-                        'role' => $role
+                    'name' => $first_name . ' ' . $last_name,
+                    'email' => $email,
+                    'role' => $role,
+                    'department' => $department
                     ]);
                     $success_message = "New admin account created successfully.";
                 } else {
@@ -93,38 +104,30 @@ if ($_POST) {
             $error_message = "You cannot delete your own account.";
         } else {
             // Get admin details before deletion
-            $get_admin_query = "SELECT first_name, last_name, email FROM users WHERE id = :id AND user_type IN ('admin', 'super_admin')";
+            $get_admin_query = "SELECT first_name, last_name, email FROM users WHERE id = :id AND user_type IN ('admin', 'super_admin', 'police', 'barangay', 'emergency', 'firefighter')";
             $get_admin_stmt = $db->prepare($get_admin_query);
             $get_admin_stmt->bindParam(':id', $admin_id);
             $get_admin_stmt->execute();
             $admin_details = $get_admin_stmt->fetch();
             
             if ($admin_details) {
-                // Delete related records in system_logs (and other tables if necessary)
-                $delete_logs_query = "DELETE FROM system_logs WHERE user_id = :id";
-                $delete_logs_stmt = $db->prepare($delete_logs_query);
-                $delete_logs_stmt->bindParam(':id', $admin_id);
-                $delete_logs_stmt->execute();
-
-                // Example: Delete related records in other tables referencing users (add more as needed)
-                // $delete_other_query = "DELETE FROM other_table WHERE user_id = :id";
-                // $delete_other_stmt = $db->prepare($delete_other_query);
-                // $delete_other_stmt->bindParam(':id', $admin_id);
-                // $delete_other_stmt->execute();
-
-                // Now delete the admin user
-                $delete_query = "DELETE FROM users WHERE id = :id AND user_type IN ('admin', 'super_admin')";
-                $delete_stmt = $db->prepare($delete_query);
-                $delete_stmt->bindParam(':id', $admin_id);
-                
-                if ($delete_stmt->execute()) {
-                    logActivity($_SESSION['user_id'], 'DELETE_ADMIN', 'users', $admin_id, $admin_details, null);
-                    $success_message = "Admin account deleted successfully.";
-                } else {
-                    $error_message = "Error deleting admin account. There may be related records in other tables that must be deleted first.";
-                }
+            // Delete related records in system_logs (and other tables if necessary)
+            $delete_logs_query = "DELETE FROM system_logs WHERE user_id = :id";
+            $delete_logs_stmt = $db->prepare($delete_logs_query);
+            $delete_logs_stmt->bindParam(':id', $admin_id);
+            $delete_logs_stmt->execute();
+            $delete_query = "DELETE FROM users WHERE id = :id AND user_type IN ('admin', 'super_admin', 'police', 'barangay', 'emergency', 'firefighter')";
+            $delete_stmt = $db->prepare($delete_query);
+            $delete_stmt->bindParam(':id', $admin_id);
+            
+            if ($delete_stmt->execute()) {
+                logActivity($_SESSION['user_id'], 'DELETE_ADMIN', 'users', $admin_id, $admin_details, null);
+                $success_message =  "Account deleted successfully.";
             } else {
-                $error_message = "Admin account not found.";
+                $error_message = "Error deleting admin account. There may be related records in other tables that must be deleted first.";
+            }
+            } else {
+            $error_message = "Admin account not found.";
             }
         }
     }
@@ -134,7 +137,7 @@ if ($_POST) {
 $admin_query = "SELECT id, first_name, last_name, email, phone,id_document, user_type, created_at, 
                        (SELECT COUNT(*) FROM system_logs WHERE user_id = users.id) as activity_count
                 FROM users 
-                WHERE user_type IN ('admin', 'super_admin') 
+                WHERE user_type != 'resident' 
                 ORDER BY created_at DESC";
 $admin_stmt = $db->prepare($admin_query);
 $admin_stmt->execute();
@@ -258,8 +261,27 @@ $current_user = $current_user_stmt->fetch();
                                                 </td>
                                                 <td><?php echo htmlspecialchars($admin['email']); ?></td>
                                                 <td>
-                                                    <span class="badge role-badge <?php echo $admin['user_type'] === 'super_admin' ? 'bg-danger' : 'bg-primary'; ?>">
-                                                        <?php echo $admin['user_type'] === 'super_admin' ? 'Super Admin' : 'Admin'; ?>
+                                                    <span class="badge role-badge 
+                                                        <?php
+                                                            switch ($admin['user_type']) {
+                                                                case 'super_admin': echo 'bg-danger'; break;
+                                                                case 'barangay': echo 'bg-success'; break;
+                                                                case 'police': echo 'bg-dark'; break;
+                                                                case 'firefighter': echo 'bg-warning text-dark'; break;
+                                                                case 'emergency': echo 'bg-info text-dark'; break;
+                                                                default: echo 'bg-primary';
+                                                            }
+                                                        ?>">
+                                                        <?php
+                                                            switch ($admin['user_type']) {
+                                                                case 'super_admin': echo 'Super Admin'; break;
+                                                                case 'barangay': echo 'Barangay'; break;
+                                                                case 'police': echo 'Police'; break;
+                                                                case 'firefighter': echo 'Fire'; break;
+                                                                case 'emergency': echo 'Emergency'; break;
+                                                                default: echo 'Admin';
+                                                            }
+                                                        ?>
                                                     </span>
                                                 </td>
                                                 <td>
@@ -396,12 +418,20 @@ $current_user = $current_user_stmt->fetch();
                             <input type="text" class="form-control" id="phone" name="phone">
                         </div>
                         <div class="mb-3">
+                            <label for="department" class="form-label">Department</label>
+                            <input type="text" class="form-control" id="department" name="department" maxlength="100">
+                        </div>
+                        <div class="mb-3">
                             <label for="role" class="form-label">Role *</label>
                             <select class="form-select" id="role" name="role" required>
                                 <option value="admin">Admin</option>
                                 <?php if ($current_user['user_type'] === 'super_admin'): ?>
                                     <option value="super_admin">Super Admin</option>
                                 <?php endif; ?>
+                                 <option value="barangay">Barangay</option>
+                                  <option value="police">Police</option>
+                                  <option value="emergency">Emergency</option>
+                                  <option value="firefighter">Firefighter</option>
                             </select>
                         </div>
                         <div class="row">

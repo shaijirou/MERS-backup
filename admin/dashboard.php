@@ -442,44 +442,6 @@ include '../includes/header.php';
                     </div>
                 </div>
             </div>
-
-            <div class="row my-4">
-                <div class="col-12">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">Quick Actions</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-3">
-                                    <a href="alerts.php" class="btn btn-danger w-100 py-3">
-                                        <i class="bi bi-exclamation-circle-fill fs-4 d-block mb-2"></i>
-                                        Send Emergency Alert
-                                    </a>
-                                </div>
-                                <div class="col-md-3">
-                                    <a href="map.php" class="btn btn-primary w-100 py-3">
-                                        <i class="bi bi-map-fill fs-4 d-block mb-2"></i>
-                                        Update Evacuation Map
-                                    </a>
-                                </div>
-                                <div class="col-md-3">
-                                    <a href="reports.php" class="btn btn-success w-100 py-3">
-                                        <i class="bi bi-file-earmark-text-fill fs-4 d-block mb-2"></i>
-                                        Generate Reports
-                                    </a>
-                                </div>
-                                <div class="col-md-3">
-                                    <a href="users.php" class="btn btn-warning w-100 py-3 text-dark">
-                                        <i class="bi bi-person-plus-fill fs-4 d-block mb-2"></i>
-                                        Verify New Users
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>

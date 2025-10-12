@@ -122,37 +122,7 @@ include '../includes/header.php';
         <!-- Navigation -->
         <?php include 'includes/navbar.php'; ?>
     <div class="row my-4">
-                <!-- <div class="col-12">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">Quick Actions</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <a href="incidents.php" class="btn btn-danger w-100 py-3">
-                                        <i class="bi bi-exclamation-triangle-fill fs-4 d-block mb-2"></i>
-                                        View Local Incidents
-                                    </a>
-                                </div>
-
-                                <div class="col-md-4">
-                                    <a href="reports.php" class="btn btn-success w-100 py-3">
-                                        <i class="bi bi-file-earmark-text-fill fs-4 d-block mb-2"></i>
-                                        Generate Reports
-                                    </a>
-                                </div>
-                                <div class="col-md-4">
-                                    <a href="map.php" class="btn btn-warning w-100 py-3 text-dark">
-                                        <i class="bi bi-house-fill fs-4 d-block mb-2"></i>
-                                        Evacuation Centers
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div> -->
-            </div>
+               
 
         <div class="container-fluid px-4">
             <!-- Statistics Cards -->
@@ -166,7 +136,7 @@ include '../includes/header.php';
                         <i class="bi bi-exclamation-triangle-fill fs-1 text-white"></i>
                     </div>
                 </div>
-
+ 
                 <div class="col-md-3">
                     <div class="p-3 bg-warning shadow-sm d-flex justify-content-around align-items-center rounded">
                         <div class="text-white">
