@@ -19,8 +19,7 @@ $error_message = '';
 
 // Handle profile update
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $first_name = trim($_POST['first_name']);
-    $last_name = trim($_POST['last_name']);
+    $department = trim($_POST['department']);
     $phone = trim($_POST['phone']);
     $email = trim($_POST['email']);
     $current_password = $_POST['current_password'];
@@ -51,12 +50,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Update profile
         if (!empty($new_password)) {
             $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-            $stmt = $db->prepare("UPDATE users SET first_name = :first_name, last_name = :last_name, phone = :phone, email = :email, password = :password WHERE id = :user_id");
+            $stmt = $db->prepare("UPDATE users SET department = :department, last_name = :last_name, phone = :phone, email = :email, password = :password WHERE id = :user_id");
             $stmt->bindParam(':password', $hashed_password);
         } else {
-            $stmt = $db->prepare("UPDATE users SET first_name = :first_name, last_name = :last_name, phone = :phone, email = :email WHERE id = :user_id");
+            $stmt = $db->prepare("UPDATE users SET department = :department, last_name = :last_name, phone = :phone, email = :email WHERE id = :user_id");
         }
-        $stmt->bindParam(':first_name', $first_name);
+        $stmt->bindParam(':department', $department);
         $stmt->bindParam(':last_name', $last_name);
         $stmt->bindParam(':phone', $phone);
         $stmt->bindParam(':email', $email);
@@ -64,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute();
         
         // Update session
-        $_SESSION['first_name'] = $first_name;
+        $_SESSION['department'] = $department;
         $_SESSION['last_name'] = $last_name;
         
         $success_message = "Profile updated successfully!";
@@ -109,7 +108,7 @@ include '../includes/header.php';
         <div class="container-fluid px-4">
             <div class="row my-4">
                 <div class="col-12">
-                    <h2><i class="bi bi-person-badge text-primary me-2"></i>Police Officer Profile</h2>
+                    <h2><i class="bi bi-person-badge text-primary me-2"></i>Police Department Profile</h2>
                     <p class="text-muted">Manage your police officer profile and account settings</p>
                 </div>
             </div>
@@ -193,18 +192,14 @@ include '../includes/header.php';
                         <div class="card-body">
                             <form method="POST">
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="first_name" class="form-label">First Name</label>
-                                        <input type="text" class="form-control" id="first_name" name="first_name" 
-                                               value="<?php echo htmlspecialchars($user['first_name']); ?>" required>
+                                    <div class="col-md-12 mb-3">
+                                        <label for="department" class="form-label">Department Name</label>
+                                        <input type="text" class="form-control" id="department" name="department" 
+                                               value="<?php echo htmlspecialchars($user['department']); ?>" required>
                                     </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="last_name" class="form-label">Last Name</label>
-                                        <input type="text" class="form-control" id="last_name" name="last_name" 
-                                               value="<?php echo htmlspecialchars($user['last_name']); ?>" required>
-                                    </div>
+                    
                                 </div>
-                                
+                            
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label for="phone" class="form-label">Phone Number</label>
