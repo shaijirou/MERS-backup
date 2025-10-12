@@ -47,6 +47,17 @@ switch ($urgency) {
 }
 ?>
 
+<style>
+.photo-thumbnail {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.photo-thumbnail:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+</style>
+
 <div class="row">
     <div class="col-md-6">
         <h6 class="text-muted mb-3">Incident Information</h6>
@@ -80,9 +91,9 @@ switch ($urgency) {
                                 <div class="col-md-6">
                                     <img src="<?php echo htmlspecialchars($photo_path); ?>" 
                                          alt="Incident Photo <?php echo $index + 1; ?>" 
-                                         class="img-fluid rounded border" 
-                                         style="max-height: 150px; width: 100%; object-fit: cover; cursor: pointer;"
-                                         onclick="window.open('<?php echo htmlspecialchars($photo_path); ?>', '_blank')">
+                                         class="img-fluid rounded border photo-thumbnail" 
+                                         style="max-height: 150px; width: 100%; object-fit: cover;"
+                                         onclick="showImageModal('<?php echo htmlspecialchars($photo_path); ?>', 'Incident Photo <?php echo $index + 1; ?>')">
                                 </div>
                             <?php endif; ?>
                         <?php endforeach; ?>
@@ -199,3 +210,26 @@ switch ($urgency) {
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">Image Viewer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-0">
+                <img id="modalImage" src="/placeholder.svg" alt="Full size image" class="img-fluid" style="max-height: 80vh; width: auto;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showImageModal(imageSrc, imageTitle) {
+    document.getElementById('modalImage').src = imageSrc;
+    document.getElementById('imageModalLabel').textContent = imageTitle;
+    const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+    imageModal.show();
+}
+</script>

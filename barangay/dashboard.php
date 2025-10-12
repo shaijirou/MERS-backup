@@ -216,7 +216,7 @@ include '../includes/header.php';
                                                                 <i class="bi bi-eye"></i>
                                                             </button>
                                                             <button class="btn btn-outline-warning btn-sm" onclick="updateStatus(<?php echo $incident['id']; ?>, 'responding')" title="Responding">
-                                                                <i class="bi bi-person-running"></i>
+                                                                <i class="bi bi-truck"></i>
                                                             </button>
                                                             <button class="btn btn-outline-danger btn-sm" onclick="updateStatus(<?php echo $incident['id']; ?>, 'on_scene')" title="On Scene">
                                                                 <i class="bi bi-geo-alt"></i>
