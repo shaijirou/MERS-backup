@@ -43,12 +43,23 @@ try {
         <button class="btn btn-primary" id="menu-toggle">
             <i class="bi bi-list"></i>
         </button>
-        <h4 style="margin-left: 8px;"><?php echo isset($_SESSION['user_name']) ? htmlspecialchars($_SESSION['user_name']) : 'Emergency Personnel'; ?></h4>
+        
         <div class="navbar-nav ms-auto">
             <div class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                     
-                    <span><?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
+                    <?php
+                    $department = '';
+                    if ($emergency_id) {
+                        $stmt = $pdo->prepare("SELECT department FROM users WHERE id = ?");
+                        $stmt->execute([$emergency_id]);
+                        $user_data = $stmt->fetch(PDO::FETCH_ASSOC);
+                        if ($user_data && !empty($user_data['department'])) {
+                            $department = $user_data['department'];
+                        }
+                    }
+                    ?>
+                    <span><?php echo htmlspecialchars($department); ?></span>
                 </a>
 
                 <ul class="dropdown-menu dropdown-menu-end">
