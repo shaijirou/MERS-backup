@@ -374,7 +374,7 @@ include '../includes/header.php';
                             <div class="d-flex justify-content-between">
                                 <div>
                                     <h4><?php echo $stats['pending_approval']; ?></h4>
-                                    <p class="mb-0">Pending Approval</p>
+                                    <p class="mb-0">Pending</p>
                                 </div>
                                 <i class="bi bi-hourglass-split fs-1"></i>
                             </div>
@@ -624,11 +624,6 @@ include '../includes/header.php';
                                                     <?php endif; ?>
                                                      <!-- Added assignment options  -->
                                                     <?php if ($incident['approval_status'] == 'approved'): ?>
-                                                    <li>
-                                                        <a class="dropdown-item" href="#" onclick="assignToDepartment(<?php echo $incident['id']; ?>, '<?php echo $incident['responder_type'] ?? ''; ?>')">
-                                                            <i class="bi bi-building text-primary"></i> Assign to Department
-                                                        </a>
-                                                    </li>
                                                     <li>
                                                         <a class="dropdown-item" href="#" onclick="assignToResponder(<?php echo $incident['id']; ?>, '<?php echo $incident['responder_type'] ?? ''; ?>', <?php echo $incident['assigned_to'] ?? 'null'; ?>)">
                                                             <i class="bi bi-person-plus text-info"></i> Assign to Responder

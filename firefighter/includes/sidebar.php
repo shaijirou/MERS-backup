@@ -33,7 +33,7 @@ requireFirefighter();
                 $stmt = $pdo->prepare("SELECT COUNT(*) FROM incident_reports 
                                       WHERE approval_status = 'approved' 
                                       AND response_status IN ('notified', 'responding', 'on_scene')
-                                      AND incident_type IN ('fire', 'hazmat', 'rescue')");
+                                      AND incident_type IN ('fire', 'other')");
                 $stmt->execute();
                 $pending_count = $stmt->fetchColumn();
                 if ($pending_count > 0): ?>
