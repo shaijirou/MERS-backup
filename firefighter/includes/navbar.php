@@ -47,8 +47,7 @@ try {
         <div class="navbar-nav ms-auto">
             <div class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                    <img src="<?php echo htmlspecialchars($profile_picture ?: '../assets/img/user-avatar.jpg'); ?>" 
-                        class="rounded-circle me-1" width="28" height="28" alt="User">
+                  
                     <span><?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
                 </a>
 
