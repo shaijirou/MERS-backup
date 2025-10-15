@@ -22,7 +22,7 @@ try {
                    OR ir.incident_type LIKE '%explosion%' 
                    OR ir.incident_type LIKE '%burn%' 
                    OR ir.incident_type LIKE '%smoke%'
-                   OR ir.urgency_level IN ('high', 'critical'))
+                   AND ir.urgency_level IN ('low', 'medium', 'high', 'critical'))
               ORDER BY 
                 CASE 
                     WHEN ir.response_status = 'notified' THEN 1
