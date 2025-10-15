@@ -291,7 +291,10 @@ function viewIncident(incidentId) {
                 '<div class="alert alert-danger">Error loading incident details</div>';
         });
 }
-
+function showImageModal(imageSrc) {
+        document.getElementById('modalImage').src = imageSrc;
+        new bootstrap.Modal(document.getElementById('imageModal')).show();
+    }
 function updateStatus(newStatus) {
     if (!currentIncidentId) return;
     

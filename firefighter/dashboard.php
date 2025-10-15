@@ -186,7 +186,7 @@ include '../includes/header.php';
                                                     </td>
                                                     <td>
                                                         <div class="btn-group btn-group-sm">
-                                                            <button class="btn btn-outline-primary" onclick="viewIncident(<?php echo $incident['id']; ?>)">
+                                                            <button class="btn btn-outline-primary" onclick="viewIncident(<?php echo $incident['id']; ?>)" title="View Details">
                                                                 <i class="bi bi-eye"></i>
                                                             </button>
                                                             <button class="btn btn-outline-warning" onclick="updateStatus(<?php echo $incident['id']; ?>, 'responding')" title="En Route">
@@ -273,23 +273,24 @@ include '../includes/header.php';
     </div>
 </div>
 
-
 <div class="modal fade" id="incidentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Fire Incident Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-fire me-2"></i>Fire Incident Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="incidentDetails">
                  Incident details will be loaded here 
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
 
 <script>
 // Toggle sidebar
@@ -304,15 +305,23 @@ setInterval(function() {
 }, 30000);
 
 function viewIncident(incidentId) {
-    // Load incident details via AJAX
-    fetch('ajax/get_incident.php?id=' + incidentId)
+    // Load incident details via AJAX using the same endpoint as incidents page
+    fetch('get_incident_details.php?id=' + incidentId)
         .then(response => response.text())
         .then(data => {
             document.getElementById('incidentDetails').innerHTML = data;
             new bootstrap.Modal(document.getElementById('incidentModal')).show();
+        })
+        .catch(error => {
+            console.error('Error loading incident details:', error);
+            document.getElementById('incidentDetails').innerHTML = 
+                '<div class="alert alert-danger">Error loading incident details</div>';
         });
 }
-
+function showImageModal(imageSrc) {
+        document.getElementById('modalImage').src = imageSrc;
+        new bootstrap.Modal(document.getElementById('imageModal')).show();
+    }
 function updateStatus(incidentId, status) {
     let statusText = getFireStatusText(status);
     
