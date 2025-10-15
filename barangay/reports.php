@@ -192,7 +192,7 @@ include '../includes/header.php';
 
             
             <div class="row g-3 mb-4">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="p-3 bg-primary shadow-sm d-flex justify-content-around align-items-center rounded">
                         <div class="text-white">
                             <h3 class="fs-2"><?php echo $summary['total_incidents']; ?></h3>
@@ -201,7 +201,7 @@ include '../includes/header.php';
                         <i class="bi bi-exclamation-triangle-fill fs-1 text-white"></i>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="p-3 bg-success shadow-sm d-flex justify-content-around align-items-center rounded">
                         <div class="text-white">
                             <h3 class="fs-2"><?php echo $summary['resolved_count']; ?></h3>
@@ -210,7 +210,7 @@ include '../includes/header.php';
                         <i class="bi bi-check-circle-fill fs-1 text-white"></i>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="p-3 bg-warning shadow-sm d-flex justify-content-around align-items-center rounded">
                         <div class="text-white">
                             <h3 class="fs-2"><?php echo $summary['active_count']; ?></h3>
@@ -219,15 +219,7 @@ include '../includes/header.php';
                         <i class="bi bi-clock-fill fs-1 text-white"></i>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="p-3 bg-info shadow-sm d-flex justify-content-around align-items-center rounded">
-                        <div class="text-white">
-                            <h3 class="fs-2"><?php echo $summary['pending_count']; ?></h3>
-                            <p class="fs-6">Pending</p>
-                        </div>
-                        <i class="bi bi-hourglass-fill fs-1 text-white"></i>
-                    </div>
-                </div>
+                
             </div>
 
             

@@ -1,9 +1,31 @@
 <?php
 require_once '../config/config.php';
 
-// Check if user is logged in and is police
-if (!isLoggedIn() || !isPolice()) {
+// Check if user is logged in
+if (!isLoggedIn()) {
     redirect('../index.php');
+}
+
+// Check if user is police personnel
+if (!isPolice()) {
+    // Redirect to appropriate dashboard based on user type
+    switch ($_SESSION['user_type']) {
+        case 'admin':
+            redirect('../admin/dashboard.php');
+            break;
+        case 'firefighter':
+            redirect('../firefighter/dashboard.php');
+            break;
+        case 'emergency':
+            redirect('../emergency/dashboard.php');
+            break;
+        case 'barangay':
+            redirect('../barangay/dashboard.php');
+            break;
+        default:
+            redirect('../user/dashboard.php');
+            break;
+    }
 }
 
 $page_title = 'Police Reports';
@@ -13,30 +35,81 @@ $additional_css = ['assets/css/admin.css'];
 $database = new Database();
 $db = $database->getConnection();
 
-// Get police reports and statistics
-$stats_query = "SELECT 
-    COUNT(*) as total_incidents,
-    SUM(CASE WHEN response_status = 'resolved' THEN 1 ELSE 0 END) as resolved_incidents,
-    SUM(CASE WHEN response_status = 'responding' OR response_status = 'on_scene' THEN 1 ELSE 0 END) as active_incidents,
-    SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as today_incidents
-    FROM incident_reports 
-    WHERE approval_status = 'approved' 
-    AND (responder_type = 'police' OR incident_type LIKE '%crime%' OR incident_type LIKE '%accident%' OR incident_type LIKE '%violence%')";
-$stmt = $db->prepare($stats_query);
+// Get current user info
+$user_id = $_SESSION['user_id'];
+$query = "SELECT * FROM users WHERE id = :user_id";
+$stmt = $db->prepare($query);
+$stmt->bindParam(':user_id', $user_id);
 $stmt->execute();
-$stats = $stmt->fetch();
+$current_user = $stmt->fetch();
 
-// Get recent incidents for reports
+// Get filter parameters
+$date_from = $_GET['date_from'] ?? date('Y-m-01');
+$date_to = $_GET['date_to'] ?? date('Y-m-t');
+$incident_type = $_GET['incident_type'] ?? '';
+$status = $_GET['status'] ?? '';
+
+$conditions = ["ir.approval_status = 'approved'"];
+$conditions[] = "(ir.assigned_to = :user_id OR ir.responder_type = 'police' OR ir.incident_type LIKE '%crime%' OR ir.incident_type LIKE '%theft%' OR ir.incident_type LIKE '%violence%')";
+$params = [':user_id' => $user_id];
+
+if (!empty($current_user['assigned_barangay'])) {
+    $conditions[] = "u.barangay = :assigned_barangay";
+    $params[':assigned_barangay'] = $current_user['assigned_barangay'];
+}
+
+if ($date_from) {
+    $conditions[] = "DATE(ir.created_at) >= :date_from";
+    $params[':date_from'] = $date_from;
+}
+if ($date_to) {
+    $conditions[] = "DATE(ir.created_at) <= :date_to";
+    $params[':date_to'] = $date_to;
+}
+if ($incident_type) {
+    $conditions[] = "ir.incident_type = :incident_type";
+    $params[':incident_type'] = $incident_type;
+}
+if ($status) {
+    $conditions[] = "ir.response_status = :status";
+    $params[':status'] = $status;
+}
+
+$where_clause = implode(' AND ', $conditions);
+
+// Get incidents data
 $incidents_query = "SELECT ir.*, u.first_name, u.last_name, u.barangay
-    FROM incident_reports ir 
-    JOIN users u ON ir.user_id = u.id 
-    WHERE ir.approval_status = 'approved'
-    AND (ir.responder_type = 'police' OR ir.incident_type LIKE '%crime%' OR ir.incident_type LIKE '%accident%' OR ir.incident_type LIKE '%violence%')
-    ORDER BY ir.created_at DESC 
-    LIMIT 50";
+                   FROM incident_reports ir 
+                   JOIN users u ON ir.user_id = u.id 
+                   WHERE $where_clause
+                   ORDER BY ir.created_at DESC";
 $stmt = $db->prepare($incidents_query);
-$stmt->execute();
-$recent_incidents = $stmt->fetchAll();
+$stmt->execute($params);
+$incidents = $stmt->fetchAll();
+
+// Get summary statistics
+$summary_query = "SELECT 
+                 COUNT(*) as total_incidents,
+                 SUM(CASE WHEN ir.response_status = 'resolved' THEN 1 ELSE 0 END) as resolved_count,
+                 SUM(CASE WHEN ir.response_status = 'responding' OR ir.response_status = 'on_scene' THEN 1 ELSE 0 END) as active_count,
+                 SUM(CASE WHEN ir.response_status = 'notified' THEN 1 ELSE 0 END) as pending_count
+                 FROM incident_reports ir 
+                 JOIN users u ON ir.user_id = u.id 
+                 WHERE $where_clause";
+$stmt = $db->prepare($summary_query);
+$stmt->execute($params);
+$summary = $stmt->fetch();
+
+// Get incidents by type
+$by_type_query = "SELECT ir.incident_type, COUNT(*) as count
+                 FROM incident_reports ir 
+                 JOIN users u ON ir.user_id = u.id 
+                 WHERE $where_clause
+                 GROUP BY ir.incident_type
+                 ORDER BY count DESC";
+$stmt = $db->prepare($by_type_query);
+$stmt->execute($params);
+$by_type = $stmt->fetchAll();
 
 include '../includes/header.php';
 ?>
@@ -46,160 +119,178 @@ include '../includes/header.php';
 <link href="../assets/css/admin.css" rel="stylesheet">
 
 <div class="d-flex" id="wrapper">
-     <!-- Sidebar  -->
+     
     <?php include 'includes/sidebar.php'; ?>
     
-     <!-- Page Content  -->
+   
     <div id="page-content-wrapper">
-         <!-- Navigation  -->
+         
         <?php include 'includes/navbar.php'; ?>
 
         <div class="container-fluid px-4">
-            <div class="row my-4">
-                <div class="col-12">
-                    <h2><i class="bi bi-file-earmark-text me-2"></i>Police Reports & Statistics</h2>
-                    <p class="text-muted">View comprehensive reports and statistics for police operations</p>
+            
+            <div class="d-flex justify-content-between align-items-center my-4">
+                <div>
+                    <h1 class="h3 mb-0">👮 Police Emergency Reports</h1>
+                    <p class="text-muted">Comprehensive analysis of police emergency response activities</p>
                 </div>
             </div>
 
-             <!-- Statistics Cards  -->
+           
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-funnel me-2"></i>Filter Reports
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">From Date</label>
+                                <input type="date" name="date_from" class="form-control" value="<?php echo $date_from; ?>">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">To Date</label>
+                                <input type="date" name="date_to" class="form-control" value="<?php echo $date_to; ?>">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Incident Type</label>
+                                <select name="incident_type" class="form-select">
+                                    <option value="">All Types</option>
+                                    <option value="Fire" <?php echo $incident_type == 'Fire' ? 'selected' : ''; ?>>Fire</option>
+                                    <option value="Flood" <?php echo $incident_type == 'Flood' ? 'selected' : ''; ?>>Flood</option>
+                                    <option value="Landslide" <?php echo $incident_type == 'Landslide' ? 'selected' : ''; ?>>Landslide</option>
+                                    <option value="Earthquake" <?php echo $incident_type == 'Earthquake' ? 'selected' : ''; ?>>Earthquake</option>
+                                    <option value="Typhoon" <?php echo $incident_type == 'Typhoon' ? 'selected' : ''; ?>>Typhoon</option>
+                                    <option value="Medical Emergency" <?php echo $incident_type == 'Medical Emergency' ? 'selected' : ''; ?>>Medical Emergency</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Status</label>
+                                <select name="status" class="form-select">
+                                    <option value="">All Status</option>
+                                    <option value="notified" <?php echo $status == 'notified' ? 'selected' : ''; ?>>Notified</option>
+                                    <option value="responding" <?php echo $status == 'responding' ? 'selected' : ''; ?>>Responding</option>
+                                    <option value="on_scene" <?php echo $status == 'on_scene' ? 'selected' : ''; ?>>On Scene</option>
+                                    <option value="resolved" <?php echo $status == 'resolved' ? 'selected' : ''; ?>>Resolved</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search me-2"></i>Apply Filters
+                            </button>
+                            <a href="reports.php" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            
             <div class="row g-3 mb-4">
-                <div class="col-md-3">
-                    <div class="card bg-primary text-white shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h3 class="fs-2 mb-0"><?php echo $stats['total_incidents']; ?></h3>
-                                    <p class="fs-6 mb-0">Total Incidents</p>
-                                </div>
-                                <i class="bi bi-clipboard-data fs-1"></i>
-                            </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-primary shadow-sm d-flex justify-content-around align-items-center rounded">
+                        <div class="text-white">
+                            <h3 class="fs-2"><?php echo $summary['total_incidents']; ?></h3>
+                            <p class="fs-6">Total Incidents</p>
                         </div>
+                        <i class="bi bi-shield-fill-exclamation fs-1 text-white"></i>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="card bg-success text-white shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h3 class="fs-2 mb-0"><?php echo $stats['resolved_incidents']; ?></h3>
-                                    <p class="fs-6 mb-0">Resolved Cases</p>
-                                </div>
-                                <i class="bi bi-check-circle fs-1"></i>
-                            </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-success shadow-sm d-flex justify-content-around align-items-center rounded">
+                        <div class="text-white">
+                            <h3 class="fs-2"><?php echo $summary['resolved_count']; ?></h3>
+                            <p class="fs-6">Resolved</p>
                         </div>
+                        <i class="bi bi-check-circle-fill fs-1 text-white"></i>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="card bg-warning text-white shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h3 class="fs-2 mb-0"><?php echo $stats['active_incidents']; ?></h3>
-                                    <p class="fs-6 mb-0">Active Cases</p>
-                                </div>
-                                <i class="bi bi-exclamation-triangle fs-1"></i>
-                            </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-warning shadow-sm d-flex justify-content-around align-items-center rounded">
+                        <div class="text-white">
+                            <h3 class="fs-2"><?php echo $summary['active_count']; ?></h3>
+                            <p class="fs-6">Active</p>
                         </div>
+                        <i class="bi bi-clock-fill fs-1 text-white"></i>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="card bg-info text-white shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h3 class="fs-2 mb-0"><?php echo $stats['today_incidents']; ?></h3>
-                                    <p class="fs-6 mb-0">Today's Reports</p>
-                                </div>
-                                <i class="bi bi-calendar-day fs-1"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                
             </div>
 
-             <!-- Export Buttons  -->
-            <div class="row mb-3">
-                <div class="col-12">
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-primary" onclick="exportReports('all')">
-                            <i class="bi bi-download me-1"></i>Export All Reports
-                        </button>
-                        <button class="btn btn-success" onclick="exportReports('monthly')">
-                            <i class="bi bi-calendar-month me-1"></i>Monthly Report
-                        </button>
-                        <button class="btn btn-info" onclick="printReports()">
-                            <i class="bi bi-printer me-1"></i>Print Reports
-                        </button>
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-table me-2"></i>Incident Reports
+                        </h5>
+                        <span class="badge bg-primary"><?php echo count($incidents); ?> Records</span>
                     </div>
                 </div>
-            </div>
-
-             <!-- Reports Table  -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">Recent Police Incidents</h5>
+                <div class="card-body">
+                    <?php if (empty($incidents)): ?>
+                        <div class="text-center py-5">
+                            <i class="bi bi-file-earmark-x text-muted" style="font-size: 4rem;"></i>
+                            <h5 class="text-muted mt-3">No incidents found</h5>
+                            <p class="text-muted">No incidents match the selected filters.</p>
                         </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead class="table-dark">
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Report #</th>
+                                        <th>Type</th>
+                                        <th>Location</th>
+                                        <th>Reporter</th>
+                                        <th>Barangay</th>
+                                        <th>Status</th>
+                                        <th>Urgency</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($incidents as $incident): ?>
                                         <tr>
-                                            <th>Date</th>
-                                            <th>Report #</th>
-                                            <th>Type</th>
-                                            <th>Location</th>
-                                            <th>Reporter</th>
-                                            <th>Urgency</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
+                                            <td class="fw-medium"><?php echo htmlspecialchars($incident['report_number']); ?></td>
+                                            <td>
+                                                <?php
+                                                $icons = [
+                                                    'Fire' => 'bi-fire',
+                                                    'Flood' => 'bi-water',
+                                                    'Landslide' => 'bi-mountain',
+                                                    'Earthquake' => 'bi-globe',
+                                                    'Typhoon' => 'bi-tornado',
+                                                    'Medical Emergency' => 'bi-heart-pulse'
+                                                ];
+                                                $icon = $icons[$incident['incident_type']] ?? 'bi-exclamation-triangle';
+                                                ?>
+                                                <i class="<?php echo $icon; ?> me-1"></i><?php echo htmlspecialchars($incident['incident_type']); ?>
+                                            </td>
+                                            <td><?php echo htmlspecialchars($incident['location']); ?></td>
+                                            <td><?php echo htmlspecialchars($incident['first_name'] . ' ' . $incident['last_name']); ?></td>
+                                            <td><?php echo htmlspecialchars($incident['barangay']); ?></td>
+                                            <td>
+                                                <span class="badge bg-<?php echo getStatusColor($incident['response_status']); ?> rounded-pill">
+                                                    <?php echo ucfirst(str_replace('_', ' ', $incident['response_status'])); ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-<?php echo getUrgencyColor($incident['urgency_level']); ?> rounded-pill">
+                                                    <?php echo ucfirst($incident['urgency_level']); ?>
+                                                </span>
+                                            </td>
+                                            <td><?php echo date('M j, Y', strtotime($incident['created_at'])); ?></td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if (count($recent_incidents) > 0): ?>
-                                            <?php foreach ($recent_incidents as $incident): ?>
-                                                <tr>
-                                                    <td><?php echo date('M j, Y', strtotime($incident['created_at'])); ?></td>
-                                                    <td class="fw-medium"><?php echo htmlspecialchars($incident['report_number']); ?></td>
-                                                    <td><?php echo htmlspecialchars($incident['incident_type']); ?></td>
-                                                    <td><?php echo htmlspecialchars($incident['location']); ?></td>
-                                                    <td><?php echo htmlspecialchars($incident['first_name'] . ' ' . $incident['last_name']); ?></td>
-                                                    <td>
-                                                        <span class="badge bg-<?php echo getUrgencyColor($incident['urgency_level']); ?> rounded-pill">
-                                                            <?php echo ucfirst($incident['urgency_level']); ?>
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <span class="badge bg-<?php echo getStatusColor($incident['response_status']); ?> rounded-pill">
-                                                            <?php echo ucfirst(str_replace('_', ' ', $incident['response_status'])); ?>
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <button class="btn btn-sm btn-outline-primary" onclick="viewIncident(<?php echo $incident['id']; ?>)">
-                                                            <i class="bi bi-eye"></i>
-                                                        </button>
-                                                        <button class="btn btn-sm btn-outline-success" onclick="generateReport(<?php echo $incident['id']; ?>)">
-                                                            <i class="bi bi-file-earmark-pdf"></i>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php else: ?>
-                                            <tr>
-                                                <td colspan="8" class="text-center py-4">
-                                                    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
-                                                    <h5 class="text-muted mt-2">No police incidents found</h5>
-                                                    <p class="text-muted">Police reports will appear here when incidents are assigned.</p>
-                                                </td>
-                                            </tr>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
                         </div>
-                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -213,25 +304,6 @@ document.getElementById("menu-toggle").addEventListener("click", function(e) {
     e.preventDefault();
     document.getElementById("wrapper").classList.toggle("toggled");
 });
-
-function exportReports(type) {
-    // Implement export functionality
-    alert('Export functionality will be implemented: ' + type);
-}
-
-function printReports() {
-    window.print();
-}
-
-function viewIncident(incidentId) {
-    // Redirect to incidents page with specific incident
-    window.location.href = 'incidents.php?id=' + incidentId;
-}
-
-function generateReport(incidentId) {
-    // Generate PDF report for specific incident
-    alert('PDF report generation will be implemented for incident #' + incidentId);
-}
 </script>
 
 <?php

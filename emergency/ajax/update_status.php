@@ -1,53 +1,75 @@
 <?php
 require_once '../../config/config.php';
 
+// Set JSON header
+header('Content-Type: application/json');
+
 // Check if user is logged in and is emergency personnel
 if (!isLoggedIn() || !isEmergency()) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $incident_id = (int)$_POST['incident_id'];
-    $status = sanitizeInput($_POST['status']);
-    $user_id = $_SESSION['user_id'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $incident_id = isset($_POST['incident_id']) ? (int)$_POST['incident_id'] : 0;
+    $new_status = isset($_POST['status']) ? $_POST['status'] : '';
     
-    $database = new Database();
-    $db = $database->getConnection();
+    // Validate status
+    $valid_statuses = ['notified', 'responding', 'on_scene', 'resolved'];
+    if (!in_array($new_status, $valid_statuses)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid status']);
+        exit;
+    }
     
-    // Update incident status
-    $query = "UPDATE incident_reports 
-              SET response_status = :status, 
-                  assigned_to = :user_id,
-                  updated_at = CURRENT_TIMESTAMP 
-              WHERE id = :incident_id 
-              AND approval_status = 'approved'";
-    
-    $stmt = $db->prepare($query);
-    $stmt->bindParam(':status', $status);
-    $stmt->bindParam(':user_id', $user_id);
-    $stmt->bindParam(':incident_id', $incident_id);
-    
-    if ($stmt->execute()) {
-        // Log activity
-        $log_query = "INSERT INTO activity_logs (user_id, incident_id, action, description) 
-                      VALUES (:user_id, :incident_id, :action, :description)";
-        $log_stmt = $db->prepare($log_query);
-        $action = "Emergency Status Updated";
-        $description = "Updated emergency incident status to " . $status;
-        $log_stmt->bindParam(':user_id', $user_id);
-        $log_stmt->bindParam(':incident_id', $incident_id);
-        $log_stmt->bindParam(':action', $action);
-        $log_stmt->bindParam(':description', $description);
-        $log_stmt->execute();
+    try {
+        $database = new Database();
+        $db = $database->getConnection();
         
-        echo json_encode(['success' => true, 'message' => 'Status updated successfully']);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to update status']);
+        // Update incident status
+        $stmt = $db->prepare("
+            UPDATE incident_reports 
+            SET response_status = :status,
+                updated_at = NOW()
+            WHERE id = :incident_id 
+            AND approval_status = 'approved'
+        ");
+        
+        $stmt->bindParam(':status', $new_status);
+        $stmt->bindParam(':incident_id', $incident_id);
+        
+        if ($stmt->execute()) {
+            // Log the status change
+            $user_id = $_SESSION['user_id'];
+            $log_stmt = $db->prepare("
+                INSERT INTO incident_logs (incident_id, user_id, action, details, created_at)
+                VALUES (:incident_id, :user_id, 'status_update', :details, NOW())
+            ");
+            
+            $details = "Status changed to: " . $new_status;
+            $log_stmt->bindParam(':incident_id', $incident_id);
+            $log_stmt->bindParam(':user_id', $user_id);
+            $log_stmt->bindParam(':details', $details);
+            $log_stmt->execute();
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Status updated successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to update status'
+            ]);
+        }
+        
+    } catch (Exception $e) {
+        error_log("Error in update_status.php: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error updating status: ' . $e->getMessage()
+        ]);
     }
 } else {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+    echo json_encode(['success' => false, 'message' => 'Invalid request method']);
 }
 ?>

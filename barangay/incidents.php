@@ -1,31 +1,9 @@
 <?php
 require_once '../config/config.php';
 
-// Check if user is logged in
-if (!isLoggedIn()) {
+// Check if user is logged in and is barangay responder
+if (!isLoggedIn() || !isBarangay()) {
     redirect('../index.php');
-}
-
-// Check if user is barangay personnel
-if (!isBarangay()) {
-    // Redirect to appropriate dashboard based on user type
-    switch ($_SESSION['user_type']) {
-        case 'admin':
-            redirect('../admin/dashboard.php');
-            break;
-        case 'police':
-            redirect('../police/dashboard.php');
-            break;
-        case 'emergency':
-            redirect('../emergency/dashboard.php');
-            break;
-        case 'firefighter':
-            redirect('../firefighter/dashboard.php');
-            break;
-        default:
-            redirect('../user/dashboard.php');
-            break;
-    }
 }
 
 $page_title = 'Barangay Incidents';
@@ -37,64 +15,17 @@ $db = $database->getConnection();
 
 // Get current user info
 $user_id = $_SESSION['user_id'];
-$query = "SELECT * FROM users WHERE id = :user_id";
-$stmt = $db->prepare($query);
-$stmt->bindParam(':user_id', $user_id);
-$stmt->execute();
-$current_user = $stmt->fetch();
 
-// Handle status updates
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
-    $incident_id = $_POST['incident_id'];
-    $new_status = $_POST['status'];
-    
-    $update_query = "UPDATE incident_reports SET response_status = :status WHERE id = :incident_id";
-    $stmt = $db->prepare($update_query);
-    $stmt->bindParam(':status', $new_status);
+// Get incident details if viewing specific incident
+$incident_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
+$incident_details = null;
+
+if ($incident_id) {
+    $stmt = $db->prepare("SELECT ir.*, u.first_name, u.last_name, u.phone, u.email, u.barangay FROM incident_reports ir JOIN users u ON ir.user_id = u.id WHERE ir.id = :incident_id AND ir.approval_status = 'approved'");
     $stmt->bindParam(':incident_id', $incident_id);
     $stmt->execute();
-    
-    // Create notification for admin
-    $notification_query = "INSERT INTO user_notifications (user_id, incident_id, title, message, notification_type) 
-                          SELECT id, :incident_id, 'Incident Status Updated', 
-                          CONCAT('Barangay unit has updated incident #', :incident_id2, ' status to ', :status), 
-                          'status_update' FROM users WHERE user_type = 'admin'";
-    $stmt = $db->prepare($notification_query);
-    $stmt->bindParam(':incident_id', $incident_id);
-    $stmt->bindParam(':incident_id2', $incident_id);
-    $stmt->bindParam(':status', $new_status);
-    $stmt->execute();
-    
-    header('Location: incidents.php?success=Status updated successfully');
-    exit;
+    $incident_details = $stmt->fetch();
 }
-
-// Get assigned incidents - show incidents that are either:
-// 1. Approved and assigned to this user, OR
-// 2. Approved with responder_type = 'barangay', OR
-// 3. Any incident from users in the same barangay (if assigned_barangay is set)
-$incidents_query = "SELECT ir.*, u.first_name, u.last_name, u.phone, u.barangay 
-                   FROM incident_reports ir 
-                   JOIN users u ON ir.user_id = u.id 
-                   WHERE (
-                       ir.approval_status = 'approved' 
-                       AND (ir.assigned_to = :user_id OR ir.responder_type = 'barangay')
-                   )";
-
-// If user has assigned barangay, also show incidents from that barangay regardless of approval
-if (!empty($current_user['assigned_barangay'])) {
-    $incidents_query .= " OR (u.barangay = :assigned_barangay)";
-}
-
-$incidents_query .= " ORDER BY ir.created_at DESC";
-
-$stmt = $db->prepare($incidents_query);
-$stmt->bindParam(':user_id', $user_id);
-if (!empty($current_user['assigned_barangay'])) {
-    $stmt->bindParam(':assigned_barangay', $current_user['assigned_barangay']);
-}
-$stmt->execute();
-$incidents = $stmt->fetchAll();
 
 include '../includes/header.php';
 ?>
@@ -104,218 +35,345 @@ include '../includes/header.php';
 <link href="../assets/css/admin.css" rel="stylesheet">
 
 <div class="d-flex" id="wrapper">
-    
     <?php include 'includes/sidebar.php'; ?>
-    
      
-    <div id="page-content-wrapper">
-       
+    <div id="page-content-wrapper"> 
         <?php include 'includes/navbar.php'; ?>
 
         <div class="container-fluid px-4">
-             
-            <div class="d-flex justify-content-between align-items-center my-4">
-                <div>
-                    <h1 class="h3 mb-0">🚨 Barangay Emergency Incidents</h1>
-                    <p class="text-muted">Manage and respond to community emergency incidents</p>
+            <div class="row my-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2><i class="bi bi-people text-primary me-2"></i>Barangay Incidents Management</h2>
+                            <p class="text-muted">Monitor and respond to community emergencies</p>
+                        </div>
+                        <button class="btn btn-outline-primary" onclick="refreshIncidents()">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                        </button>
+                    </div>
                 </div>
-                <span class="badge bg-primary fs-6"><?php echo count($incidents); ?> Total Incidents</span>
             </div>
 
-            <?php if (isset($_GET['success'])): ?>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="bi bi-check-circle me-2"></i><?php echo htmlspecialchars($_GET['success']); ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <div class="alert alert-primary border-start border-primary border-4 shadow-sm mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle fs-2 text-primary me-3"></i>
+                    <div>
+                        <h6 class="mb-1">Barangay Response Protocol</h6>
+                        <small>Coordinate with local officials and ensure community safety. Report to barangay captain for major incidents.</small>
+                    </div>
                 </div>
-            <?php endif; ?>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3 class="fs-2 mb-0" id="active-incidents">0</h3>
+                                    <p class="fs-6 mb-0">Active Incidents</p>
+                                </div>
+                                <i class="bi bi-exclamation-triangle fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3 class="fs-2 mb-0" id="en-route">0</h3>
+                                    <p class="fs-6 mb-0">En Route</p>
+                                </div>
+                                <i class="bi bi-person-walking fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3 class="fs-2 mb-0" id="resolved-today">0</h3>
+                                    <p class="fs-6 mb-0">Resolved Today</p>
+                                </div>
+                                <i class="bi bi-check-circle fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3 class="fs-2 mb-0" id="total-month">0</h3>
+                                    <p class="fs-6 mb-0">Total This Month</p>
+                                </div>
+                                <i class="bi bi-bar-chart fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             
-            <div class="row">
-                <div class="col-12">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">
-                                <i class="bi bi-exclamation-triangle me-2"></i>Assigned Incidents
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <?php if (empty($incidents)): ?>
-                                <div class="text-center py-5">
-                                    <i class="bi bi-house-check text-muted" style="font-size: 4rem;"></i>
-                                    <h5 class="text-muted mt-3">No incidents assigned</h5>
-                                    <p class="text-muted">You will be notified when new incidents are assigned to the barangay emergency response team.</p>
-                                </div>
-                            <?php else: ?>
-                                <div class="row g-4">
-                                    <?php foreach ($incidents as $incident): ?>
-                                        <div class="col-md-6 col-lg-4">
-                                            <div class="card h-100 border-start border-4 border-<?php echo getUrgencyColor($incident['urgency_level']); ?>">
-                                                <div class="card-header bg-light">
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <h6 class="mb-0">
-                                                            <?php
-                                                            $icons = [
-                                                                'Fire' => 'bi-fire',
-                                                                'Flood' => 'bi-water',
-                                                                'Landslide' => 'bi-mountain',
-                                                                'Earthquake' => 'bi-globe',
-                                                                'Typhoon' => 'bi-tornado',
-                                                                'Medical Emergency' => 'bi-heart-pulse'
-                                                            ];
-                                                            $icon = $icons[$incident['incident_type']] ?? 'bi-exclamation-triangle';
-                                                            ?>
-                                                            <i class="<?php echo $icon; ?> me-2"></i><?php echo htmlspecialchars($incident['incident_type']); ?>
-                                                        </h6>
-                                                        <span class="badge bg-<?php echo getStatusColor($incident['response_status'] ?? 'notified'); ?> rounded-pill">
-                                                            <?php echo ucfirst(str_replace('_', ' ', $incident['response_status'] ?? 'notified')); ?>
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div class="card-body">
-                                                    <div class="mb-3">
-                                                        <small class="text-muted d-block"><i class="bi bi-geo-alt me-1"></i>Location</small>
-                                                        <span><?php echo htmlspecialchars($incident['location']); ?></span>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <small class="text-muted d-block"><i class="bi bi-person me-1"></i>Reporter</small>
-                                                        <span><?php echo htmlspecialchars($incident['first_name'] . ' ' . $incident['last_name']); ?></span>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <small class="text-muted d-block"><i class="bi bi-telephone me-1"></i>Contact</small>
-                                                        <span><?php echo htmlspecialchars($incident['phone']); ?></span>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <small class="text-muted d-block"><i class="bi bi-exclamation-triangle me-1"></i>Urgency</small>
-                                                        <span class="badge bg-<?php echo getUrgencyColor($incident['urgency_level']); ?> rounded-pill">
-                                                            <?php echo ucfirst($incident['urgency_level']); ?>
-                                                        </span>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <small class="text-muted d-block"><i class="bi bi-calendar me-1"></i>Reported</small>
-                                                        <span><?php echo date('M j, Y g:i A', strtotime($incident['created_at'])); ?></span>
-                                                    </div>
-                                                    <?php if (!empty($incident['description'])): ?>
-                                                        <div class="mb-3">
-                                                            <small class="text-muted d-block"><i class="bi bi-file-text me-1"></i>Description</small>
-                                                            <span class="small"><?php echo htmlspecialchars(substr($incident['description'], 0, 100)) . (strlen($incident['description']) > 100 ? '...' : ''); ?></span>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                                <div class="card-footer bg-white">
-                                                    <div class="d-flex gap-2 flex-wrap">
-                                                        <?php 
-                                                        $response_status = $incident['response_status'] ?? 'notified';
-                                                        if ($incident['latitude'] && $incident['longitude']): ?>
-                                                            <a href="https://www.google.com/maps/dir/?api=1&destination=<?php echo $incident['latitude']; ?>,<?php echo $incident['longitude']; ?>" 
-                                                               target="_blank" 
-                                                               class="btn btn-info btn-sm">
-                                                                <i class="bi bi-geo-alt-fill me-1"></i>Get Directions
-                                                            </a>
-                                                        <?php endif; ?>
-                                                        
-                                                        <?php if ($response_status == 'notified'): ?>
-                                                            <form method="POST" class="d-inline">
-                                                                <input type="hidden" name="incident_id" value="<?php echo $incident['id']; ?>">
-                                                                <input type="hidden" name="status" value="responding">
-                                                                <button type="submit" name="update_status" class="btn btn-warning btn-sm">
-                                                                    <i class="bi bi-person-running me-1"></i>Start Response
-                                                                </button>
-                                                            </form>
-                                                        <?php elseif ($response_status == 'responding'): ?>
-                                                            <form method="POST" class="d-inline">
-                                                                <input type="hidden" name="incident_id" value="<?php echo $incident['id']; ?>">
-                                                                <input type="hidden" name="status" value="on_scene">
-                                                                <button type="submit" name="update_status" class="btn btn-danger btn-sm">
-                                                                    <i class="bi bi-geo-alt me-1"></i>On Scene
-                                                                </button>
-                                                            </form>
-                                                        <?php elseif ($response_status == 'on_scene'): ?>
-                                                            <form method="POST" class="d-inline">
-                                                                <input type="hidden" name="incident_id" value="<?php echo $incident['id']; ?>">
-                                                                <input type="hidden" name="status" value="resolved">
-                                                                <button type="submit" name="update_status" class="btn btn-success btn-sm">
-                                                                    <i class="bi bi-check-circle me-1"></i>Mark Resolved
-                                                                </button>
-                                                            </form>
-                                                        <?php endif; ?>
-                                                        <button class="btn btn-outline-primary btn-sm" onclick="viewIncident(<?php echo $incident['id']; ?>)">
-                                                            <i class="bi bi-eye me-1"></i>View Details
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-list me-2"></i>Barangay Incident Reports</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="incidents-table">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Report #</th>
+                                    <th>Type</th>
+                                    <th>Location</th>
+                                    <th>Reporter</th>
+                                    <th>Date/Time</th>
+                                    <th>Urgency</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="incidents-tbody">
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
                                         </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
+                                        <p class="mt-2 text-muted">Loading barangay incidents...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="incidentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Incident Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-people me-2"></i>Barangay Incident Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="incidentDetails">
-                 Incident details will be loaded here 
+            <div class="modal-body" id="incident-details">
+                 
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning" id="respond-btn" onclick="updateStatus('responding')">
+                    <i class="bi bi-person-walking me-1"></i> Start Response
+                </button>
+                <button type="button" class="btn btn-primary" id="onscene-btn" onclick="updateStatus('on_scene')" style="display: none;">
+                    <i class="bi bi-geo-alt me-1"></i> Arrive On Scene
+                </button>
+                <button type="button" class="btn btn-success" id="resolve-btn" onclick="updateStatus('resolved')" style="display: none;">
+                    <i class="bi bi-check me-1"></i> Mark Resolved
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+let currentIncidentId = null;
+
 // Toggle sidebar
 document.getElementById("menu-toggle").addEventListener("click", function(e) {
     e.preventDefault();
     document.getElementById("wrapper").classList.toggle("toggled");
 });
 
+document.addEventListener('DOMContentLoaded', function() {
+    loadIncidents();
+    loadStatistics();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(() => {
+        loadIncidents();
+        loadStatistics();
+    }, 30000);
+
+    // Show specific incident if ID provided
+    <?php if ($incident_id && $incident_details): ?>
+        viewIncident(<?php echo $incident_id; ?>);
+    <?php endif; ?>
+});
+
+function loadStatistics() {
+    fetch('ajax/get_barangay_statistics.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('active-incidents').textContent = data.active_incidents || 0;
+                document.getElementById('en-route').textContent = data.en_route || 0;
+                document.getElementById('resolved-today').textContent = data.resolved_today || 0;
+                document.getElementById('total-month').textContent = data.total_month || 0;
+            }
+        })
+        .catch(error => console.error('Error loading statistics:', error));
+}
+
+function loadIncidents() {
+    fetch('ajax/get_barangay_incidents.php')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('incidents-tbody');
+            
+            if (data.success && data.incidents && data.incidents.length > 0) {
+                let html = '';
+                data.incidents.forEach(incident => {
+                    const urgencyClass = getUrgencyClass(incident.urgency_level);
+                    const statusClass = getStatusClass(incident.response_status);
+                    const isCommunityIssue = incident.incident_type.toLowerCase().includes('community') || 
+                                            incident.incident_type.toLowerCase().includes('barangay') ||
+                                            incident.incident_type.toLowerCase().includes('dispute');
+                    const communityIcon = isCommunityIssue ? '<i class="bi bi-people text-primary me-1"></i>' : '';
+                    
+                    html += `
+                        <tr ${isCommunityIssue ? 'class="table-primary"' : ''}>
+                            <td class="fw-medium">${incident.report_number}</td>
+                            <td>${communityIcon}${incident.incident_type}</td>
+                            <td>${incident.location}<br><small class="text-muted">${incident.barangay || 'N/A'}</small></td>
+                            <td>${incident.first_name} ${incident.last_name}<br><small class="text-muted">${incident.phone}</small></td>
+                            <td>${new Date(incident.created_at).toLocaleDateString()}<br><small class="text-muted">${new Date(incident.created_at).toLocaleTimeString()}</small></td>
+                            <td><span class="badge ${urgencyClass} rounded-pill">${incident.urgency_level}</span></td>
+                            <td><span class="badge ${statusClass} rounded-pill">${getStatusText(incident.response_status)}</span></td>
+                            <td>
+                                <div class="btn-group">
+                                    ${incident.latitude && incident.longitude ? 
+                                        `<a href="https://www.google.com/maps/dir/?api=1&destination=${incident.latitude},${incident.longitude}" 
+                                            target="_blank" 
+                                            class="btn btn-sm btn-info" 
+                                            title="Get Directions">
+                                            <i class="bi bi-geo-alt-fill"></i>
+                                        </a>` : ''}
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewIncident(${incident.id})">
+                                        <i class="bi bi-eye"></i> View
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            } else {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No barangay incidents assigned</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading incidents:', error);
+            document.getElementById('incidents-tbody').innerHTML = 
+                '<tr><td colspan="8" class="text-center text-danger py-4">Error loading incidents</td></tr>';
+        });
+}
+
 function viewIncident(incidentId) {
-    fetch('get_incident_details.php?id=' + incidentId)
+    currentIncidentId = incidentId;
+    
+    fetch(`get_incident_details.php?id=${incidentId}`)
         .then(response => response.text())
         .then(data => {
-            document.getElementById('incidentDetails').innerHTML = data;
+            document.getElementById('incident-details').innerHTML = data;
             new bootstrap.Modal(document.getElementById('incidentModal')).show();
         })
         .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('incidentDetails').innerHTML = 
+            console.error('Error loading incident details:', error);
+            document.getElementById('incident-details').innerHTML = 
                 '<div class="alert alert-danger">Error loading incident details</div>';
         });
 }
+
+function updateStatus(newStatus) {
+    if (!currentIncidentId) return;
+    
+    fetch('ajax/update_status.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `incident_id=${currentIncidentId}&status=${newStatus}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal and refresh data
+            bootstrap.Modal.getInstance(document.getElementById('incidentModal')).hide();
+            loadIncidents();
+            loadStatistics();
+            
+            // Show success message
+            showAlert('Status updated successfully!', 'success');
+        } else {
+            showAlert('Error updating status: ' + data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating status:', error);
+        showAlert('Error updating status', 'danger');
+    });
+}
+
+function refreshIncidents() {
+    loadIncidents();
+    loadStatistics();
+    showAlert('Data refreshed!', 'info');
+}
+
+function getUrgencyClass(urgency) {
+    switch(urgency?.toLowerCase()) {
+        case 'low': return 'bg-success';
+        case 'medium': return 'bg-warning';
+        case 'high': return 'bg-danger';
+        case 'critical': return 'bg-dark';
+        default: return 'bg-secondary';
+    }
+}
+
+function getStatusClass(status) {
+    switch(status) {
+        case 'notified': return 'bg-info';
+        case 'responding': return 'bg-warning';
+        case 'on_scene': return 'bg-primary';
+        case 'resolved': return 'bg-success';
+        default: return 'bg-secondary';
+    }
+}
+
+function getStatusText(status) {
+    switch(status) {
+        case 'notified': return 'Notified';
+        case 'responding': return 'Responding';
+        case 'on_scene': return 'On Scene';
+        case 'resolved': return 'Resolved';
+        default: return 'Unknown';
+    }
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 80px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
 </script>
 
-<?php
-function getUrgencyColor($urgency) {
-    switch ($urgency) {
-        case 'low': return 'success';
-        case 'medium': return 'warning';
-        case 'high': return 'danger';
-        case 'critical': return 'dark';
-        default: return 'secondary';
-    }
-}
-
-function getStatusColor($status) {
-    switch ($status) {
-        case 'notified': return 'info';
-        case 'responding': return 'warning';
-        case 'on_scene': return 'danger';
-        case 'resolved': return 'success';
-        default: return 'secondary';
-    }
-}
-
-include '../includes/footer.php';
-?>
+<?php include '../includes/footer.php'; ?>
