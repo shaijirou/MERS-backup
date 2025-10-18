@@ -21,12 +21,7 @@ $incident_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $incident_details = null;
 
 if ($incident_id) {
-    $stmt = $db->prepare("
-        SELECT ir.*, u.first_name, u.last_name, u.phone, u.email, u.barangay
-        FROM incident_reports ir 
-        JOIN users u ON ir.user_id = u.id 
-        WHERE ir.id = :incident_id AND ir.approval_status = 'approved'
-    ");
+    $stmt = $db->prepare("SELECT ir.*, u.first_name, u.last_name, u.phone, u.email, u.barangay FROM incident_reports ir JOIN users u ON ir.user_id = u.id WHERE ir.id = :incident_id AND ir.approval_status = 'approved'");
     $stmt->bindParam(':incident_id', $incident_id);
     $stmt->execute();
     $incident_details = $stmt->fetch();
@@ -40,12 +35,12 @@ include '../includes/header.php';
 <link href="../assets/css/admin.css" rel="stylesheet">
 
 <div class="d-flex" id="wrapper">
-     <!-- Sidebar  -->
+    <!-- Sidebar  -->
     <?php include 'includes/sidebar.php'; ?>
     
-     <!-- Page Content  -->
+    <!-- Page Content  -->
     <div id="page-content-wrapper">
-         <!-- Navigation  -->
+        <!-- Navigation  -->
         <?php include 'includes/navbar.php'; ?>
 
         <div class="container-fluid px-4">
@@ -63,7 +58,7 @@ include '../includes/header.php';
                 </div>
             </div>
 
-             <!-- Fire Safety Alert  -->
+            <!-- Fire Safety Alert  -->
             <div class="alert alert-warning border-start border-warning border-4 shadow-sm mb-4">
                 <div class="d-flex align-items-center">
                     <i class="bi bi-exclamation-triangle fs-2 text-warning me-3"></i>
@@ -74,7 +69,7 @@ include '../includes/header.php';
                 </div>
             </div>
 
-             <!-- Statistics Cards  -->
+            <!-- Statistics Cards  -->
             <div class="row g-3 mb-4">
                 <div class="col-md-3">
                     <div class="card bg-danger text-white shadow-sm">
@@ -130,7 +125,7 @@ include '../includes/header.php';
                 </div>
             </div>
 
-             <!-- Incidents Table  -->
+            <!-- Incidents Table  -->
             <div class="card shadow-sm">
                 <div class="card-header bg-danger text-white">
                     <h5 class="mb-0"><i class="bi bi-list me-2"></i>Fire Incident Reports</h5>
@@ -168,7 +163,7 @@ include '../includes/header.php';
     </div>
 </div>
 
- <!-- Incident Details Modal  -->
+<!-- Incident Details Modal  -->
 <div class="modal fade" id="incidentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -177,7 +172,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="incident-details">
-                 <!-- Details will be loaded here  -->
+                <!-- Details will be loaded here  -->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -194,7 +189,6 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
-
 
 <script>
 let currentIncidentId = null;
@@ -296,6 +290,21 @@ function viewIncident(incidentId) {
         .then(response => response.text())
         .then(data => {
             document.getElementById('incident-details').innerHTML = data;
+            
+            fetch(`ajax/get_fire_incidents.php`)
+                .then(response => response.json())
+                .then(incidentsData => {
+                    if (incidentsData.success && incidentsData.incidents) {
+                        const incident = incidentsData.incidents.find(inc => inc.id == incidentId);
+                        if (incident && incident.response_status === 'resolved') {
+                            // Disable all action buttons if incident is resolved
+                            document.getElementById('respond-btn').disabled = true;
+                            document.getElementById('fighting-btn').disabled = true;
+                            document.getElementById('resolve-btn').disabled = true;
+                        }
+                    }
+                });
+            
             new bootstrap.Modal(document.getElementById('incidentModal')).show();
         })
         .catch(error => {
@@ -304,10 +313,7 @@ function viewIncident(incidentId) {
                 '<div class="alert alert-danger">Error loading incident details</div>';
         });
 }
-function showImageModal(imageSrc) {
-        document.getElementById('modalImage').src = imageSrc;
-        new bootstrap.Modal(document.getElementById('imageModal')).show();
-    }
+
 function updateStatus(newStatus) {
     if (!currentIncidentId) return;
     

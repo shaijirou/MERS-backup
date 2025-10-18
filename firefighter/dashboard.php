@@ -189,10 +189,16 @@ include '../includes/header.php';
                                                             <button class="btn btn-outline-primary" onclick="viewIncident(<?php echo $incident['id']; ?>)" title="View Details">
                                                                 <i class="bi bi-eye"></i>
                                                             </button>
-                                                            <button class="btn btn-outline-warning" onclick="updateStatus(<?php echo $incident['id']; ?>, 'responding')" title="En Route">
+                                                            <button class="btn btn-outline-warning" 
+                                                                    onclick="updateStatus(<?php echo $incident['id']; ?>, 'responding')" 
+                                                                    title="En Route"
+                                                                    <?php echo ($incident['response_status'] === 'resolved') ? 'disabled' : ''; ?>>
                                                                 <i class="bi bi-truck"></i>
                                                             </button>
-                                                            <button class="btn btn-outline-danger" onclick="updateStatus(<?php echo $incident['id']; ?>, 'on_scene')" title="Fighting Fire">
+                                                            <button class="btn btn-outline-danger" 
+                                                                    onclick="updateStatus(<?php echo $incident['id']; ?>, 'on_scene')" 
+                                                                    title="Fighting Fire"
+                                                                    <?php echo ($incident['response_status'] === 'resolved') ? 'disabled' : ''; ?>>
                                                                 <i class="bi bi-droplet"></i>
                                                             </button>
                                                             <button class="btn btn-outline-success" onclick="updateStatus(<?php echo $incident['id']; ?>, 'resolved')" title="Fire Out">
@@ -318,10 +324,7 @@ function viewIncident(incidentId) {
                 '<div class="alert alert-danger">Error loading incident details</div>';
         });
 }
-function showImageModal(imageSrc) {
-        document.getElementById('modalImage').src = imageSrc;
-        new bootstrap.Modal(document.getElementById('imageModal')).show();
-    }
+
 function updateStatus(incidentId, status) {
     let statusText = getFireStatusText(status);
     

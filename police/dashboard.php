@@ -186,10 +186,14 @@ include '../includes/header.php';
                                                             <button class="btn btn-outline-primary" onclick="viewIncident(<?php echo $incident['id']; ?>)" title="View Details">
                                                                 <i class="bi bi-eye"></i>
                                                             </button>
-                                                            <button class="btn btn-outline-success" onclick="updateStatus(<?php echo $incident['id']; ?>, 'responding')">
+                                                            <button class="btn btn-outline-success" 
+                                                                    onclick="updateStatus(<?php echo $incident['id']; ?>, 'responding')"
+                                                                    <?php echo ($incident['response_status'] === 'resolved') ? 'disabled' : ''; ?>>
                                                                 <i class="bi bi-car-front"></i>
                                                             </button>
-                                                            <button class="btn btn-outline-warning" onclick="updateStatus(<?php echo $incident['id']; ?>, 'on_scene')">
+                                                            <button class="btn btn-outline-warning" 
+                                                                    onclick="updateStatus(<?php echo $incident['id']; ?>, 'on_scene')"
+                                                                    <?php echo ($incident['response_status'] === 'resolved') ? 'disabled' : ''; ?>>
                                                                 <i class="bi bi-geo-alt"></i>
                                                             </button>
                                                             <button class="btn btn-outline-success" onclick="updateStatus(<?php echo $incident['id']; ?>, 'resolved')">
@@ -263,10 +267,7 @@ function viewIncident(incidentId) {
                 '<div class="alert alert-danger">Error loading incident details</div>';
         });
 }
-function showImageModal(imageSrc) {
-        document.getElementById('modalImage').src = imageSrc;
-        new bootstrap.Modal(document.getElementById('imageModal')).show();
-    }
+
 function updateStatus(incidentId, status) {
     if (confirm('Are you sure you want to update the status to ' + status.replace('_', ' ') + '?')) {
         fetch('ajax/update_status.php', {

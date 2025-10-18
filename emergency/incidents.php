@@ -290,6 +290,21 @@ function viewIncident(incidentId) {
         .then(response => response.text())
         .then(data => {
             document.getElementById('incident-details').innerHTML = data;
+            
+            fetch(`ajax/get_emergency_incidents.php`)
+                .then(response => response.json())
+                .then(incidentsData => {
+                    if (incidentsData.success && incidentsData.incidents) {
+                        const incident = incidentsData.incidents.find(inc => inc.id == incidentId);
+                        if (incident && incident.response_status === 'resolved') {
+                            // Disable all action buttons if incident is resolved
+                            document.getElementById('respond-btn').disabled = true;
+                            document.getElementById('onscene-btn').disabled = true;
+                            document.getElementById('resolve-btn').disabled = true;
+                        }
+                    }
+                });
+            
             new bootstrap.Modal(document.getElementById('incidentModal')).show();
         })
         .catch(error => {
@@ -298,10 +313,7 @@ function viewIncident(incidentId) {
                 '<div class="alert alert-danger">Error loading incident details</div>';
         });
 }
-function showImageModal(imageSrc) {
-        document.getElementById('modalImage').src = imageSrc;
-        new bootstrap.Modal(document.getElementById('imageModal')).show();
-    }
+
 function updateStatus(newStatus) {
     if (!currentIncidentId) return;
     
