@@ -27,6 +27,8 @@ if ($_POST) {
             $expires_at = !empty($_POST['expires_at']) ? $_POST['expires_at'] : null;
             $send_sms = isset($_POST['send_sms']) ? 1 : 0;
             
+            $sent_by = $_SESSION['user_id'];
+            
             $query = "INSERT INTO alerts (title, message, alert_type, severity_level, affected_barangays, sent_by, expires_at, created_at) 
                      VALUES (:title, :message, :alert_type, :severity_level, :affected_barangays, :sent_by, :expires_at, NOW())";
             
@@ -36,7 +38,7 @@ if ($_POST) {
             $stmt->bindParam(':alert_type', $alert_type);
             $stmt->bindParam(':severity_level', $severity_level);
             $stmt->bindParam(':affected_barangays', $affected_barangays);
-            $stmt->bindParam(':sent_by', $_SESSION['user_id']);
+            $stmt->bindParam(':sent_by', $sent_by);
             $stmt->bindParam(':expires_at', $expires_at);
             
             if ($stmt->execute()) {
@@ -73,13 +75,18 @@ if ($_POST) {
                         $success_message .= " SMS sent to " . count($phone_numbers) . " recipients (" . $successful_sms . " successful, " . $failed_sms . " failed).";
                         
                         // Store SMS log in database if table exists
+                        $log_alert_id = $alert_id;
+                        $log_total = count($phone_numbers);
+                        $log_successful = $successful_sms;
+                        $log_failed = $failed_sms;
+                        
                         $log_query = "INSERT INTO sms_logs (alert_id, total_recipients, successful, failed, created_at) 
                                      VALUES (:alert_id, :total, :successful, :failed, NOW())";
                         $log_stmt = $db->prepare($log_query);
-                        $log_stmt->bindParam(':alert_id', $alert_id);
-                        $log_stmt->bindParam(':total', count($phone_numbers));
-                        $log_stmt->bindParam(':successful', $successful_sms);
-                        $log_stmt->bindParam(':failed', $failed_sms);
+                        $log_stmt->bindParam(':alert_id', $log_alert_id);
+                        $log_stmt->bindParam(':total', $log_total);
+                        $log_stmt->bindParam(':successful', $log_successful);
+                        $log_stmt->bindParam(':failed', $log_failed);
                         
                         try {
                             $log_stmt->execute();
