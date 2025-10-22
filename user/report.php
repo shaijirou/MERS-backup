@@ -217,7 +217,7 @@ include '../includes/header.php';
                         
                         <div class="mb-3">
                             <label for="photos" class="form-label">Photos <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control" id="photos" name="photos[]" accept="image/*" multiple>
+                            <input type="file" class="form-control" id="photos" name="photos[]" accept="image/*" required>
                             <div class="form-text">Upload photos of the incident to help emergency responders assess the situation</div>
                         </div>
                         
