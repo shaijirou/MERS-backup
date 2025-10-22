@@ -551,9 +551,10 @@ include '../includes/header.php';
                                     </td>
                                     <td>
                                         <?php
-                                        $response_status = $incident['response_status'] ?? 'notified';
+                                        $response_status = isset($incident['response_status']) && !empty($incident['response_status']) ? $incident['response_status'] : 'pending';
                                         $status_class = '';
                                         switch ($response_status) {
+                                            case 'pending': $status_class = 'bg-secondary'; break;
                                             case 'notified': $status_class = 'bg-warning'; break;
                                             case 'responding': $status_class = 'bg-info'; break;
                                             case 'on_scene': $status_class = 'bg-primary'; break;
