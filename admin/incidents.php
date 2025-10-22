@@ -551,15 +551,17 @@ include '../includes/header.php';
                                     </td>
                                     <td>
                                         <?php
+                                        $response_status = $incident['response_status'] ?? 'notified';
                                         $status_class = '';
-                                        switch ($incident['status']) {
-                                            case 'pending': $status_class = 'bg-warning'; break;
-                                            case 'in_progress': $status_class = 'bg-info'; break;
-                                            case 'resolved': $status_class = 'bg-success'; break;
-                                            case 'closed': $status_class = 'bg-secondary'; break;
+                                        switch ($response_status) {
+                                            case 'notified': $status_class = 'bg-warning'; break;
+                                            case 'responding': $status_class = 'bg-info'; break;
+                                            case 'on_scene': $status_class = 'bg-primary'; break;
+                                            case 'resolve': $status_class = 'bg-success'; break;
+                                            default: $status_class = 'bg-secondary'; break;
                                         }
                                         ?>
-                                        <span class="badge <?php echo $status_class; ?>"><?php echo ucfirst(str_replace('_', ' ', $incident['status'])); ?></span>
+                                        <span class="badge <?php echo $status_class; ?>"><?php echo ucfirst(str_replace('_', ' ', $response_status)); ?></span>
                                     </td>
                                     <td>
                                         <div><?php echo date('M j, Y g:i A', strtotime($incident['created_at'])); ?></div>
@@ -596,14 +598,7 @@ include '../includes/header.php';
                                                             <i class="bi bi-person-plus text-info"></i> Assign to Responder
                                                         </a>
                                                     </li>
-                                                    <li><hr class="dropdown-divider"></li>
                                                     <?php endif; ?>
-                                                    <li>
-                                                        <a class="dropdown-item" href="#" onclick="updateIncident(<?php echo $incident['id']; ?>, '<?php echo $incident['status']; ?>', '<?php echo htmlspecialchars($incident['resolution_notes']); ?>')">
-                                                            <i class="bi bi-pencil text-warning"></i> Update Status
-                                                        </a>
-                                                    </li>
-                                                    <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <a class="dropdown-item text-danger" href="#" onclick="deleteIncident(<?php echo $incident['id']; ?>)">
                                                             <i class="bi bi-trash"></i> Delete Incident
