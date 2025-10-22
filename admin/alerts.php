@@ -1,5 +1,7 @@
 <?php
 require_once '../config/config.php';
+require_once '../config/semaphore.php';
+require_once '../includes/SemaphoreAPI.php';
 requireAdmin();
 
 $page_title = 'Alert Management';
@@ -7,6 +9,9 @@ $additional_css = ['assets/css/admin.css'];
 
 $database = new Database();
 $db = $database->getConnection();
+
+// Initialize Semaphore API
+$sms_api = new SemaphoreAPI();
 
 // Handle alert actions
 if ($_POST) {
@@ -20,6 +25,7 @@ if ($_POST) {
             $severity_level = $_POST['severity_level'] ?? '';
             $affected_barangays = ($_POST['affected_barangays']) ?? '';
             $expires_at = !empty($_POST['expires_at']) ? $_POST['expires_at'] : null;
+            $send_sms = isset($_POST['send_sms']) ? 1 : 0;
             
             $query = "INSERT INTO alerts (title, message, alert_type, severity_level, affected_barangays, sent_by, expires_at, created_at) 
                      VALUES (:title, :message, :alert_type, :severity_level, :affected_barangays, :sent_by, :expires_at, NOW())";
@@ -34,8 +40,56 @@ if ($_POST) {
             $stmt->bindParam(':expires_at', $expires_at);
             
             if ($stmt->execute()) {
+                $alert_id = $db->lastInsertId();
                 $success_message = "Alert created successfully!";
-                logActivity($_SESSION['user_id'], 'Alert created', 'alerts', $db->lastInsertId());
+                
+                if (ENABLE_SMS_NOTIFICATIONS && $send_sms) {
+                    $sms_message = "ALERT: " . substr($title, 0, 50) . " - " . substr($message, 0, 80);
+                    
+                    // Get recipient phone numbers based on settings
+                    if (SMS_ALERT_RECIPIENTS === 'barangay' && $affected_barangays !== 'All') {
+                        // Send only to users in affected barangay
+                        $recipient_query = "SELECT phone FROM users WHERE barangay = :barangay AND phone IS NOT NULL AND phone != ''";
+                        $recipient_stmt = $db->prepare($recipient_query);
+                        $recipient_stmt->bindParam(':barangay', $affected_barangays);
+                    } else {
+                        // Send to all users
+                        $recipient_query = "SELECT phone FROM users WHERE phone IS NOT NULL AND phone != ''";
+                        $recipient_stmt = $db->prepare($recipient_query);
+                    }
+                    
+                    $recipient_stmt->execute();
+                    $recipients = $recipient_stmt->fetchAll();
+                    
+                    $phone_numbers = array_column($recipients, 'phone');
+                    
+                    if (!empty($phone_numbers)) {
+                        $sms_results = $sms_api->sendBulkSMS($phone_numbers, $sms_message);
+                        
+                        // Log SMS sending results
+                        $successful_sms = count(array_filter($sms_results, function($r) { return $r['success']; }));
+                        $failed_sms = count($sms_results) - $successful_sms;
+                        
+                        $success_message .= " SMS sent to " . count($phone_numbers) . " recipients (" . $successful_sms . " successful, " . $failed_sms . " failed).";
+                        
+                        // Store SMS log in database if table exists
+                        $log_query = "INSERT INTO sms_logs (alert_id, total_recipients, successful, failed, created_at) 
+                                     VALUES (:alert_id, :total, :successful, :failed, NOW())";
+                        $log_stmt = $db->prepare($log_query);
+                        $log_stmt->bindParam(':alert_id', $alert_id);
+                        $log_stmt->bindParam(':total', count($phone_numbers));
+                        $log_stmt->bindParam(':successful', $successful_sms);
+                        $log_stmt->bindParam(':failed', $failed_sms);
+                        
+                        try {
+                            $log_stmt->execute();
+                        } catch (Exception $e) {
+                            // SMS log table might not exist, continue anyway
+                        }
+                    }
+                }
+                
+                logActivity($_SESSION['user_id'], 'Alert created', 'alerts', $alert_id);
             } else {
                 $error_message = "Error creating alert.";
             }
@@ -518,6 +572,18 @@ include '../includes/header.php';
                                 <label for="expires_at" class="form-label">Expiration Date/Time</label>
                                 <input type="datetime-local" class="form-control" id="expires_at" name="expires_at">
                             </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="send_sms" name="send_sms" value="1">
+                            <label class="form-check-label" for="send_sms">
+                                <i class="bi bi-telephone"></i> Send SMS Notification to Users
+                            </label>
+                            <small class="d-block text-muted mt-1">
+                                <?php echo SMS_ALERT_RECIPIENTS === 'barangay' ? 'SMS will be sent to users in the affected barangay.' : 'SMS will be sent to all registered users.'; ?>
+                            </small>
                         </div>
                     </div>
                 </div>
