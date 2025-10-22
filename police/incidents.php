@@ -163,13 +163,13 @@ include '../includes/header.php';
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-warning" id="respond-btn" onclick="updateStatus('responding')">
+                <button type="button" class="btn btn-warning" id="respond-btn" onclick="showResponderModal('responding')">
                     <i class="bi bi-car-front me-1"></i> Respond to Incident
                 </button>
-                <button type="button" class="btn btn-primary" id="onscene-btn" onclick="updateStatus('on_scene')" style="display: none;">
+                <button type="button" class="btn btn-primary" id="onscene-btn" onclick="showResponderModal('on_scene')" style="display: none;">
                     <i class="bi bi-geo-alt me-1"></i> Arrived On Scene
                 </button>
-                <button type="button" class="btn btn-success" id="resolve-btn" onclick="updateStatus('resolved')" style="display: none;">
+                <button type="button" class="btn btn-success" id="resolve-btn" onclick="showResponderModal('resolved')" style="display: none;">
                     <i class="bi bi-check me-1"></i> Mark as Resolved
                 </button>
             </div>
@@ -177,8 +177,33 @@ include '../includes/header.php';
     </div>
 </div>
 
+<!-- Added responder name modal for recording responder identity -->
+<div class="modal fade" id="responderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-person-badge me-2"></i>Confirm Your Response</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">Please enter your name to record your response to this incident for transparency and record-keeping.</p>
+                <div class="mb-3">
+                    <label for="responder_name" class="form-label">Your Full Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="responder_name" placeholder="Enter your full name" required>
+                    <small class="text-muted">This will be recorded in the incident report</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="confirmResponderResponse()">Confirm Response</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 let currentIncidentId = null;
+let pendingStatus = null;
 
 // Toggle sidebar
 document.getElementById("menu-toggle").addEventListener("click", function(e) {
@@ -301,15 +326,42 @@ function viewIncident(incidentId) {
         });
 }
 
-function updateStatus(newStatus) {
+function showResponderModal(status) {
     if (!currentIncidentId) return;
+    
+    pendingStatus = status;
+    document.getElementById('responder_name').value = '';
+    new bootstrap.Modal(document.getElementById('responderModal')).show();
+}
+
+function confirmResponderResponse() {
+    const responderName = document.getElementById('responder_name').value.trim();
+    
+    if (!responderName) {
+        alert('Please enter your name');
+        return;
+    }
+    
+    // Close responder modal
+    bootstrap.Modal.getInstance(document.getElementById('responderModal')).hide();
+    
+    // Call updateStatus with responder name
+    updateStatus(pendingStatus, responderName);
+}
+
+function updateStatus(newStatus, responderName = null) {
+    if (!currentIncidentId) return;
+    
+    const formData = new FormData();
+    formData.append('incident_id', currentIncidentId);
+    formData.append('status', newStatus);
+    if (responderName) {
+        formData.append('responder_name', responderName);
+    }
     
     fetch('ajax/update_status.php', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `incident_id=${currentIncidentId}&status=${newStatus}`
+        body: formData
     })
     .then(response => response.json())
     .then(data => {

@@ -292,6 +292,35 @@ include '../includes/header.php';
     </div>
 </div>
 
+<!-- Added responder name modal for recording responder information -->
+<div class="modal fade" id="responderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="bi bi-person-check me-2"></i>Responder Information</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="responderForm">
+                    <div class="mb-3">
+                        <label for="responderName" class="form-label">Your Full Name</label>
+                        <input type="text" class="form-control" id="responderName" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="responderStatus" class="form-label">Response Status</label>
+                        <input type="text" class="form-control" id="responderStatus" readonly>
+                    </div>
+                    <input type="hidden" id="incidentIdHidden">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitResponderInfo()">Confirm Response</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
@@ -321,26 +350,59 @@ function viewIncident(incidentId) {
         });
 }
 
+let pendingStatus = null;
+
 function updateStatus(incidentId, status) {
     let statusText = getFireStatusText(status);
     
-    if (confirm('Are you sure you want to update the status to ' + statusText + '?')) {
-        fetch('ajax/update_status.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'incident_id=' + incidentId + '&status=' + status
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Error updating status: ' + data.message);
-            }
-        });
+    pendingStatus = status;
+    document.getElementById('incidentIdHidden').value = incidentId;
+    document.getElementById('responderStatus').value = statusText.toUpperCase();
+    document.getElementById('responderName').value = '';
+    new bootstrap.Modal(document.getElementById('responderModal')).show();
+}
+
+function submitResponderInfo() {
+    const responderName = document.getElementById('responderName').value.trim();
+    const incidentId = document.getElementById('incidentIdHidden').value;
+    
+    if (!responderName) {
+        alert('Please enter your full name');
+        return;
     }
+    
+    const formData = new FormData();
+    formData.append('incident_id', incidentId);
+    formData.append('status', pendingStatus);
+    formData.append('responder_name', responderName);
+    
+    console.log("[v0] Submitting responder info:", {
+        incident_id: incidentId,
+        status: pendingStatus,
+        responder_name: responderName
+    });
+    
+    // Close the modal
+    bootstrap.Modal.getInstance(document.getElementById('responderModal')).hide();
+    
+    // Send the update with responder name
+    fetch('ajax/update_status.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("[v0] Response from server:", data);
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error updating status: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error("[v0] Error:", error);
+        alert('Error: ' + error.message);
+    });
 }
 
 function getFireStatusText(status) {
