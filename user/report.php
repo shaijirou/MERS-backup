@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $injuries = sanitizeInput($_POST['injuries']);
     $contact_number = sanitizeInput($_POST['contact_number']);
     
-    if (empty($incident_type) || empty($location) || empty($description) || empty($contact_number)) {
+    if (empty($incident_type) || empty($location) || empty($description) || empty($contact_number) || empty($photos)) {
         $error_message = 'Please fill in all required fields.';
     } else {
         // Handle photo uploads
@@ -216,7 +216,7 @@ include '../includes/header.php';
                         </div>
                         
                         <div class="mb-3">
-                            <label for="photos" class="form-label">Photos (Optional)</label>
+                            <label for="photos" class="form-label">Photos <span class="text-danger">*</span></label>
                             <input type="file" class="form-control" id="photos" name="photos[]" accept="image/*" multiple>
                             <div class="form-text">Upload photos of the incident to help emergency responders assess the situation</div>
                         </div>
