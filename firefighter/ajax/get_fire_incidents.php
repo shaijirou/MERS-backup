@@ -21,8 +21,7 @@ try {
               AND (ir.incident_type LIKE '%fire%' 
                    OR ir.incident_type LIKE '%explosion%' 
                    OR ir.incident_type LIKE '%burn%' 
-                   OR ir.incident_type LIKE '%smoke%'
-                   AND ir.urgency_level IN ('low', 'medium', 'high', 'critical'))
+                   OR ir.incident_type LIKE '%smoke%')
               ORDER BY 
                 CASE 
                     WHEN ir.response_status = 'notified' THEN 1
@@ -31,8 +30,6 @@ try {
                     WHEN ir.response_status = 'resolved' THEN 4
                     ELSE 5
                 END,
-                ir.urgency_level = 'critical' DESC,
-                ir.urgency_level = 'high' DESC,
                 ir.created_at DESC";
     
     $stmt = $db->prepare($query);

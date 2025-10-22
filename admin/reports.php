@@ -39,8 +39,7 @@ $summary_stats = [];
 $incidents_query = "SELECT 
                    COUNT(*) as total_incidents,
                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_incidents,
-                   SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved_incidents,
-                   SUM(CASE WHEN urgency_level = 'critical' THEN 1 ELSE 0 END) as critical_incidents
+                   SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved_incidents
                    FROM incident_reports 
                    WHERE DATE(created_at) BETWEEN :date_from AND :date_to";
 $incidents_stmt = $db->prepare($incidents_query);

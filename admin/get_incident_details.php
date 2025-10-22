@@ -43,14 +43,14 @@ switch ($incident['status']) {
 }
 
 // Format urgency badge
-$urgency = $incident['urgency_level'] ?? '';
-$urgency_class = '';
-switch ($urgency) {
-    case 'low': $urgency_class = 'bg-success'; break;
-    case 'medium': $urgency_class = 'bg-warning'; break;
-    case 'high': $urgency_class = 'bg-orange'; break;
-    case 'critical': $urgency_class = 'bg-danger'; break;
-}
+// $urgency = $incident['urgency_level'] ?? '';
+// $urgency_class = '';
+// switch ($urgency) {
+//     case 'low': $urgency_class = 'bg-success'; break;
+//     case 'medium': $urgency_class = 'bg-warning'; break;
+//     case 'high': $urgency_class = 'bg-orange'; break;
+//     case 'critical': $urgency_class = 'bg-danger'; break;
+// }
 ?>
 
 <div class="row">
@@ -141,17 +141,6 @@ switch ($urgency) {
             </div>
         </div>
         <?php endif; ?>
-        
-        <div class="mb-3">
-            <label class="form-label fw-bold">Severity Level:</label>
-            <div>
-                <?php if ($urgency): ?>
-                    <span class="badge <?php echo $urgency_class; ?>"><?php echo ucfirst($urgency); ?></span>
-                <?php else: ?>
-                    <span class="text-muted">Not specified</span>
-                <?php endif; ?>
-            </div>
-        </div>
         
         <div class="mb-3">
             <label class="form-label fw-bold">Status:</label>

@@ -149,7 +149,7 @@ include '../includes/header.php';
                                                 <th>Report #</th>
                                                 <th>Type</th>
                                                 <th>Location</th>
-                                                <th>Urgency</th>
+                                               
                                                 <th>Status</th>
                                                 <th>Actions</th>
                                             </tr>
@@ -160,11 +160,7 @@ include '../includes/header.php';
                                                     <td><?php echo htmlspecialchars($incident['report_number']); ?></td>
                                                     <td><?php echo htmlspecialchars($incident['incident_type']); ?></td>
                                                     <td><?php echo htmlspecialchars($incident['location']); ?></td>
-                                                    <td>
-                                                        <span class="badge bg-<?php echo getUrgencyColor($incident['urgency_level']); ?>">
-                                                            <?php echo ucfirst($incident['urgency_level']); ?>
-                                                        </span>
-                                                    </td>
+                                                    
                                                     <td>
                                                         <span class="badge bg-<?php echo getStatusColor($incident['response_status']); ?>">
                                                             <?php echo ucfirst(str_replace('_', ' ', $incident['response_status'])); ?>
@@ -417,15 +413,15 @@ function markAllAsRead() {
 </script>
 
 <?php
-function getUrgencyColor($urgency) {
-    switch ($urgency) {
-        case 'low': return 'success';
-        case 'medium': return 'warning';
-        case 'high': return 'danger';
-        case 'critical': return 'dark';
-        default: return 'secondary';
-    }
-}
+// function getUrgencyColor($urgency) {
+//     switch ($urgency) {
+//         case 'low': return 'success';
+//         case 'medium': return 'warning';
+//         case 'high': return 'danger';
+//         case 'critical': return 'dark';
+//         default: return 'secondary';
+//     }
+// }
 
 function getStatusColor($status) {
     switch ($status) {

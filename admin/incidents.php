@@ -354,7 +354,7 @@ include '../includes/header.php';
 
              <!-- Statistics Cards  -->
             <div class="row g-3 mb-4">
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <div class="card bg-primary text-white">
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
@@ -368,13 +368,13 @@ include '../includes/header.php';
                     </div>
                 </div>
                  <!-- Added pending approval card  -->
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <div class="card bg-warning text-white">
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
                                 <div>
                                     <h4><?php echo $stats['pending_approval']; ?></h4>
-                                    <p class="mb-0">Pending</p>
+                                    <p class="mb-0">Pending </p>
                                 </div>
                                 <i class="bi bi-hourglass-split fs-1"></i>
                             </div>
@@ -382,7 +382,7 @@ include '../includes/header.php';
                     </div>
                 </div>
                  <!-- Added unassigned incidents card  -->
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <div class="card bg-info text-white">
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
@@ -395,7 +395,7 @@ include '../includes/header.php';
                         </div>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <div class="card bg-success text-white">
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
@@ -408,20 +408,8 @@ include '../includes/header.php';
                         </div>
                     </div>
                 </div>
-                <div class="col-md-2">
-                    <div class="card bg-danger text-white">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <h4><?php echo $stats['critical_incidents']; ?></h4>
-                                    <p class="mb-0">Critical</p>
-                                </div>
-                                <i class="bi bi-exclamation-triangle fs-1"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-2">
+                
+                <!-- <div class="col-md-2">
                     <div class="card bg-dark text-white">
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
@@ -433,14 +421,14 @@ include '../includes/header.php';
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> -->
             </div>
 
              <!-- Filters  -->
             <div class="card mb-4">
                 <div class="card-body">
                     <form method="GET" class="row g-3">
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                             <label class="form-label">Search</label>
                             <input type="text" class="form-control" name="search" placeholder="Search incidents..." value="<?php echo htmlspecialchars($search); ?>">
                         </div>
@@ -476,16 +464,7 @@ include '../includes/header.php';
                                 <option value="other" <?php echo $type_filter == 'other' ? 'selected' : ''; ?>>Other</option>
                             </select>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Severity</label>
-                            <select class="form-select" name="severity">
-                                <option value="">All Severity</option>
-                                <option value="low" <?php echo $severity_filter == 'low' ? 'selected' : ''; ?>>Low</option>
-                                <option value="medium" <?php echo $severity_filter == 'medium' ? 'selected' : ''; ?>>Medium</option>
-                                <option value="high" <?php echo $severity_filter == 'high' ? 'selected' : ''; ?>>High</option>
-                                <option value="critical" <?php echo $severity_filter == 'critical' ? 'selected' : ''; ?>>Critical</option>
-                            </select>
-                        </div>
+                        
                         <div class="col-md-2">
                             <label class="form-label">&nbsp;</label>
                             <div class="d-grid">
@@ -509,7 +488,7 @@ include '../includes/header.php';
                                     <th>Reporter</th>
                                     <th>Incident Type</th>
                                     <th>Location</th>
-                                    <th>Severity</th>
+                                    <!-- <th>Severity</th> -->
                                      <!-- Added approval status column  -->
                                     <th>Approval</th>
                                      <!-- Added assigned department column  -->
@@ -539,19 +518,7 @@ include '../includes/header.php';
                                         <small class="text-muted"><?php echo htmlspecialchars(substr($incident['description'], 0, 50)) . '...'; ?></small>
                                     </td>
                                     <td><?php echo htmlspecialchars($incident['location']); ?></td>
-                                    <td>
-                                        <?php
-                                        $urgency = isset($incident['urgency_level']) && $incident['urgency_level'] !== null ? $incident['urgency_level'] : '';
-                                        $urgency_class = '';
-                                        switch ($urgency) {
-                                            case 'low': $urgency_class = 'bg-success'; break;
-                                            case 'medium': $urgency_class = 'bg-warning'; break;
-                                            case 'high': $urgency_class = 'bg-danger'; break;
-                                            case 'critical': $urgency_class = 'bg-danger'; break;
-                                        }
-                                        ?>
-                                        <span class="badge <?php echo $urgency_class; ?>"><?php echo $urgency !== '' ? ucfirst($urgency) : 'N/A'; ?></span>
-                                    </td>
+                                    
                                      <!-- Added approval status display  -->
                                     <td>
                                         <?php

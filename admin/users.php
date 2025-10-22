@@ -252,12 +252,12 @@ include '../includes/header.php';
             <div class="card mb-4">
                 <div class="card-body">
                     <form method="GET" class="row g-3">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label">Search</label>
                             <input type="text" class="form-control" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Name, email, or phone">
                         </div>
                        
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <label class="form-label">Verified</label>
                             <select class="form-select" name="verified">
                                 <option value="">All</option>

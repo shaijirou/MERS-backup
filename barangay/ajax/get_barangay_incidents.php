@@ -29,7 +29,6 @@ try {
                    OR ir.incident_type LIKE '%neighborhood%'
                    OR ir.incident_type LIKE '%other%'
               )
-              AND ir.urgency_level IN ('low', 'medium', 'high', 'critical')
               ORDER BY 
                 CASE 
                     WHEN ir.response_status = 'notified' THEN 1
@@ -38,8 +37,6 @@ try {
                     WHEN ir.response_status = 'resolved' THEN 4
                     ELSE 5
                 END,
-                ir.urgency_level = 'critical' DESC,
-                ir.urgency_level = 'high' DESC,
                 ir.created_at DESC";
     
     $stmt = $db->prepare($query);

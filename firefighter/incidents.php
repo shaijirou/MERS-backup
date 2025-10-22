@@ -140,7 +140,7 @@ include '../includes/header.php';
                                     <th>Location</th>
                                     <th>Reporter</th>
                                     <th>Date/Time</th>
-                                    <th>Urgency</th>
+                                    
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -238,7 +238,7 @@ function loadIncidents() {
             if (data.success && data.incidents && data.incidents.length > 0) {
                 let html = '';
                 data.incidents.forEach(incident => {
-                    const urgencyClass = getUrgencyClass(incident.urgency_level);
+                    
                     const statusClass = getStatusClass(incident.response_status);
                     const isFireRelated = incident.incident_type.toLowerCase().includes('fire') || 
                                          incident.incident_type.toLowerCase().includes('explosion') ||
@@ -252,7 +252,7 @@ function loadIncidents() {
                             <td>${incident.location}<br><small class="text-muted">${incident.barangay || 'N/A'}</small></td>
                             <td>${incident.first_name} ${incident.last_name}<br><small class="text-muted">${incident.phone}</small></td>
                             <td>${new Date(incident.created_at).toLocaleDateString()}<br><small class="text-muted">${new Date(incident.created_at).toLocaleTimeString()}</small></td>
-                            <td><span class="badge ${urgencyClass} rounded-pill">${incident.urgency_level}</span></td>
+                           
                             <td><span class="badge ${statusClass} rounded-pill">${getStatusText(incident.response_status)}</span></td>
                             <td>
                                 <div class="btn-group">
@@ -350,15 +350,15 @@ function refreshIncidents() {
     showAlert('Data refreshed!', 'info');
 }
 
-function getUrgencyClass(urgency) {
-    switch(urgency?.toLowerCase()) {
-        case 'low': return 'bg-success';
-        case 'medium': return 'bg-warning';
-        case 'high': return 'bg-danger';
-        case 'critical': return 'bg-dark';
-        default: return 'bg-secondary';
-    }
-}
+// function getUrgencyClass(urgency) {
+//     switch(urgency?.toLowerCase()) {
+//         case 'low': return 'bg-success';
+//         case 'medium': return 'bg-warning';
+//         case 'high': return 'bg-danger';
+//         case 'critical': return 'bg-dark';
+//         default: return 'bg-secondary';
+//     }
+// }
 
 function getStatusClass(status) {
     switch(status) {

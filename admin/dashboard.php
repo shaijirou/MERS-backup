@@ -339,9 +339,6 @@ include '../includes/header.php';
                                 <?php foreach ($recent_incidents as $incident): ?>
                                 <li class="list-group-item d-flex justify-content-between align-items-center p-3">
                                     <div>
-                                        <span class="badge bg-<?php echo $incident['urgency_level'] == 'critical' ? 'danger' : ($incident['urgency_level'] == 'high' ? 'warning' : 'info'); ?> me-2">
-                                            <?php echo ucfirst($incident['urgency_level']); ?>
-                                        </span>
                                         <span><?php echo ucfirst($incident['incident_type']); ?></span>
                                         <small class="d-block text-muted">Reported by: <?php echo $incident['first_name'] . ' ' . $incident['last_name']; ?></small>
                                     </div>

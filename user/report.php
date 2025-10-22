@@ -18,7 +18,6 @@ $error_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $incident_type = sanitizeInput($_POST['incident_type']);
-    $urgency_level = sanitizeInput($_POST['urgency_level']);
     $location = sanitizeInput($_POST['location']);
     $latitude = !empty($_POST['latitude']) ? floatval($_POST['latitude']) : null;
     $longitude = !empty($_POST['longitude']) ? floatval($_POST['longitude']) : null;
@@ -27,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $injuries = sanitizeInput($_POST['injuries']);
     $contact_number = sanitizeInput($_POST['contact_number']);
     
-    if (empty($incident_type) || empty($urgency_level) || empty($location) || empty($description) || empty($contact_number)) {
+    if (empty($incident_type) || empty($location) || empty($description) || empty($contact_number)) {
         $error_message = 'Please fill in all required fields.';
     } else {
         // Handle photo uploads
@@ -54,15 +53,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Generate report number
         $report_number = generateReportNumber();
         
-        // Insert incident report
-        $query = "INSERT INTO incident_reports (report_number, user_id, incident_type, urgency_level, location, latitude, longitude, description, people_affected, injuries, photos, contact_number) 
-                  VALUES (:report_number, :user_id, :incident_type, :urgency_level, :location, :latitude, :longitude, :description, :people_affected, :injuries, :photos, :contact_number)";
+        $query = "INSERT INTO incident_reports (report_number, user_id, incident_type, location, latitude, longitude, description, people_affected, injuries, photos, contact_number) 
+                  VALUES (:report_number, :user_id, :incident_type, :location, :latitude, :longitude, :description, :people_affected, :injuries, :photos, :contact_number)";
         
         $stmt = $db->prepare($query);
         $stmt->bindParam(':report_number', $report_number);
         $stmt->bindParam(':user_id', $_SESSION['user_id']);
         $stmt->bindParam(':incident_type', $incident_type);
-        $stmt->bindParam(':urgency_level', $urgency_level);
         $stmt->bindParam(':location', $location);
         $stmt->bindParam(':latitude', $latitude);
         $stmt->bindParam(':longitude', $longitude);
@@ -151,7 +148,7 @@ include '../includes/header.php';
                     
                     <form method="POST" enctype="multipart/form-data">
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label for="incident_type" class="form-label">Incident Type <span class="text-danger">*</span></label>
                                 <select class="form-select" id="incident_type" name="incident_type" required>
                                     <option value="" selected disabled>Select incident type</option>
@@ -165,16 +162,6 @@ include '../includes/header.php';
                                     <option value="water_supply_issue">Water Supply Issue</option>
                                     <option value="fallen_tree">Fallen Tree</option>
                                     <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="urgency_level" class="form-label">Urgency Level <span class="text-danger">*</span></label>
-                                <select class="form-select" id="urgency_level" name="urgency_level" required>
-                                    <option value="" selected disabled>Select urgency level</option>
-                                    <option value="low">Low - Minor issue, no immediate danger</option>
-                                    <option value="medium">Medium - Moderate concern, some risk</option>
-                                    <option value="high">High - Serious situation, immediate attention needed</option>
-                                    <option value="critical">Critical - Life-threatening emergency</option>
                                 </select>
                             </div>
                         </div>

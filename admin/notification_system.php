@@ -73,7 +73,7 @@ function approveIncidentAndNotify($incident_id) {
         
         // Send notifications to relevant user types
         foreach ($user_types_to_notify as $user_type) {
-            $message = "New incident approved: {$incident['incident_type']} at {$incident['location']}. Severity: {$incident['urgency_level']}.";
+            $message = "New incident approved: {$incident['incident_type']} at {$incident['location']}.";
             sendNotificationToUserType($incident_id, $user_type, $message);
         }
         
