@@ -285,7 +285,7 @@ include 'includes/header.php';
                         <div class="mb-4 form-check">
                             <input class="form-check-input" type="checkbox" id="terms_check" required>
                             <label class="form-check-label" for="terms_check">
-                                I agree to the <a href="#" class="text-primary">Terms of Service</a> and <a href="#" class="text-primary">Privacy Policy</a>
+                                I agree to the <a href="#" class="text-primary" data-bs-toggle="modal" data-bs-target="#termsModal">Terms of Service</a> and <a href="#" class="text-primary" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a>
                             </label>
                         </div>
                         
@@ -303,7 +303,137 @@ include 'includes/header.php';
             </div>
             
             <div class="text-center mt-4 text-muted">
-                <small>&copy; 2023 Municipality of Agoncillo. All rights reserved.</small>
+                <small>&copy; 2025 Municipality of Agoncillo. All rights reserved.</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Added Terms of Service Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Terms of Service</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="fw-bold mb-3">Municipal Emergency Response System (MERS) - Terms of Service</h6>
+                
+                <p><strong>Last Updated: October 2025</strong></p>
+                
+                <h6 class="fw-bold mt-4">1. Acceptance of Terms</h6>
+                <p>By registering and using the Municipal Emergency Response System (MERS), you agree to comply with these Terms of Service. If you do not agree to these terms, please do not use this system.</p>
+                
+                <h6 class="fw-bold mt-4">2. Purpose of the System</h6>
+                <p>MERS is designed to provide emergency alerts, disaster notifications, and critical information to residents of Agoncillo, Batangas. The system aims to enhance public safety and emergency response coordination.</p>
+                
+                <h6 class="fw-bold mt-4">3. User Responsibilities</h6>
+                <ul>
+                    <li>You are responsible for maintaining the confidentiality of your account credentials</li>
+                    <li>You agree to provide accurate and truthful information during registration</li>
+                    <li>You will not use this system for any unlawful or harmful purposes</li>
+                    <li>You agree not to share your account with other individuals</li>
+                    <li>You will not attempt to access unauthorized areas of the system</li>
+                </ul>
+                
+                <h6 class="fw-bold mt-4">4. Alert Notifications</h6>
+                <p>By registering, you consent to receive emergency alerts and notifications via SMS, email, and in-app messages. You may manage your notification preferences in your account settings.</p>
+                
+                <h6 class="fw-bold mt-4">5. Accuracy of Information</h6>
+                <p>While we strive to provide accurate and timely emergency information, MERS does not guarantee the accuracy, completeness, or timeliness of all alerts. Users should verify critical information through official channels.</p>
+                
+                <h6 class="fw-bold mt-4">6. Limitation of Liability</h6>
+                <p>The Municipality of Agoncillo and MERS administrators shall not be liable for any direct, indirect, incidental, or consequential damages arising from the use or inability to use this system.</p>
+                
+                <h6 class="fw-bold mt-4">7. Termination of Access</h6>
+                <p>We reserve the right to suspend or terminate user accounts that violate these terms or engage in prohibited activities.</p>
+                
+                <h6 class="fw-bold mt-4">8. Changes to Terms</h6>
+                <p>We may update these Terms of Service at any time. Continued use of the system constitutes acceptance of updated terms.</p>
+                
+                <h6 class="fw-bold mt-4">9. Contact Information</h6>
+                <p>For questions regarding these terms, please contact the Municipality of Agoncillo Emergency Management Office.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Added Privacy Policy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="privacyModalLabel">Privacy Policy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="fw-bold mb-3">Municipal Emergency Response System (MERS) - Privacy Policy</h6>
+                
+                <p><strong>Last Updated: October 2025</strong></p>
+                
+                <h6 class="fw-bold mt-4">1. Introduction</h6>
+                <p>The Municipality of Agoncillo is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your personal information through the Municipal Emergency Response System (MERS).</p>
+                
+                <h6 class="fw-bold mt-4">2. Information We Collect</h6>
+                <p>We collect the following information during registration:</p>
+                <ul>
+                    <li>Personal Information: First name, last name, email address, phone number</li>
+                    <li>Address Information: House number, street, barangay, and landmark</li>
+                    <li>Identification Documents: Valid ID or Barangay Certificate for verification</li>
+                    <li>Biometric Data: Selfie photo for identity verification purposes</li>
+                    <li>Account Security: Encrypted password for account access</li>
+                </ul>
+                
+                <h6 class="fw-bold mt-4">3. How We Use Your Information</h6>
+                <p>Your information is used for:</p>
+                <ul>
+                    <li>Sending emergency alerts and disaster notifications</li>
+                    <li>Verifying your identity and account authenticity</li>
+                    <li>Locating you during emergency situations</li>
+                    <li>Improving emergency response coordination</li>
+                    <li>Communicating important updates and system announcements</li>
+                    <li>Complying with legal and regulatory requirements</li>
+                </ul>
+                
+                <h6 class="fw-bold mt-4">4. Data Security</h6>
+                <p>We implement industry-standard security measures to protect your personal information, including encryption, secure servers, and access controls. However, no system is completely secure, and we cannot guarantee absolute security.</p>
+                
+                <h6 class="fw-bold mt-4">5. Data Sharing</h6>
+                <p>Your information may be shared with:</p>
+                <ul>
+                    <li>Emergency response personnel during disaster situations</li>
+                    <li>Local government units for emergency coordination</li>
+                    <li>Authorized third-party service providers</li>
+                </ul>
+                <p>We do not sell or rent your personal information to third parties.</p>
+                
+                <h6 class="fw-bold mt-4">6. Data Retention</h6>
+                <p>Your personal information is retained as long as your account is active. Upon account deletion, your data will be securely deleted within 30 days, except where required by law.</p>
+                
+                <h6 class="fw-bold mt-4">7. Your Rights</h6>
+                <p>You have the right to:</p>
+                <ul>
+                    <li>Access your personal information</li>
+                    <li>Request correction of inaccurate data</li>
+                    <li>Request deletion of your account and data</li>
+                    <li>Opt-out of non-emergency communications</li>
+                </ul>
+                
+                <h6 class="fw-bold mt-4">8. Cookies and Tracking</h6>
+                <p>MERS may use cookies and similar technologies to enhance user experience and system functionality. You can control cookie settings through your browser.</p>
+                
+                <h6 class="fw-bold mt-4">9. Changes to Privacy Policy</h6>
+                <p>We may update this Privacy Policy periodically. We will notify users of significant changes via email or system announcement.</p>
+                
+                <h6 class="fw-bold mt-4">10. Contact Us</h6>
+                <p>For privacy concerns or data requests, please contact the Municipality of Agoncillo Data Protection Officer or Emergency Management Office.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
