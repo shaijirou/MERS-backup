@@ -183,8 +183,24 @@ $count_stmt = $db->prepare($count_query);
 foreach ($params as $key => $value) {
     $count_stmt->bindValue($key, $value);
 }
-$count_stmt->execute();
-$total_records = $count_stmt->fetch()['total'];
+try {
+    $count_stmt->execute();
+} catch (PDOException $e) {
+    // If connection was lost, attempt one reconnect and retry
+    if ($e->getCode() === '2006' || stripos($e->getMessage(), 'MySQL server has gone away') !== false) {
+        // Recreate the DB connection and retry the query once
+        $db = $database->getConnection();
+        $count_stmt = $db->prepare($count_query);
+        foreach ($params as $key => $value) {
+            $count_stmt->bindValue($key, $value);
+        }
+        $count_stmt->execute();
+    } else {
+        throw $e;
+    }
+}
+$count_row = $count_stmt->fetch(PDO::FETCH_ASSOC);
+$total_records = $count_row['total'];
 $total_pages = ceil($total_records / $limit);
 
 // Get alerts
