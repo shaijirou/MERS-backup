@@ -35,14 +35,9 @@ include '../includes/header.php';
 <link href="../assets/css/admin.css" rel="stylesheet">
 
 <div class="d-flex" id="wrapper">
-      
     <?php include 'includes/sidebar.php'; ?>
-    
-     
     <div id="page-content-wrapper">
-          
         <?php include 'includes/navbar.php'; ?>
-
         <div class="container-fluid px-4">
             <div class="row my-4">
                 <div class="col-12">
@@ -57,8 +52,6 @@ include '../includes/header.php';
                     </div>
                 </div>
             </div>
-
-             
             <div class="alert alert-danger border-start border-danger border-4 shadow-sm mb-4">
                 <div class="d-flex align-items-center">
                     <i class="bi bi-exclamation-triangle fs-2 text-danger me-3"></i>
@@ -68,8 +61,6 @@ include '../includes/header.php';
                     </div>
                 </div>
             </div>
-
-             
             <div class="row g-3 mb-4">
                 <div class="col-md-3">
                     <div class="card bg-danger text-white shadow-sm">
@@ -124,11 +115,9 @@ include '../includes/header.php';
                     </div>
                 </div>
             </div>
-
-             
             <div class="card shadow-sm">
                 <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0"><i class="bi bi-list me-2"></i>Emergency Medical Reports</h5>
+                    <h5 class="mb-0"><i class="bi bi-list me-2"></i>Emergency Medical Incident Reports</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -140,7 +129,6 @@ include '../includes/header.php';
                                     <th>Location</th>
                                     <th>Reporter</th>
                                     <th>Date/Time</th>
-                                    
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -163,28 +151,50 @@ include '../includes/header.php';
     </div>
 </div>
 
-
 <div class="modal fade" id="incidentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="bi bi-heart-pulse me-2"></i>Emergency Incident Details</h5>
+                <h5 class="modal-title"><i class="bi bi-heart-pulse me-2"></i>Emergency Medical Incident Details</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="incident-details">
-                 
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-warning" id="respond-btn" onclick="updateStatus('responding')">
-                    <i class="bi bi-truck-front me-1"></i> Dispatch Ambulance
+                <button type="button" class="btn btn-warning" id="respond-btn" onclick="showResponderModal('responding')">
+                    <i class="bi bi-truck-front me-1"></i> Respond to Emergency
                 </button>
-                <button type="button" class="btn btn-danger" id="onscene-btn" onclick="updateStatus('on_scene')" style="display: none;">
-                    <i class="bi bi-geo-alt me-1"></i> On Scene
+                <button type="button" class="btn btn-danger" id="onscene-btn" onclick="showResponderModal('on_scene')" style="display: none;">
+                    <i class="bi bi-geo-alt me-1"></i> On Scene Treating Patient
                 </button>
-                <button type="button" class="btn btn-success" id="resolve-btn" onclick="updateStatus('resolved')" style="display: none;">
-                    <i class="bi bi-check me-1"></i> Patient Treated
+                <button type="button" class="btn btn-success" id="resolve-btn" onclick="showResponderModal('resolved')" style="display: none;">
+                    <i class="bi bi-check me-1"></i> Patient Transported
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Added responder name modal for recording responder identity -->
+<div class="modal fade" id="responderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-person-badge me-2"></i>Confirm Your Response</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">Please enter your name to record your response to this medical emergency for transparency and record-keeping.</p>
+                <div class="mb-3">
+                    <label for="responder_name_input" class="form-label">Your Full Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="responder_name_input" placeholder="Enter your full name" required>
+                    <small class="text-muted">This will be recorded in the incident report</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmResponderResponse()">Confirm Response</button>
             </div>
         </div>
     </div>
@@ -192,6 +202,7 @@ include '../includes/header.php';
 
 <script>
 let currentIncidentId = null;
+let pendingStatus = null;
 
 // Toggle sidebar
 document.getElementById("menu-toggle").addEventListener("click", function(e) {
@@ -238,15 +249,14 @@ function loadIncidents() {
             if (data.success && data.incidents && data.incidents.length > 0) {
                 let html = '';
                 data.incidents.forEach(incident => {
-                    
                     const statusClass = getStatusClass(incident.response_status);
-                    const isMedicalEmergency = incident.incident_type.toLowerCase().includes('medical') || 
-                                              incident.incident_type.toLowerCase().includes('health') ||
-                                              incident.incident_type.toLowerCase().includes('injury');
-                    const medicalIcon = isMedicalEmergency ? '<i class="bi bi-heart-pulse text-danger me-1"></i>' : '';
+                    const isMedicalIncident = incident.incident_type.toLowerCase().includes('medical') || 
+                                             incident.incident_type.toLowerCase().includes('emergency') ||
+                                             incident.incident_type.toLowerCase().includes('accident');
+                    const medicalIcon = isMedicalIncident ? '<i class="bi bi-heart-pulse text-danger me-1"></i>' : '';
                     
                     html += `
-                        <tr ${isMedicalEmergency ? 'class="table-danger"' : ''}>
+                        <tr ${isMedicalIncident ? 'class="table-danger"' : ''}>
                             <td class="fw-medium">${incident.report_number}</td>
                             <td>${medicalIcon}${incident.incident_type}</td>
                             <td>${incident.location}<br><small class="text-muted">${incident.barangay || 'N/A'}</small></td>
@@ -314,15 +324,42 @@ function viewIncident(incidentId) {
         });
 }
 
-function updateStatus(newStatus) {
+function showResponderModal(status) {
     if (!currentIncidentId) return;
+    
+    pendingStatus = status;
+    document.getElementById('responder_name_input').value = '';
+    new bootstrap.Modal(document.getElementById('responderModal')).show();
+}
+
+function confirmResponderResponse() {
+    const responderName = document.getElementById('responder_name_input').value.trim();
+    
+    if (!responderName) {
+        alert('Please enter your name');
+        return;
+    }
+    
+    // Close responder modal
+    bootstrap.Modal.getInstance(document.getElementById('responderModal')).hide();
+    
+    // Call updateStatus with responder name
+    updateStatus(pendingStatus, responderName);
+}
+
+function updateStatus(newStatus, responderName = null) {
+    if (!currentIncidentId) return;
+    
+    const formData = new FormData();
+    formData.append('incident_id', currentIncidentId);
+    formData.append('status', newStatus);
+    if (responderName) {
+        formData.append('responder_name', responderName);
+    }
     
     fetch('ajax/update_status.php', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `incident_id=${currentIncidentId}&status=${newStatus}`
+        body: formData
     })
     .then(response => response.json())
     .then(data => {
@@ -375,7 +412,7 @@ function getStatusText(status) {
         case 'notified': return 'Notified';
         case 'responding': return 'En Route';
         case 'on_scene': return 'On Scene';
-        case 'resolved': return 'Patient Treated';
+        case 'resolved': return 'Resolved';
         default: return 'Unknown';
     }
 }

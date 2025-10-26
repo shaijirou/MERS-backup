@@ -35,14 +35,9 @@ include '../includes/header.php';
 <link href="../assets/css/admin.css" rel="stylesheet">
 
 <div class="d-flex" id="wrapper">
-    <!-- Sidebar  -->
     <?php include 'includes/sidebar.php'; ?>
-    
-    <!-- Page Content  -->
     <div id="page-content-wrapper">
-        <!-- Navigation  -->
         <?php include 'includes/navbar.php'; ?>
-
         <div class="container-fluid px-4">
             <div class="row my-4">
                 <div class="col-12">
@@ -57,8 +52,6 @@ include '../includes/header.php';
                     </div>
                 </div>
             </div>
-
-            <!-- Fire Safety Alert  -->
             <div class="alert alert-warning border-start border-warning border-4 shadow-sm mb-4">
                 <div class="d-flex align-items-center">
                     <i class="bi bi-exclamation-triangle fs-2 text-warning me-3"></i>
@@ -68,8 +61,6 @@ include '../includes/header.php';
                     </div>
                 </div>
             </div>
-
-            <!-- Statistics Cards  -->
             <div class="row g-3 mb-4">
                 <div class="col-md-3">
                     <div class="card bg-danger text-white shadow-sm">
@@ -124,8 +115,6 @@ include '../includes/header.php';
                     </div>
                 </div>
             </div>
-
-            <!-- Incidents Table  -->
             <div class="card shadow-sm">
                 <div class="card-header bg-danger text-white">
                     <h5 class="mb-0"><i class="bi bi-list me-2"></i>Fire Incident Reports</h5>
@@ -163,7 +152,6 @@ include '../includes/header.php';
     </div>
 </div>
 
-<!-- Incident Details Modal  -->
 <div class="modal fade" id="incidentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -172,19 +160,42 @@ include '../includes/header.php';
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="incident-details">
-                <!-- Details will be loaded here  -->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-warning" id="respond-btn" onclick="updateStatus('responding')">
-                    <i class="bi bi-truck me-1"></i> En Route
+                <button type="button" class="btn btn-warning" id="respond-btn" onclick="showResponderModal('responding')">
+                    <i class="bi bi-truck me-1"></i> Respond to Fire
                 </button>
-                <button type="button" class="btn btn-danger" id="fighting-btn" onclick="updateStatus('on_scene')" style="display: none;">
-                    <i class="bi bi-droplet me-1"></i> Fighting Fire
+                <button type="button" class="btn btn-danger" id="onscene-btn" onclick="showResponderModal('on_scene')" style="display: none;">
+                    <i class="bi bi-geo-alt me-1"></i> On Scene Fighting Fire
                 </button>
-                <button type="button" class="btn btn-success" id="resolve-btn" onclick="updateStatus('resolved')" style="display: none;">
-                    <i class="bi bi-check me-1"></i> Fire Out
+                <button type="button" class="btn btn-success" id="resolve-btn" onclick="showResponderModal('resolved')" style="display: none;">
+                    <i class="bi bi-check me-1"></i> Fire Extinguished
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Added responder name modal for recording responder identity -->
+<div class="modal fade" id="responderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-person-badge me-2"></i>Confirm Your Response</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">Please enter your name to record your response to this fire incident for transparency and record-keeping.</p>
+                <div class="mb-3">
+                    <label for="responder_name_input" class="form-label">Your Full Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="responder_name_input" placeholder="Enter your full name" required>
+                    <small class="text-muted">This will be recorded in the incident report</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmResponderResponse()">Confirm Response</button>
             </div>
         </div>
     </div>
@@ -192,6 +203,7 @@ include '../includes/header.php';
 
 <script>
 let currentIncidentId = null;
+let pendingStatus = null;
 
 // Toggle sidebar
 document.getElementById("menu-toggle").addEventListener("click", function(e) {
@@ -240,19 +252,18 @@ function loadIncidents() {
                 data.incidents.forEach(incident => {
                     
                     const statusClass = getStatusClass(incident.response_status);
-                    const isFireRelated = incident.incident_type.toLowerCase().includes('fire') || 
-                                         incident.incident_type.toLowerCase().includes('explosion') ||
-                                         incident.incident_type.toLowerCase().includes('burn');
-                    const fireIcon = isFireRelated ? '<i class="bi bi-fire text-danger me-1"></i>' : '';
+                    const isFireIncident = incident.incident_type.toLowerCase().includes('fire') || 
+                                          incident.incident_type.toLowerCase().includes('explosion');
+                    const fireIcon = isFireIncident ? '<i class="bi bi-fire text-danger me-1"></i>' : '';
                     
                     html += `
-                        <tr ${isFireRelated ? 'class="table-danger"' : ''}>
+                        <tr ${isFireIncident ? 'class="table-danger"' : ''}>
                             <td class="fw-medium">${incident.report_number}</td>
                             <td>${fireIcon}${incident.incident_type}</td>
                             <td>${incident.location}<br><small class="text-muted">${incident.barangay || 'N/A'}</small></td>
                             <td>${incident.first_name} ${incident.last_name}<br><small class="text-muted">${incident.phone}</small></td>
                             <td>${new Date(incident.created_at).toLocaleDateString()}<br><small class="text-muted">${new Date(incident.created_at).toLocaleTimeString()}</small></td>
-                           
+                            
                             <td><span class="badge ${statusClass} rounded-pill">${getStatusText(incident.response_status)}</span></td>
                             <td>
                                 <div class="btn-group">
@@ -299,7 +310,7 @@ function viewIncident(incidentId) {
                         if (incident && incident.response_status === 'resolved') {
                             // Disable all action buttons if incident is resolved
                             document.getElementById('respond-btn').disabled = true;
-                            document.getElementById('fighting-btn').disabled = true;
+                            document.getElementById('onscene-btn').disabled = true;
                             document.getElementById('resolve-btn').disabled = true;
                         }
                     }
@@ -314,15 +325,42 @@ function viewIncident(incidentId) {
         });
 }
 
-function updateStatus(newStatus) {
+function showResponderModal(status) {
     if (!currentIncidentId) return;
+    
+    pendingStatus = status;
+    document.getElementById('responder_name_input').value = '';
+    new bootstrap.Modal(document.getElementById('responderModal')).show();
+}
+
+function confirmResponderResponse() {
+    const responderName = document.getElementById('responder_name_input').value.trim();
+    
+    if (!responderName) {
+        alert('Please enter your name');
+        return;
+    }
+    
+    // Close responder modal
+    bootstrap.Modal.getInstance(document.getElementById('responderModal')).hide();
+    
+    // Call updateStatus with responder name
+    updateStatus(pendingStatus, responderName);
+}
+
+function updateStatus(newStatus, responderName = null) {
+    if (!currentIncidentId) return;
+    
+    const formData = new FormData();
+    formData.append('incident_id', currentIncidentId);
+    formData.append('status', newStatus);
+    if (responderName) {
+        formData.append('responder_name', responderName);
+    }
     
     fetch('ajax/update_status.php', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `incident_id=${currentIncidentId}&status=${newStatus}`
+        body: formData
     })
     .then(response => response.json())
     .then(data => {
@@ -374,8 +412,8 @@ function getStatusText(status) {
     switch(status) {
         case 'notified': return 'Notified';
         case 'responding': return 'En Route';
-        case 'on_scene': return 'Fighting Fire';
-        case 'resolved': return 'Fire Out';
+        case 'on_scene': return 'On Scene';
+        case 'resolved': return 'Resolved';
         default: return 'Unknown';
     }
 }
