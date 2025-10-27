@@ -25,3 +25,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+# ignore a specific PHP file (uncomment and set path)
+#/config.php
+/config/semaphore.php
