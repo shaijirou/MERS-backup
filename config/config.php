@@ -5,6 +5,8 @@ session_start();
 // Database configuration
 require_once 'database.php';
 
+require_once 'semaphore.php';
+
 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'];
 $script_dir = dirname($_SERVER['SCRIPT_NAME']);
