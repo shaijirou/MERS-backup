@@ -195,7 +195,7 @@ $where_conditions = [];
 $params = [];
 
 if ($status_filter) {
-    $where_conditions[] = "ir.status = :status";
+    $where_conditions[] = "ir.response_status = :status";
     $params[':status'] = $status_filter;
 }
 if ($type_filter) {
@@ -330,11 +330,6 @@ include '../includes/header.php';
              <!-- Page Header  -->
             <div class="d-flex justify-content-between align-items-center py-3">
                 <h1 class="h3 mb-0">Incident Management</h1>
-                <div>
-                    <button class="btn btn-success" onclick="exportIncidents()">
-                        <i class="bi bi-download"></i> Export
-                    </button>
-                </div>
             </div>
 
              <!-- Success/Error Messages  -->
@@ -447,9 +442,9 @@ include '../includes/header.php';
                             <select class="form-select" name="status">
                                 <option value="">All Status</option>
                                 <option value="pending" <?php echo $status_filter == 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                <option value="in_progress" <?php echo $status_filter == 'in_progress' ? 'selected' : ''; ?>>In Progress</option>
-                                <option value="resolved" <?php echo $status_filter == 'resolved' ? 'selected' : ''; ?>>Resolved</option>
-                                <option value="closed" <?php echo $status_filter == 'closed' ? 'selected' : ''; ?>>Closed</option>
+                                <option value="notified" <?php echo $status_filter == 'notified' ? 'selected' : ''; ?>>Notified</option>
+                                <option value="responding" <?php echo $status_filter == 'responding' ? 'selected' : ''; ?>>Responding</option>
+                                <option value="resolve" <?php echo $status_filter == 'resolve' ? 'selected' : ''; ?>>Resolve</option>
                             </select>
                         </div>
                         <div class="col-md-2">
@@ -512,10 +507,10 @@ include '../includes/header.php';
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td style="max-width: 200px;">
                                         <span class="badge bg-secondary"><?php echo ucfirst($incident['incident_type']); ?></span>
                                         <br>
-                                        <small class="text-muted"><?php echo htmlspecialchars(substr($incident['description'], 0, 50)) . '...'; ?></small>
+                                        <small class="text-muted" style="word-wrap: break-word; white-space: normal; display: block; margin-top: 5px; line-height: 1.4;"><?php echo htmlspecialchars(substr($incident['description'], 0, 100)) . (strlen($incident['description']) > 100 ? '...' : ''); ?></small>
                                     </td>
                                     <td><?php echo htmlspecialchars($incident['location']); ?></td>
                                     

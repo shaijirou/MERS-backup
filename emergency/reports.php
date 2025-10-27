@@ -146,27 +146,15 @@ include '../includes/header.php';
                 <div class="card-body">
                     <form method="GET">
                         <div class="row g-3">
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label fw-semibold">From Date</label>
                                 <input type="date" name="date_from" class="form-control" value="<?php echo $date_from; ?>">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label fw-semibold">To Date</label>
                                 <input type="date" name="date_to" class="form-control" value="<?php echo $date_to; ?>">
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold">Incident Type</label>
-                                <select name="incident_type" class="form-select">
-                                    <option value="">All Types</option>
-                                    <option value="Fire" <?php echo $incident_type == 'Fire' ? 'selected' : ''; ?>>Fire</option>
-                                    <option value="Flood" <?php echo $incident_type == 'Flood' ? 'selected' : ''; ?>>Flood</option>
-                                    <option value="Landslide" <?php echo $incident_type == 'Landslide' ? 'selected' : ''; ?>>Landslide</option>
-                                    <option value="Earthquake" <?php echo $incident_type == 'Earthquake' ? 'selected' : ''; ?>>Earthquake</option>
-                                    <option value="Typhoon" <?php echo $incident_type == 'Typhoon' ? 'selected' : ''; ?>>Typhoon</option>
-                                    <option value="Medical Emergency" <?php echo $incident_type == 'Medical Emergency' ? 'selected' : ''; ?>>Medical Emergency</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label fw-semibold">Status</label>
                                 <select name="status" class="form-select">
                                     <option value="">All Status</option>

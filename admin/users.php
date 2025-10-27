@@ -193,9 +193,6 @@ include '../includes/header.php';
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
                         <i class="bi bi-person-plus"></i> Add New User
                     </button>
-                    <button class="btn btn-success" onclick="exportUsers()">
-                        <i class="bi bi-download"></i> Export
-                    </button>
                 </div>
             </div>
 
