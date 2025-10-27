@@ -5,6 +5,12 @@ session_start();
 // Database configuration
 require_once 'database.php';
 
+$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'];
+$script_dir = dirname($_SERVER['SCRIPT_NAME']);
+$base_path = ($script_dir !== '/') ? $script_dir : '';
+define('APP_URL', $protocol . '://' . $host . $base_path);
+
 // // Ensure $pdo is defined (should be set in database.php)
 // if (!isset($pdo)) {
 //     throw new Exception('Database connection not established.');
@@ -216,4 +222,3 @@ function logActivity($user_id, $action, $table_name = null, $record_id = null, $
     
     $stmt->execute();
 }
-?>
