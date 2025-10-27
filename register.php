@@ -1,5 +1,6 @@
 <?php
 require_once 'config/config.php';
+require_once 'includes/SemaphoreAPI.php';
 
 $page_title = 'Register';
 
@@ -14,6 +15,7 @@ if (isLoggedIn()) {
 
 $error_message = '';
 $success_message = '';
+$field_errors = []; // Array to store field-specific errors
 
 // Get barangays for dropdown
 $database = new Database();
@@ -24,27 +26,85 @@ $stmt = $db->prepare($query);
 $stmt->execute();
 $barangays = $stmt->fetchAll();
 
+$form_data = [
+    'first_name' => '',
+    'last_name' => '',
+    'email' => '',
+    'phone' => '',
+    'house_number' => '',
+    'street' => '',
+    'barangay' => '',
+    'landmark' => ''
+];
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $first_name = sanitizeInput($_POST['first_name']);
-    $last_name = sanitizeInput($_POST['last_name']);
-    $email = sanitizeInput($_POST['email']);
-    $phone = sanitizeInput($_POST['phone']);
-    $house_number = sanitizeInput($_POST['house_number']);
-    $street = sanitizeInput($_POST['street']);
-    $barangay = sanitizeInput($_POST['barangay']);
-    $landmark = sanitizeInput($_POST['landmark']);
-    $password = $_POST['password'];
-    $confirm_password = $_POST['confirm_password'];
+    $first_name = sanitizeInput($_POST['first_name'] ?? '');
+    $last_name = sanitizeInput($_POST['last_name'] ?? '');
+    $email = sanitizeInput($_POST['email'] ?? '');
+    $phone = sanitizeInput($_POST['phone'] ?? '');
+    $house_number = sanitizeInput($_POST['house_number'] ?? '');
+    $street = sanitizeInput($_POST['street'] ?? '');
+    $barangay = sanitizeInput($_POST['barangay'] ?? '');
+    $landmark = sanitizeInput($_POST['landmark'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
     
-    // Validation
-    if (empty($first_name) || empty($last_name) || empty($email) || empty($phone) || 
-        empty($house_number) || empty($street) || empty($barangay) || empty($password) || empty($confirm_password)) {
-        $error_message = 'Please fill in all required fields.';
-    } elseif ($password !== $confirm_password) {
-        $error_message = 'Passwords do not match.';
+    $form_data = [
+        'first_name' => $first_name,
+        'last_name' => $last_name,
+        'email' => $email,
+        'phone' => $phone,
+        'house_number' => $house_number,
+        'street' => $street,
+        'barangay' => $barangay,
+        'landmark' => $landmark
+    ];
+    
+    if (empty($first_name)) {
+        $field_errors['first_name'] = 'First name is required.';
+    }
+    
+    if (empty($last_name)) {
+        $field_errors['last_name'] = 'Last name is required.';
+    }
+    
+    if (empty($email)) {
+        $field_errors['email'] = 'Email address is required.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $field_errors['email'] = 'Please enter a valid email address.';
+    }
+    
+    if (empty($phone)) {
+        $field_errors['phone'] = 'Mobile number is required.';
+    } elseif (!preg_match('/^9\d{9}$/', $phone)) {
+        $field_errors['phone'] = 'Please enter a valid mobile number (10 digits starting with 9).';
+    }
+    
+    if (empty($house_number)) {
+        $field_errors['house_number'] = 'House number is required.';
+    }
+    
+    if (empty($street)) {
+        $field_errors['street'] = 'Street is required.';
+    }
+    
+    if (empty($barangay)) {
+        $field_errors['barangay'] = 'Barangay is required.';
+    }
+    
+    if (empty($password)) {
+        $field_errors['password'] = 'Password is required.';
     } elseif (strlen($password) < 6) {
-        $error_message = 'Password must be at least 6 characters long.';
-    } else {
+        $field_errors['password'] = 'Password must be at least 6 characters long.';
+    }
+    
+    if (empty($confirm_password)) {
+        $field_errors['confirm_password'] = 'Please confirm your password.';
+    } elseif ($password !== $confirm_password) {
+        $field_errors['confirm_password'] = 'Passwords do not match.';
+    }
+    
+    if (empty($field_errors)) {
         // Check if email or phone already exists
         $query = "SELECT id FROM users WHERE email = :email OR phone = :phone";
         $stmt = $db->prepare($query);
@@ -53,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute();
         
         if ($stmt->rowCount() > 0) {
-            $error_message = 'Email or phone number already registered.';
+            $field_errors['email'] = 'Email or phone number already registered.';
         } else {
             // Handle file uploads
             $id_document = '';
@@ -127,8 +187,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->bindParam(':selfie_photo', $selfie_photo);
             
             if ($stmt->execute()) {
-                $success_message = 'Registration successful! Your account is pending verification. You will receive a notification once approved.';
-                logActivity($db->lastInsertId(), 'User registered');
+                $user_id = $db->lastInsertId();
+                
+                $verification_code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                $expiry = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+                
+                // Store verification code in password_reset_token with token_type = 'sms_verification'
+                $query = "UPDATE users 
+                          SET password_reset_code = :token, 
+                              password_reset_code_expiry = :expiry, 
+                              token_type = 'sms_verification',
+                              verification_attempts = 0
+                          WHERE id = :user_id";
+                $stmt = $db->prepare($query);
+                $stmt->bindParam(':token', $verification_code);
+                $stmt->bindParam(':expiry', $expiry);
+                $stmt->bindParam(':user_id', $user_id);
+                
+                if ($stmt->execute()) {
+                    // Send SMS via Semaphore API
+                    $semaphore = new SemaphoreAPI();
+                    $message = "Your MERS verification code is: " . $verification_code . ". Valid for 10 minutes.";
+                    $sms_result = $semaphore->sendSMS($phone, $message);
+                    
+                    if ($sms_result['success']) {
+                        // Store user_id in session for verification page
+                        $_SESSION['pending_verification_user_id'] = $user_id;
+                        $_SESSION['pending_verification_phone'] = $phone;
+                        
+                        // Redirect to SMS verification page
+                        redirect('verify-sms.php');
+                    } else {
+                        $error_message = 'Registration successful but failed to send SMS code. Please try again.';
+                        logActivity($user_id, 'SMS verification failed: ' . $sms_result['error']);
+                    }
+                } else {
+                    $error_message = 'Registration successful but verification setup failed. Please contact support.';
+                }
             } else {
                 $error_message = 'Registration failed. Please try again.';
             }
@@ -169,52 +264,74 @@ include 'includes/header.php';
                         <div class="row mb-3">
                             <div class="col-md-6 mb-3 mb-md-0">
                                 <label for="first_name" class="form-label">First Name *</label>
-                                <input type="text" class="form-control" id="first_name" name="first_name" placeholder="Enter your first name" required>
+                                <input type="text" class="form-control <?php echo isset($field_errors['first_name']) ? 'is-invalid' : ''; ?>" id="first_name" name="first_name" placeholder="Enter your first name" value="<?php echo htmlspecialchars($form_data['first_name']); ?>" required>
+                                <?php if (isset($field_errors['first_name'])): ?>
+                                    <div class="invalid-feedback d-block"><?php echo $field_errors['first_name']; ?></div>
+                                <?php endif; ?>
                             </div>
                             <div class="col-md-6">
                                 <label for="last_name" class="form-label">Last Name *</label>
-                                <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Enter your last name" required>
+                                <input type="text" class="form-control <?php echo isset($field_errors['last_name']) ? 'is-invalid' : ''; ?>" id="last_name" name="last_name" placeholder="Enter your last name" value="<?php echo htmlspecialchars($form_data['last_name']); ?>" required>
+                                <?php if (isset($field_errors['last_name'])): ?>
+                                    <div class="invalid-feedback d-block"><?php echo $field_errors['last_name']; ?></div>
+                                <?php endif; ?>
                             </div>
                         </div>
                         
                         <div class="mb-3">
                             <label for="email" class="form-label">Email Address *</label>
-                            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email address" required>
+                            <input type="email" class="form-control <?php echo isset($field_errors['email']) ? 'is-invalid' : ''; ?>" id="email" name="email" placeholder="Enter your email address" value="<?php echo htmlspecialchars($form_data['email']); ?>" required>
+                            <?php if (isset($field_errors['email'])): ?>
+                                <div class="invalid-feedback d-block"><?php echo $field_errors['email']; ?></div>
+                            <?php endif; ?>
                         </div>
                         
                         <div class="mb-3">
                             <label for="phone" class="form-label">Mobile Number *</label>
                             <div class="input-group">
                                 <span class="input-group-text">+63</span>
-                                <input type="tel" class="form-control" id="phone" name="phone" placeholder="9XX XXX XXXX" required>
+                                <input type="tel" class="form-control <?php echo isset($field_errors['phone']) ? 'is-invalid' : ''; ?>" id="phone" name="phone" placeholder="9XX XXX XXXX" value="<?php echo htmlspecialchars($form_data['phone']); ?>" required>
                             </div>
-                            <div class="form-text">We'll send a verification code to this number</div>
+                            <?php if (isset($field_errors['phone'])): ?>
+                                <div class="invalid-feedback d-block"><?php echo $field_errors['phone']; ?></div>
+                            <?php else: ?>
+                                <div class="form-text">We'll send a verification code to this number</div>
+                            <?php endif; ?>
                         </div>
                         
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label for="house_number" class="form-label">House No. *</label>
-                                <input type="text" class="form-control" id="house_number" name="house_number" placeholder="e.g., 123" required>
+                                <input type="text" class="form-control <?php echo isset($field_errors['house_number']) ? 'is-invalid' : ''; ?>" id="house_number" name="house_number" placeholder="e.g., 123" value="<?php echo htmlspecialchars($form_data['house_number']); ?>" required>
+                                <?php if (isset($field_errors['house_number'])): ?>
+                                    <div class="invalid-feedback d-block"><?php echo $field_errors['house_number']; ?></div>
+                                <?php endif; ?>
                             </div>
                             <div class="col-md-8">
                                 <label for="street" class="form-label">Street *</label>
-                                <input type="text" class="form-control" id="street" name="street" placeholder="e.g., Rizal St." required>
+                                <input type="text" class="form-control <?php echo isset($field_errors['street']) ? 'is-invalid' : ''; ?>" id="street" name="street" placeholder="e.g., Rizal St." value="<?php echo htmlspecialchars($form_data['street']); ?>" required>
+                                <?php if (isset($field_errors['street'])): ?>
+                                    <div class="invalid-feedback d-block"><?php echo $field_errors['street']; ?></div>
+                                <?php endif; ?>
                             </div>
                         </div>
                         
                         <div class="mb-3">
                             <label for="barangay" class="form-label">Barangay *</label>
-                            <select class="form-select" id="barangay" name="barangay" required>
-                                <option value="" selected disabled>Select your barangay</option>
+                            <select class="form-select <?php echo isset($field_errors['barangay']) ? 'is-invalid' : ''; ?>" id="barangay" name="barangay" required>
+                                <option value="" <?php echo empty($form_data['barangay']) ? 'selected' : ''; ?> disabled>Select your barangay</option>
                                 <?php foreach ($barangays as $barangay): ?>
-                                    <option value="<?php echo $barangay['name']; ?>"><?php echo $barangay['name']; ?></option>
+                                    <option value="<?php echo $barangay['name']; ?>" <?php echo $form_data['barangay'] === $barangay['name'] ? 'selected' : ''; ?>><?php echo $barangay['name']; ?></option>
                                 <?php endforeach; ?>
                             </select>
+                            <?php if (isset($field_errors['barangay'])): ?>
+                                <div class="invalid-feedback d-block"><?php echo $field_errors['barangay']; ?></div>
+                            <?php endif; ?>
                         </div>
                         
                         <div class="mb-3">
                             <label for="landmark" class="form-label">Landmark (Optional)</label>
-                            <input type="text" class="form-control" id="landmark" name="landmark" placeholder="e.g., Near the market">
+                            <input type="text" class="form-control" id="landmark" name="landmark" placeholder="e.g., Near the market" value="<?php echo htmlspecialchars($form_data['landmark']); ?>">
                         </div>
 
                         <div class="mb-3">
@@ -274,12 +391,18 @@ include 'includes/header.php';
                         
                         <div class="mb-3">
                             <label for="password" class="form-label">Password *</label>
-                            <input type="password" class="form-control" id="password" name="password" placeholder="Create a password" required>
+                            <input type="password" class="form-control <?php echo isset($field_errors['password']) ? 'is-invalid' : ''; ?>" id="password" name="password" placeholder="Create a password" required>
+                            <?php if (isset($field_errors['password'])): ?>
+                                <div class="invalid-feedback d-block"><?php echo $field_errors['password']; ?></div>
+                            <?php endif; ?>
                         </div>
                         
                         <div class="mb-4">
                             <label for="confirm_password" class="form-label">Confirm Password *</label>
-                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
+                            <input type="password" class="form-control <?php echo isset($field_errors['confirm_password']) ? 'is-invalid' : ''; ?>" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
+                            <?php if (isset($field_errors['confirm_password'])): ?>
+                                <div class="invalid-feedback d-block"><?php echo $field_errors['confirm_password']; ?></div>
+                            <?php endif; ?>
                         </div>
                         
                         <div class="mb-4 form-check">

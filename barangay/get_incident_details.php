@@ -35,16 +35,6 @@ if (!$incident) {
     echo '<div class="alert alert-danger">Incident not found</div>';
     exit;
 }
-
-// Format urgency badge
-// $urgency = $incident['urgency_level'] ?? '';
-// $urgency_class = '';
-// switch ($urgency) {
-//     case 'low': $urgency_class = 'bg-success'; break;
-//     case 'medium': $urgency_class = 'bg-warning'; break;
-//     case 'high': $urgency_class = 'bg-danger'; break;
-//     case 'critical': $urgency_class = 'bg-dark'; break;
-// }
 ?>
 
 <style>
@@ -58,8 +48,9 @@ if (!$incident) {
 }
 </style>
 
-<div class="row">
-    <div class="col-md-6">
+<!-- Updated layout to be fully responsive with col-12 col-lg-6 for proper stacking on mobile -->
+<div class="row g-3">
+    <div class="col-12 col-lg-6">
         <h6 class="text-muted mb-3">Incident Information</h6>
         
         <div class="mb-3">
@@ -75,6 +66,7 @@ if (!$incident) {
                 }
                 
                 if (!empty($photos)): ?>
+                    <!-- Updated photo grid to be responsive: col-12 col-sm-6 col-md-4 -->
                     <div class="row g-2">
                         <?php foreach ($photos as $index => $photo): ?>
                             <?php 
@@ -88,7 +80,7 @@ if (!$incident) {
                             }
                             ?>
                             <?php if ($photo_path): ?>
-                                <div class="col-md-6">
+                                <div class="col-12 col-sm-6 col-md-4">
                                     <img src="<?php echo htmlspecialchars($photo_path); ?>" 
                                          alt="Incident Photo <?php echo $index + 1; ?>" 
                                          class="img-fluid rounded border photo-thumbnail" 
@@ -141,11 +133,9 @@ if (!$incident) {
             </div>
         </div>
         <?php endif; ?>
-        
-        
     </div>
     
-    <div class="col-md-6">
+    <div class="col-12 col-lg-6">
         <h6 class="text-muted mb-3">Reporter Information</h6>
         
         <div class="mb-3">

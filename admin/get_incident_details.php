@@ -41,20 +41,11 @@ switch ($incident['status']) {
     case 'resolved': $status_class = 'bg-success'; break;
     case 'closed': $status_class = 'bg-secondary'; break;
 }
-
-// Format urgency badge
-// $urgency = $incident['urgency_level'] ?? '';
-// $urgency_class = '';
-// switch ($urgency) {
-//     case 'low': $urgency_class = 'bg-success'; break;
-//     case 'medium': $urgency_class = 'bg-warning'; break;
-//     case 'high': $urgency_class = 'bg-orange'; break;
-//     case 'critical': $urgency_class = 'bg-danger'; break;
-// }
 ?>
 
-<div class="row">
-    <div class="col-md-6">
+<!-- Updated layout to be fully responsive with col-12 col-lg-6 for proper stacking on mobile -->
+<div class="row g-3">
+    <div class="col-12 col-lg-6">
         <h6 class="text-muted mb-3">Incident Information</h6>
         
         <div class="mb-3">
@@ -70,6 +61,7 @@ switch ($incident['status']) {
                 }
                 
                 if (!empty($photos)): ?>
+                    <!-- Updated photo grid to be responsive: col-12 col-sm-6 col-md-4 -->
                     <div class="row g-2">
                         <?php foreach ($photos as $index => $photo): ?>
                             <?php 
@@ -83,7 +75,7 @@ switch ($incident['status']) {
                             }
                             ?>
                             <?php if ($photo_path): ?>
-                                <div class="col-md-6">
+                                <div class="col-12 col-sm-6 col-md-4">
                                     <img src="<?php echo htmlspecialchars($photo_path); ?>" 
                                          alt="Incident Photo <?php echo $index + 1; ?>" 
                                          class="img-fluid rounded border" 
@@ -150,7 +142,7 @@ switch ($incident['status']) {
         </div>
     </div>
     
-    <div class="col-md-6">
+    <div class="col-12 col-lg-6">
         <h6 class="text-muted mb-3">Reporter Information</h6>
         
         <div class="mb-3">
@@ -242,7 +234,7 @@ switch ($incident['status']) {
 </div>
 
 <div class="mt-3 pt-3 border-top">
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
         <button class="btn btn-warning" onclick="updateIncident(<?php echo $incident['id']; ?>, '<?php echo $incident['status']; ?>', '<?php echo htmlspecialchars($incident['resolution_notes']); ?>')">
             <i class="bi bi-pencil"></i> Update Status
         </button>

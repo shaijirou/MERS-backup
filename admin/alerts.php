@@ -13,6 +13,40 @@ $db = $database->getConnection();
 // Initialize Semaphore API
 $sms_api = new SemaphoreAPI();
 
+function sendAlertEmails($db, $alert_id, $alert_title, $alert_message, $alert_type, $severity_level, $affected_barangays) {
+    try {
+        // Get recipient emails based on affected barangays
+        if ($affected_barangays !== 'All') {
+            $recipient_query = "SELECT email FROM users WHERE barangay = :barangay AND email IS NOT NULL AND email != '' AND verification_status = 'verified'";
+            $recipient_stmt = $db->prepare($recipient_query);
+            $recipient_stmt->bindParam(':barangay', $affected_barangays);
+        } else {
+            $recipient_query = "SELECT email FROM users WHERE email IS NOT NULL AND email != '' AND verification_status = 'verified'";
+            $recipient_stmt = $db->prepare($recipient_query);
+        }
+        
+        $recipient_stmt->execute();
+        $recipients = $recipient_stmt->fetchAll();
+        
+        $emails = array_column($recipients, 'email');
+        
+        // Store email list in session for JavaScript to use
+        $_SESSION['alert_emails'] = $emails;
+        $_SESSION['alert_data'] = [
+            'title' => $alert_title,
+            'message' => $alert_message,
+            'type' => $alert_type,
+            'severity' => $severity_level,
+            'barangay' => $affected_barangays
+        ];
+        
+        return count($emails);
+    } catch (Exception $e) {
+        error_log('Error getting alert recipients: ' . $e->getMessage());
+        return 0;
+    }
+}
+
 // Handle alert actions
 if ($_POST) {
     $action = $_POST['action'] ?? '';
@@ -94,6 +128,11 @@ if ($_POST) {
                             // SMS log table might not exist, continue anyway
                         }
                     }
+                }
+                
+                $email_count = sendAlertEmails($db, $alert_id, $title, $message, $alert_type, $severity_level, $affected_barangays);
+                if ($email_count > 0) {
+                    $success_message .= " Email notifications queued for " . $email_count . " recipients.";
                 }
                 
                 logActivity($_SESSION['user_id'], 'Alert created', 'alerts', $alert_id);

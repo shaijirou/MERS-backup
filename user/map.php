@@ -194,12 +194,8 @@ include '../includes/header.php';
 
                                 <h6 class="mt-2 mb-1 small text-muted border-top pt-2">Other Layers</h6>
                                 <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="toggleRoutes">
-                                    <label class="form-check-label" for="toggleRoutes"><small><i class="bi bi-signpost-2 me-1"></i>Emergency Routes</small></label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="toggleIncidents">
-                                    <label class="form-check-label" for="toggleIncidents"><small><i class="bi bi-exclamation-triangle me-1"></i>Recent Incidents</small></label>
+                                    <input class="form-check-input" type="checkbox" id="toggleAlerts">
+                                    <label class="form-check-label" for="toggleAlerts"><small><i class="bi bi-exclamation-triangle me-1"></i>Recent Alerts</small></label>
                                 </div>
                             </div>
                         </div>
@@ -482,7 +478,7 @@ function initializeMap() {
     
     // Create layer groups. ONLY Evacuation and Volcanic are added to map by default.
     evacuationLayer = L.layerGroup().addTo(map);
-    incidentLayer = L.layerGroup();
+    incidentLayer = L.layerGroup(); // Don't add to map by default - user must toggle it on
     routeLayer = L.layerGroup();
     floodLayer = L.layerGroup();
     landslideLayer = L.layerGroup();
@@ -500,7 +496,7 @@ function initializeMap() {
     // Add custom controls (Zoom buttons)
     addCustomControls();
 
-    // *** FIX: Prevent Leaflet from capturing clicks on the Map Controls container ***
+    // *** FIX: Prevent Leaflet from capturing clicks on the Map Controls container *** 
     const controlsContainer = document.querySelector(".map-controls-container");
     if (controlsContainer && typeof L !== 'undefined') {
         // Disable click and scroll propagation to allow interaction with the controls
@@ -765,17 +761,7 @@ function addCustomControls() {
     customControl.onAdd = function(map) {
         const div = L.DomUtil.create('div', 'custom-controls');
         div.innerHTML = `
-            <div class="btn-group-vertical" role="group">
-                <button class="btn btn-light border btn-sm" onclick="map.zoomIn()" title="Zoom In">
-                    <i class="bi bi-plus"></i>
-                </button>
-                <button class="btn btn-light border btn-sm" onclick="map.zoomOut()" title="Zoom Out">
-                    <i class="bi bi-dash"></i>
-                </button>
-                <button class="btn btn-light border btn-sm" onclick="resetView()" title="Reset View">
-                    <i class="bi bi-house"></i>
-                </button>
-            </div>
+            
         `;
         return div;
     };
@@ -967,7 +953,7 @@ function initializeMapControls() {
     // 2. LAYER TOGGLE LOGIC (Event Listeners for Checkboxes)
     const layerControls = [
         { id: 'toggleEvacuation', layer: evacuationLayer },
-        { id: 'toggleIncidents', layer: incidentLayer },
+        { id: 'toggleAlerts', layer: incidentLayer }, // Added alerts/incidents layer toggle
         { id: 'toggleRoutes', layer: routeLayer, callback: addSampleRoutes }, // Call addSampleRoutes on activation
         { id: 'toggleFlood', layer: floodLayer },
         { id: 'toggleLandslide', layer: landslideLayer },

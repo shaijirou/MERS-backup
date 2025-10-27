@@ -9,9 +9,14 @@ class SemaphoreAPI {
     private $sender_name;
     
     public function __construct($api_key = null, $api_url = null, $sender_name = null) {
-        $this->api_key = $api_key ?: SEMAPHORE_API_KEY;
-        $this->api_url = $api_url ?: SEMAPHORE_API_URL;
-        $this->sender_name = $sender_name ?: SEMAPHORE_SENDER_NAME;
+        $this->api_key = $api_key ?: (defined('SEMAPHORE_API_KEY') ? SEMAPHORE_API_KEY : getenv('SEMAPHORE_API_KEY'));
+        $this->api_url = $api_url ?: (defined('SEMAPHORE_API_URL') ? SEMAPHORE_API_URL : 'https://api.semaphore.co/api/v4/messages');
+        $this->sender_name = $sender_name ?: (defined('SEMAPHORE_SENDER_NAME') ? SEMAPHORE_SENDER_NAME : 'MERS');
+        
+        // Validate API key is set
+        if (empty($this->api_key) || $this->api_key === 'your_semaphore_api_key_here') {
+            throw new Exception('Semaphore API key is not configured. Please set SEMAPHORE_API_KEY in config/semaphore.php or as an environment variable.');
+        }
     }
     
     /**
@@ -189,4 +194,3 @@ class SemaphoreAPI {
         }
     }
 }
-?>

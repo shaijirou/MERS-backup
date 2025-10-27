@@ -8,6 +8,8 @@ $additional_css = ['assets/css/admin.css'];
 $database = new Database();
 $db = $database->getConnection();
 
+require_once '../includes/SemaphoreAPI.php';
+
 // Handle user actions
 if ($_POST) {
     $action = $_POST['action'] ?? '';
@@ -15,6 +17,12 @@ if ($_POST) {
     
     switch ($action) {
         case 'verify':
+            $user_query = "SELECT phone, first_name FROM users WHERE id = :user_id";
+            $user_stmt = $db->prepare($user_query);
+            $user_stmt->bindParam(':user_id', $user_id);
+            $user_stmt->execute();
+            $user = $user_stmt->fetch(PDO::FETCH_ASSOC);
+            
             $query = "UPDATE users SET verification_status = 'verified', verified_by = :admin_id WHERE id = :user_id";
             $stmt = $db->prepare($query);
             $stmt->bindParam(':admin_id', $_SESSION['user_id']);
@@ -22,16 +30,44 @@ if ($_POST) {
             if ($stmt->execute()) {
                 $success_message = "User verified successfully.";
                 logActivity($_SESSION['user_id'], 'User verified', 'users', $user_id);
+                
+                if ($user && !empty($user['phone'])) {
+                    try {
+                        $sms_api = new SemaphoreAPI();
+                        $message = "Hello {$user['first_name']}, your account has been verified and approved by the admin. You can now access all features. Thank you!";
+                        $sms_api->sendSMS($user['phone'], $message);
+                    } catch (Exception $e) {
+                        // Log SMS error but don't fail the verification
+                        error_log("SMS sending failed for user {$user_id}: " . $e->getMessage());
+                    }
+                }
             }
             break;
             
         case 'unverify':
+            $user_query = "SELECT phone, first_name FROM users WHERE id = :user_id";
+            $user_stmt = $db->prepare($user_query);
+            $user_stmt->bindParam(':user_id', $user_id);
+            $user_stmt->execute();
+            $user = $user_stmt->fetch(PDO::FETCH_ASSOC);
+            
             $query = "UPDATE users SET verification_status = 'pending', verified_by = NULL WHERE id = :user_id";
             $stmt = $db->prepare($query);
             $stmt->bindParam(':user_id', $user_id);
             if ($stmt->execute()) {
                 $success_message = "User verification removed.";
                 logActivity($_SESSION['user_id'], 'User unverified', 'users', $user_id);
+                
+                if ($user && !empty($user['phone'])) {
+                    try {
+                        $sms_api = new SemaphoreAPI();
+                        $message = "Hello {$user['first_name']}, your account verification has been removed. Please contact the admin for more information.";
+                        $sms_api->sendSMS($user['phone'], $message);
+                    } catch (Exception $e) {
+                        // Log SMS error but don't fail the unverification
+                        error_log("SMS sending failed for user {$user_id}: " . $e->getMessage());
+                    }
+                }
             }
             break;
             
@@ -193,9 +229,6 @@ include '../includes/header.php';
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
                         <i class="bi bi-person-plus"></i> Add New User
                     </button>
-                    <button class="btn btn-success" onclick="exportUsers()">
-                        <i class="bi bi-download"></i> Export
-                    </button>
                 </div>
             </div>
 
@@ -315,7 +348,7 @@ include '../includes/header.php';
                                     </td>
                                     <td>
                                         <div><?php echo $user['phone']; ?></div>
-                                        
+                                      
                                     </td>
                                     <td>
                                         <div><?php echo $user['barangay']; ?></div>

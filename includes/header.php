@@ -34,5 +34,11 @@
     <meta property="og:image" content="<?php echo BASE_URL; ?>assets/img/logo.png">
     <meta property="og:url" content="<?php echo BASE_URL; ?>">
     <meta property="og:type" content="website">
+    
+    <!-- EmailJS CDN -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/index.min.js"></script>
+    
+    <!-- Add EmailJS config script to initialize EmailJS functions -->
+    <script type="text/javascript" src="<?php echo BASE_URL; ?>assets/js/emailjs-config.js"></script>
 </head>
 <body>
