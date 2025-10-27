@@ -21,6 +21,14 @@ body {
   width: auto;
 }
 
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  justify-content: center;
+  align-items: center;
+}
+
 .card {
   border: none;
   border-radius: 10px;
@@ -162,6 +170,7 @@ footer a:hover {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -176,6 +185,7 @@ footer a:hover {
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -194,12 +204,15 @@ footer a:hover {
 .status-active {
   background-color: var(--success-color);
 }
+
 .status-inactive {
   background-color: var(--secondary-color);
 }
+
 .status-warning {
   background-color: var(--warning-color);
 }
+
 .status-danger {
   background-color: var(--danger-color);
 }
@@ -216,9 +229,11 @@ footer a:hover {
   0% {
     box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
   }
+
   70% {
     box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
   }
@@ -226,6 +241,7 @@ footer a:hover {
 
 /* Print styles */
 @media print {
+
   .navbar,
   .btn,
   .card-footer,
