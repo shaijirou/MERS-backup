@@ -111,9 +111,9 @@ if (!$incident) {
         </div>
         
         <div class="mb-3">
-            <label class="form-label fw-bold">Description:</label>
-            <div class="border rounded p-2 bg-light">
-                <?php echo nl2br(htmlspecialchars($incident['description'])); ?>
+            <label class="form-label fw-bold mb-0">Description:</label>
+            <div style="pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">
+            <?php echo nl2br(htmlspecialchars($incident['description'])); ?>
             </div>
         </div>
         
