@@ -418,6 +418,7 @@ include '../includes/header.php';
                                     <th>Incident Type</th>
                                     <th>Location</th>
                                     <th>Reported By</th>
+                                    <th>Approval Status</th>
                                     <th>Status</th>
                                     <th>Time</th>
                                 </tr>
@@ -429,9 +430,35 @@ include '../includes/header.php';
                                         <td><?php echo ucfirst($report['incident_type']); ?></td>
                                         <td><?php echo htmlspecialchars($report['location']); ?></td>
                                         <td><?php echo htmlspecialchars($report['first_name'] . ' ' . $report['last_name']); ?></td>
+
+                                        <?php
+                                            // Approval status: default to 'pending' if missing/empty
+                                            $as = (isset($report['approval_status']) && trim($report['approval_status']) !== '') ? strtolower($report['approval_status']) : 'pending';
+
+                                            // Map approval status to bootstrap badge classes
+                                            // Use a more visible color for 'pending'
+                                            $approvalBadgeClass = $as === 'approved' ? 'bg-success' :
+                                                                  ($as === 'rejected' ? 'bg-danger' : 'bg-warning text-dark');
+
+                                            $approvalLabel = ucfirst($as);
+                                        ?>
                                         <td>
-                                            <span class="badge bg-<?php echo $report['status'] == 'resolved' ? 'success' : ($report['status'] == 'in_progress' ? 'warning text-dark' : ($report['status'] == 'pending' ? 'secondary' : 'danger')); ?>">
-                                                <?php echo ucfirst(str_replace('_', ' ', $report['status'])); ?>
+                                            <span class="badge <?php echo $approvalBadgeClass; ?>">
+                                                <?php echo $approvalLabel; ?>
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <span class="badge <?php
+                                                // Default to 'pending' if response_status is missing or empty
+                                                $rs = (isset($report['response_status']) && trim($report['response_status']) !== '') ? $report['response_status'] : 'pending';
+                                                echo $rs == 'resolved' ? 'bg-success' :
+                                                     ($rs == 'on_scene' ? 'bg-warning text-dark' :
+                                                     ($rs == 'responding' ? 'bg-info text-dark' :
+                                                     ($rs == 'pending' ? 'bg-warning text-dark' :
+                                                     ($rs == 'notified' ? 'bg-secondary' : 'bg-danger'))));
+                                            ?>">
+                                                <?php echo ucfirst(str_replace('_', ' ', $rs)); ?>
                                             </span>
                                         </td>
                                         <td><?php echo formatDateTime($report['created_at']); ?></td>
@@ -439,7 +466,7 @@ include '../includes/header.php';
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="5" class="text-center py-4">
+                                        <td colspan="6" class="text-center py-4">
                                             <p class="text-muted mb-0">No recent incident reports</p>
                                         </td>
                                     </tr>
