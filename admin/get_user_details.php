@@ -44,146 +44,167 @@ $reports_stmt->bindParam(':user_id', $user_id);
 $reports_stmt->execute();
 $recent_reports = $reports_stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
-<div class="row g-4">
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h6 class="card-title mb-0"><i class="bi bi-person"></i> Personal Information</h6>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-12">
-                        <label class="form-label fw-bold">Full Name</label>
-                        <p class="mb-2"><?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?></p>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label fw-bold">Email</label>
-                        <p class="mb-2"><?php echo htmlspecialchars($user['email']); ?></p>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label fw-bold">Phone</label>
-                        <p class="mb-2"><?php echo htmlspecialchars($user['phone']); ?></p>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label fw-bold">Barangay</label>
-                        <p class="mb-2"><?php echo htmlspecialchars($user['barangay']); ?></p>
-                    </div>
-                    <div class="col-12">
-    <label class="form-label fw-bold">Complete Address</label>
-    <p class="mb-2">
-        <?php 
-            if (!empty($user['house_number']) || !empty($user['street']) || !empty($user['landmark'])) {
-                echo htmlspecialchars($user['house_number'] . ' ' . $user['street']);
-                if (!empty($user['landmark'])) {
-                    echo ' (Near ' . htmlspecialchars($user['landmark']) . ')';
-                }
-            } else {
-                echo '<em class="text-muted">Not specified</em>';
-            }
-        ?>
-    </p>
-</div>
-                </div>
-            </div>
+<div class="container py-4">
+    <!-- Profile Header -->
+    <div class="card mb-4 shadow-sm border-0 rounded-3">
+        <div class="card-body text-center">
+            <img src="<?php echo !empty($user['selfie_photo']) ? htmlspecialchars('../' . $user['selfie_photo']) : 'assets/img/default-avatar.png'; ?>" 
+                 alt="Profile Photo" 
+                 class="rounded-circle shadow-sm mb-3" 
+                 style="width: 250px; height: 250px; object-fit: cover; border: 4px solid #dee2e6;">
+            <h4 class="mb-0"><?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?></h4>
+            <p class="text-muted mb-0"><?php echo ucfirst($user['user_type']); ?></p>
+            <small class="text-muted">Member since <?php echo date('F j, Y', strtotime($user['created_at'])); ?></small>
         </div>
     </div>
 
-     
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h6 class="card-title mb-0"><i class="bi bi-shield-check"></i> Status & Verification</h6>
+    <div class="row g-4">
+        <!-- Personal Information -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-primary text-white d-flex align-items-center">
+                    <i class="bi bi-person-fill me-2"></i>
+                    <h6 class="mb-0">Personal Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Full Name:</strong><br>
+                        <?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Email:</strong><br>
+                        <?php echo htmlspecialchars($user['email']); ?>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Phone:</strong><br>
+                        <?php echo htmlspecialchars($user['phone']); ?>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Barangay:</strong><br>
+                        <?php echo htmlspecialchars($user['barangay']); ?>
+                    </div>
+                    <div>
+                        <strong>Complete Address:</strong><br>
+                        <?php 
+                            if (!empty($user['house_number']) || !empty($user['street']) || !empty($user['landmark'])) {
+                                echo htmlspecialchars($user['house_number'] . ' ' . $user['street']);
+                                if (!empty($user['landmark'])) {
+                                    echo ' (Near ' . htmlspecialchars($user['landmark']) . ')';
+                                }
+                            } else {
+                                echo '<em class="text-muted">Not specified</em>';
+                            }
+                        ?>
+                        <?php echo htmlspecialchars($user['barangay']); ?> Agoncillo, Batangas City, Philippines
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-12">
-                        <label class="form-label fw-bold">Verification Status</label>
-                        <p class="mb-2">
-                            <?php if ($user['verification_status'] === 'verified'): ?>
-                                <span class="badge bg-success"><i class="bi bi-check-circle"></i> Verified</span>
-                            <?php else: ?>
-                                <span class="badge bg-warning"><i class="bi bi-clock"></i> Pending</span>
-                            <?php endif; ?>
-                        </p>
+        </div>
+
+        <!-- Uploaded Documents -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-secondary text-white d-flex align-items-center">
+                    <i class="bi bi-card-text me-2"></i>
+                    <h6 class="mb-0">ID Document</h6>
+                </div>
+                <div class="card-body text-center">
+                    <?php if (!empty($user['id_document'])): ?>
+                        <img src="<?php echo htmlspecialchars('../' . $user['id_document']); ?>" 
+                             alt="ID Document" 
+                             class="img-fluid rounded shadow-sm" 
+                             style="max-height: 250px; object-fit: contain;">
+                    <?php else: ?>
+                        <p class="text-muted"><i class="bi bi-image"></i><br>No ID document uploaded</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification & Status -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-success text-white d-flex align-items-center">
+                    <i class="bi bi-shield-check me-2"></i>
+                    <h6 class="mb-0">Verification & Status</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Verification Status:</strong><br>
+                        <?php if ($user['verification_status'] === 'verified'): ?>
+                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Verified</span>
+                        <?php else: ?>
+                            <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Pending</span>
+                        <?php endif; ?>
                     </div>
                     <?php if ($user['verification_status'] === 'verified' && $user['verified_by_name']): ?>
-                    <div class="col-12">
-                        <label class="form-label fw-bold">Verified By</label>
-                        <p class="mb-2"><?php echo htmlspecialchars($user['verified_by_name'] . ' ' . $user['verified_by_lastname']); ?></p>
-                    </div>
+                        <div class="mb-2">
+                            <strong>Verified By:</strong><br>
+                            <?php echo htmlspecialchars($user['verified_by_name'] . ' ' . $user['verified_by_lastname']); ?>
+                        </div>
                     <?php endif; ?>
-                    <div class="col-12">
-                        <label class="form-label fw-bold">User Type</label>
-                        <p class="mb-2">
-                            <span class="badge bg-info"><?php echo ucfirst($user['user_type']); ?></span>
-                        </p>
+                    <div class="mb-2">
+                        <strong>User Type:</strong><br>
+                        <span class="badge bg-info"><?php echo ucfirst($user['user_type']); ?></span>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-   
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h6 class="card-title mb-0"><i class="bi bi-bar-chart"></i> Activity Statistics</h6>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-6">
-                        <div class="text-center">
-                            <h4 class="text-primary mb-1"><?php echo $user['report_count']; ?></h4>
+        
+
+        <!-- Activity Stats -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-info text-white d-flex align-items-center">
+                    <i class="bi bi-bar-chart me-2"></i>
+                    <h6 class="mb-0">Activity Statistics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <h4 class="text-primary mb-0"><?php echo $user['report_count']; ?></h4>
                             <small class="text-muted">Total Reports</small>
                         </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="text-center">
-                            <h4 class="text-success mb-1"><?php echo $user['resolved_reports']; ?></h4>
+                        <div class="col-6">
+                            <h4 class="text-success mb-0"><?php echo $user['resolved_reports']; ?></h4>
                             <small class="text-muted">Resolved Reports</small>
                         </div>
                     </div>
-                    <div class="col-12">
-                        <label class="form-label fw-bold">Member Since</label>
-                        <p class="mb-2"><?php echo date('F j, Y', strtotime($user['created_at'])); ?></p>
-                        <small class="text-muted"><?php echo timeAgo($user['created_at']); ?></small>
-                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-      
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h6 class="card-title mb-0"><i class="bi bi-file-text"></i> Recent Reports</h6>
-            </div>
-            <div class="card-body">
-                <?php if (empty($recent_reports)): ?>
-                    <p class="text-muted mb-0">No reports submitted yet.</p>
-                <?php else: ?>
-                    <div class="list-group list-group-flush">
-                        <?php foreach ($recent_reports as $report): ?>
-                            <div class="list-group-item px-0">
-                                <div class="d-flex justify-content-between align-items-start">
+        <!-- Recent Reports -->
+        <div class="col-12">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-dark text-white d-flex align-items-center">
+                    <i class="bi bi-file-earmark-text me-2"></i>
+                    <h6 class="mb-0">Recent Reports</h6>
+                </div>
+                <div class="card-body">
+                    <?php if (empty($recent_reports)): ?>
+                        <p class="text-muted mb-0">No reports submitted yet.</p>
+                    <?php else: ?>
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($recent_reports as $report): ?>
+                                <div class="list-group-item border-0 px-0 py-2 d-flex justify-content-between align-items-start">
                                     <div>
                                         <h6 class="mb-1"><?php echo htmlspecialchars($report['incident_type_name'] ?? 'Unknown Type'); ?></h6>
-                                        <p class="mb-1 small"><?php echo htmlspecialchars(substr($report['description'], 0, 50)) . '...'; ?></p>
+                                        <p class="mb-1 small text-muted"><?php echo htmlspecialchars(substr($report['description'], 0, 50)) . '...'; ?></p>
                                         <small class="text-muted"><?php echo timeAgo($report['created_at']); ?></small>
                                     </div>
                                     <span class="badge bg-<?php 
                                         echo $report['status'] === 'resolved' ? 'success' : 
-                                            ($report['status'] === 'in_progress' ? 'warning' : 'secondary'); 
+                                            ($report['status'] === 'in_progress' ? 'warning text-dark' : 'secondary'); 
                                     ?>">
                                         <?php echo ucfirst(str_replace('_', ' ', $report['status'])); ?>
                                     </span>
                                 </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
