@@ -526,7 +526,7 @@ include '../includes/header.php';
                     <a href="#" class="btn btn-outline-light btn-sm"><i class="bi bi-youtube"></i></a>
                 </div>
                 <div class="mt-3">
-                    <a href="#" class="btn btn-sm btn-primary">
+                    <a href="https://a3.files.diawi.com/app-file/78LluDJh3kGY6g7H7M4U.apk" class="btn btn-sm btn-primary">
                         <i class="bi bi-download me-1"></i> Download Mobile App
                     </a>
                 </div>

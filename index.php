@@ -1,6 +1,10 @@
 <?php
 require_once 'config/config.php';
 
+$userAgent = $_SERVER['HTTP_USER_AGENT'];
+$isApp = strpos($userAgent, 'MERSApp') !== false;
+
+
 $page_title = 'Login';
 
 // If user is already logged in, redirect to appropriate dashboard
@@ -147,6 +151,13 @@ include 'includes/header.php';
                     
                     <div class="text-center mt-4">
                         <p>Don't have an account? <a href="register.php" class="text-primary">Register here</a></p>
+                    </div>
+
+                   <div class="text-center mt-4" <?php if ($isApp) echo 'style="display:none;"'; ?>>
+                        <a href="https://upload.app/api/download?sha256=b830d98f8537325cda1606047b37b1e0636345aaf001092632c2ec7edff748ee&download_id=upload_a4093ff1-7ba2-40fa-9a67-952b4638e084&token=3152b3d1c216189336357fcf0df000a569035f06"
+                        class="btn btn-sm btn-primary">
+                        <i class="bi bi-download me-1"></i> Download Mobile App
+                        </a>
                     </div>
                 </div>
             </div>
