@@ -193,9 +193,6 @@ include '../includes/header.php';
     <link href="../assets/css/admin.css" rel="stylesheet">
     <style>
         /* Enhanced styles to ensure dropdowns work properly */
-        .table-responsive {
-            overflow: visible !important;
-        }
         .dropdown-menu {
             z-index: 1050 !important;
             position: absolute !important;
