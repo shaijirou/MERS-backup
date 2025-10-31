@@ -26,30 +26,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $injuries = sanitizeInput($_POST['injuries']);
     $contact_number = sanitizeInput($_POST['contact_number']);
     
-    if (empty($incident_type) || empty($location) || empty($description) || empty($contact_number) || empty($photos)) {
-        $error_message = 'Please fill in all required fields.';
-    } else {
-        // Handle photo uploads
-        $photos = [];
-        if (isset($_FILES['photos'])) {
-            $upload_dir = '../uploads/incidents/';
-            if (!file_exists($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
-            }
-            
-            for ($i = 0; $i < count($_FILES['photos']['name']); $i++) {
-                if ($_FILES['photos']['error'][$i] == 0) {
-                    $file_extension = strtolower(pathinfo($_FILES['photos']['name'][$i], PATHINFO_EXTENSION));
-                    $new_filename = 'incident_' . uniqid() . '.' . $file_extension;
-                    $upload_path = $upload_dir . $new_filename;
-                    
-                    if (move_uploaded_file($_FILES['photos']['tmp_name'][$i], $upload_path)) {
-                        $photos[] = $upload_path;
-                    }
+    $photos = [];
+    if (isset($_FILES['photos'])) {
+        $upload_dir = '../uploads/incidents/';
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+        
+        for ($i = 0; $i < count($_FILES['photos']['name']); $i++) {
+            if ($_FILES['photos']['error'][$i] == 0) {
+                $file_extension = strtolower(pathinfo($_FILES['photos']['name'][$i], PATHINFO_EXTENSION));
+                $new_filename = 'incident_' . uniqid() . '.' . $file_extension;
+                $upload_path = $upload_dir . $new_filename;
+                
+                if (move_uploaded_file($_FILES['photos']['tmp_name'][$i], $upload_path)) {
+                    $photos[] = $upload_path;
                 }
             }
         }
-        
+    }
+    
+    if (empty($incident_type) || empty($location) || empty($description) || empty($contact_number) || empty($photos)) {
+        $error_message = 'Please fill in all required fields.';
+    } else {
         // Generate report number
         $report_number = generateReportNumber();
         
