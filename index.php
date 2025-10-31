@@ -154,7 +154,7 @@ include 'includes/header.php';
                     </div>
 
                    <div class="text-center mt-4" <?php if ($isApp) echo 'style="display:none;"'; ?>>
-                        <a href="https://upload.app/api/download?sha256=b830d98f8537325cda1606047b37b1e0636345aaf001092632c2ec7edff748ee&download_id=upload_a4093ff1-7ba2-40fa-9a67-952b4638e084&token=3152b3d1c216189336357fcf0df000a569035f06"
+                        <a href="https://d.apkpure.com/b/APK/com.example.mers?version=latest"
                         class="btn btn-sm btn-primary">
                         <i class="bi bi-download me-1"></i> Download Mobile App
                         </a>
