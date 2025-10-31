@@ -21,8 +21,9 @@ $incident_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $incident_details = null;
 
 if ($incident_id) {
-    $stmt = $db->prepare("SELECT ir.*, u.first_name, u.last_name, u.phone, u.email, u.barangay FROM incident_reports ir JOIN users u ON ir.user_id = u.id WHERE ir.id = :incident_id AND ir.approval_status = 'approved'");
+    $stmt = $db->prepare("SELECT ir.*, u.first_name, u.last_name, u.phone, u.email, u.barangay FROM incident_reports ir JOIN users u ON ir.user_id = u.id WHERE ir.id = :incident_id AND ir.approval_status = 'approved' AND (ir.assigned_to = :user_id OR (ir.responder_type = 'barangay' AND ir.assigned_to IS NULL))");
     $stmt->bindParam(':incident_id', $incident_id);
+    $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
     $incident_details = $stmt->fetch();
 }

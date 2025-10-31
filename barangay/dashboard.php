@@ -43,25 +43,17 @@ $stmt->bindParam(':user_id', $user_id);
 $stmt->execute();
 $current_user = $stmt->fetch();
 
-// Get assigned incidents (filter by barangay if assigned_barangay is set)
+// Get assigned incidents (filter by assigned_to user_id)
 $incidents_query = "SELECT ir.*, u.first_name, u.last_name, u.phone, u.barangay 
                    FROM incident_reports ir 
                    JOIN users u ON ir.user_id = u.id 
                    WHERE ir.approval_status = 'approved' 
-                   AND (ir.assigned_to = :user_id OR ir.responder_type = 'barangay')";
-
-// If user has assigned barangay, filter incidents by that barangay
-if (!empty($current_user['assigned_barangay'])) {
-    $incidents_query .= " AND u.barangay = :assigned_barangay";
-}
+                   AND (ir.assigned_to = :user_id OR (ir.responder_type = 'barangay' AND ir.assigned_to IS NULL))";
 
 $incidents_query .= " ORDER BY ir.created_at DESC";
 
 $stmt = $db->prepare($incidents_query);
 $stmt->bindParam(':user_id', $user_id);
-if (!empty($current_user['assigned_barangay'])) {
-    $stmt->bindParam(':assigned_barangay', $current_user['assigned_barangay']);
-}
 $stmt->execute();
 $assigned_incidents = $stmt->fetchAll();
 
@@ -74,7 +66,6 @@ $stmt->bindParam(':user_id', $user_id);
 $stmt->execute();
 $notifications = $stmt->fetchAll();
 
-// Get statistics
 $stats_query = "SELECT 
                 COUNT(*) as total_assigned,
                 SUM(CASE WHEN response_status = 'responding' THEN 1 ELSE 0 END) as responding,
@@ -83,17 +74,10 @@ $stats_query = "SELECT
                 FROM incident_reports ir
                 JOIN users u ON ir.user_id = u.id
                 WHERE ir.approval_status = 'approved' 
-                AND (ir.assigned_to = :user_id OR ir.responder_type = 'barangay')";
-
-if (!empty($current_user['assigned_barangay'])) {
-    $stats_query .= " AND u.barangay = :assigned_barangay";
-}
+                AND (ir.assigned_to = :user_id OR (ir.responder_type = 'barangay' AND ir.assigned_to IS NULL))";
 
 $stmt = $db->prepare($stats_query);
 $stmt->bindParam(':user_id', $user_id);
-if (!empty($current_user['assigned_barangay'])) {
-    $stmt->bindParam(':assigned_barangay', $current_user['assigned_barangay']);
-}
 $stmt->execute();
 $stats = $stmt->fetch();
 

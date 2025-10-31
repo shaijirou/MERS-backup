@@ -194,6 +194,21 @@ $date_to = $_GET['date_to'] ?? '';
 $where_conditions = [];
 $params = [];
 
+// If the current user is a barangay department member, only show incidents from their assigned barangay
+if (isBarangay() && !isAdmin() && !isSuperAdmin()) {
+    $user_id = $_SESSION['user_id'];
+    $query_user = "SELECT assigned_barangay FROM users WHERE id = :user_id";
+    $stmt_user = $db->prepare($query_user);
+    $stmt_user->bindParam(':user_id', $user_id);
+    $stmt_user->execute();
+    $user = $stmt_user->fetch();
+    
+    if ($user && $user['assigned_barangay']) {
+        $where_conditions[] = "u.barangay = :user_barangay";
+        $params[':user_barangay'] = $user['assigned_barangay'];
+    }
+}
+
 if ($status_filter) {
     $where_conditions[] = "ir.response_status = :status";
     $params[':status'] = $status_filter;
@@ -967,7 +982,7 @@ include '../includes/header.php';
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = data;
                 const photoElements = tempDiv.querySelectorAll('img[onclick*="showImageModal"]');
-                
+
                 if (photoElements.length > 0) {
                     const firstPhotoSrc = photoElements[0].getAttribute('onclick').match(/'([^']+)'/)[1];
                     showImageModal(firstPhotoSrc);

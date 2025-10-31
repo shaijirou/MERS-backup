@@ -12,17 +12,19 @@ try {
     $database = new Database();
     $db = $database->getConnection();
     
-    // Get incidents that are approved and relevant to barangay
-    // Focus on community-related incidents and local matters
+    $user_id = $_SESSION['user_id'];
+    
+    // Get incidents that are approved and assigned to barangay department or assigned to this specific user
     $query = "SELECT ir.*, u.first_name, u.last_name, u.phone, u.email, u.barangay 
               FROM incident_reports ir 
               JOIN users u ON ir.user_id = u.id 
               WHERE ir.approval_status = 'approved' 
-              AND ir.responder_type = 'barangay'
+              AND (ir.assigned_to = :user_id OR (ir.responder_type = 'barangay' AND ir.assigned_to IS NULL))
               AND (
                    ir.incident_type LIKE '%community%' 
                    OR ir.incident_type LIKE '%barangay%' 
-                   OR ir.incident_type LIKE '%flood%' 
+                   OR ir.incident_type LIKE '%flood%'
+                   OR ir.incident_type LIKE '%landslide%' 
                    OR ir.incident_type LIKE '%road accident%'
                    OR ir.incident_type LIKE '%public%'
                    OR ir.incident_type LIKE '%local%'
@@ -40,6 +42,7 @@ try {
                 ir.created_at DESC";
     
     $stmt = $db->prepare($query);
+    $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
     $incidents = $stmt->fetchAll(PDO::FETCH_ASSOC);
     

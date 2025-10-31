@@ -50,13 +50,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Update profile
         if (!empty($new_password)) {
             $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-            $stmt = $db->prepare("UPDATE users SET department = :department, last_name = :last_name, phone = :phone, email = :email, password = :password WHERE id = :user_id");
+            $stmt = $db->prepare("UPDATE users SET department = :department, phone = :phone, email = :email, password = :password WHERE id = :user_id");
             $stmt->bindParam(':password', $hashed_password);
         } else {
-            $stmt = $db->prepare("UPDATE users SET department = :department, last_name = :last_name, phone = :phone, email = :email WHERE id = :user_id");
+            $stmt = $db->prepare("UPDATE users SET department = :department, phone = :phone, email = :email WHERE id = :user_id");
         }
         $stmt->bindParam(':department', $department);
-        $stmt->bindParam(':last_name', $last_name);
         $stmt->bindParam(':phone', $phone);
         $stmt->bindParam(':email', $email);
         $stmt->bindParam(':user_id', $user_id);
@@ -64,7 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         // Update session
         $_SESSION['department'] = $department;
-        $_SESSION['last_name'] = $last_name;
         
         $success_message = "Profile updated successfully!";
         
