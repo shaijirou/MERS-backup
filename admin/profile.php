@@ -325,7 +325,7 @@ $admin_profile = $profile_stmt->fetch();
 
 // Get admin activity statistics
 $stats_query = "SELECT 
-                COUNT(CASE WHEN action = 'LOGIN' THEN 1 END) as total_logins,
+                COUNT(CASE WHEN action = 'User logged in' THEN 1 END) as total_logins,
                 COUNT(CASE WHEN action LIKE '%USER%' THEN 1 END) as user_actions,
                 COUNT(CASE WHEN action LIKE '%ALERT%' THEN 1 END) as alert_actions,
                 COUNT(CASE WHEN action LIKE '%INCIDENT%' THEN 1 END) as incident_actions,
