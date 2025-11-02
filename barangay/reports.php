@@ -51,13 +51,8 @@ $status = $_GET['status'] ?? '';
 
 // Build query conditions
 $conditions = ["ir.approval_status = 'approved'"];
-$conditions[] = "(ir.assigned_to = :user_id OR ir.responder_type = 'barangay')";
+$conditions[] = "ir.responder_type = 'barangay' AND (ir.assigned_to = :user_id OR ir.assigned_to IS NULL)";
 $params = [':user_id' => $user_id];
-
-if (!empty($current_user['assigned_barangay'])) {
-    $conditions[] = "u.barangay = :assigned_barangay";
-    $params[':assigned_barangay'] = $current_user['assigned_barangay'];
-}
 
 if ($date_from) {
     $conditions[] = "DATE(ir.created_at) >= :date_from";
@@ -238,7 +233,6 @@ include '../includes/header.php';
                                         <th>Reporter</th>
                                         <th>Barangay</th>
                                         <th>Status</th>
-                                        <th>Urgency</th>
                                         <th>Date</th>
                                     </tr>
                                 </thead>
@@ -268,11 +262,7 @@ include '../includes/header.php';
                                                     <?php echo ucfirst(str_replace('_', ' ', $incident['response_status'])); ?>
                                                 </span>
                                             </td>
-                                            <td>
-                                                <span class="badge bg-<?php echo getUrgencyColor($incident['urgency_level']); ?> rounded-pill">
-                                                    <?php echo ucfirst($incident['urgency_level']); ?>
-                                                </span>
-                                            </td>
+                                            
                                             <td><?php echo date('M j, Y', strtotime($incident['created_at'])); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -296,15 +286,7 @@ document.getElementById("menu-toggle").addEventListener("click", function(e) {
 </script>
 
 <?php
-function getUrgencyColor($urgency) {
-    switch ($urgency) {
-        case 'low': return 'success';
-        case 'medium': return 'warning';
-        case 'high': return 'danger';
-        case 'critical': return 'dark';
-        default: return 'secondary';
-    }
-}
+
 
 function getStatusColor($status) {
     switch ($status) {
