@@ -431,21 +431,27 @@ include '../includes/header.php';
                 <div class="card-footer">
                     <nav>
                         <ul class="pagination justify-content-center mb-0">
+                            <?php 
+                            $query_params = $_GET;
+                            unset($query_params['page']);
+                            $query_string = http_build_query($query_params);
+                            $separator = !empty($query_string) ? '&' : '';
+                            ?>
                             <?php if ($page > 1): ?>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page=<?php echo $page - 1; ?>&<?php echo http_build_query($_GET); ?>">Previous</a>
+                                    <a class="page-link" href="?page=<?php echo $page - 1; ?><?php echo $separator . $query_string; ?>">Previous</a>
                                 </li>
                             <?php endif; ?>
                             
                             <?php for ($i = max(1, $page - 2); $i <= min($total_pages, $page + 2); $i++): ?>
                                 <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                                    <a class="page-link" href="?page=<?php echo $i; ?>&<?php echo http_build_query($_GET); ?>"><?php echo $i; ?></a>
+                                    <a class="page-link" href="?page=<?php echo $i; ?><?php echo $separator . $query_string; ?>"><?php echo $i; ?></a>
                                 </li>
                             <?php endfor; ?>
                             
                             <?php if ($page < $total_pages): ?>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page=<?php echo $page + 1; ?>&<?php echo http_build_query($_GET); ?>">Next</a>
+                                    <a class="page-link" href="?page=<?php echo $page + 1; ?><?php echo $separator . $query_string; ?>">Next</a>
                                 </li>
                             <?php endif; ?>
                         </ul>
