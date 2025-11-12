@@ -175,6 +175,9 @@ include '../includes/header.php';
                 <li class="nav-item">
                     <a class="nav-link" href="report.php"><i class="bi bi-exclamation-triangle-fill me-1"></i> Report Incident</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="my-reports.php"><i class="bi bi-file-earmark-text-fill me-1"></i> My Reports</a>
+                </li>
                 <li class="nav-item dropdown">
                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                         <img src="../<?php echo $user['selfie_photo'] ?: 'assets/img/user-avatar.jpg'; ?>" class="rounded-circle me-1" width="28" height="28" alt="User">
@@ -182,6 +185,7 @@ include '../includes/header.php';
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person-circle me-2"></i>My Profile</a></li>
+                       
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="../logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
@@ -412,62 +416,7 @@ include '../includes/header.php';
         </div>
     </div>
 
-    <!-- Additional Resources -->
-    <div class="card shadow-sm">
-        <div class="card-header bg-info text-white">
-            <h4 class="card-title mb-0">
-                <i class="bi bi-book me-2"></i>Additional Resources
-            </h4>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>Online Resources</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <a href="#" class="text-decoration-none">
-                                <i class="bi bi-globe me-2"></i>NDRRMC Official Website
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a href="#" class="text-decoration-none">
-                                <i class="bi bi-cloud-sun me-2"></i>PAGASA Weather Updates
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a href="#" class="text-decoration-none">
-                                <i class="bi bi-geo-alt me-2"></i>Hazard Maps Philippines
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a href="#" class="text-decoration-none">
-                                <i class="bi bi-heart-pulse me-2"></i>Red Cross First Aid Guide
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <h5>Mobile Apps</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="bi bi-phone me-2"></i>NDRRMC Disaster Response App
-                        </li>
-                        <li class="mb-2">
-                            <i class="bi bi-phone me-2"></i>PAGASA Weather App
-                        </li>
-                        <li class="mb-2">
-                            <i class="bi bi-phone me-2"></i>Red Cross Emergency App
-                        </li>
-                        <li class="mb-2">
-                            <i class="bi bi-phone me-2"></i>First Aid by Red Cross
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
+   
 <script>
 // Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -482,8 +431,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
-
-
 // Highlight current section in navigation
 window.addEventListener('scroll', function() {
     const sections = document.querySelectorAll('[id]');

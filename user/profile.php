@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $house_number = sanitizeInput($_POST['house_number']);
         $street = sanitizeInput($_POST['street']);
         $barangay = sanitizeInput($_POST['barangay']);
-         $landmark = sanitizeInput($_POST['landmark']);
+        $landmark = sanitizeInput($_POST['landmark']);
         
         if (empty($first_name) || empty($last_name) || empty($email) || empty($phone) || empty($house_number) || empty($street) || empty($barangay)) {
             $error_message = 'Please fill in all required fields.';
@@ -181,6 +181,10 @@ include '../includes/header.php';
                 <li class="nav-item">
                     <a class="nav-link" href="report.php"><i class="bi bi-exclamation-triangle-fill me-1"></i> Report Incident</a>
                 </li>
+                <!-- Added My Reports link to navbar -->
+                <li class="nav-item">
+                    <a class="nav-link" href="my-reports.php"><i class="bi bi-file-earmark-text-fill me-1"></i> My Reports</a>
+                </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle active" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                         <img src="../<?php echo $user['selfie_photo'] ?: 'assets/img/user-avatar.jpg'; ?>" class="rounded-circle me-1" width="28" height="28" alt="User">
@@ -188,6 +192,7 @@ include '../includes/header.php';
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item active" href="profile.php"><i class="bi bi-person-circle me-2"></i>My Profile</a></li>
+                        
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="../logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
@@ -289,32 +294,28 @@ include '../includes/header.php';
                                 </select>
                             </div>
                             <div class="col-md-4">
-    <label for="house_number" class="form-label">House Number</label>
-    <input type="text" class="form-control" id="house_number" name="house_number" 
-           value="<?php echo htmlspecialchars($user['house_number']); ?>" 
-           placeholder="Enter house number">
-</div>
+                                <label for="house_number" class="form-label">House Number</label>
+                                <input type="text" class="form-control" id="house_number" name="house_number" 
+                                       value="<?php echo htmlspecialchars($user['house_number']); ?>" 
+                                       placeholder="Enter house number">
+                            </div>
 
-<div class="col-md-4">
-    <label for="street" class="form-label">Street</label>
-    <input type="text" class="form-control" id="street" name="street" 
-           value="<?php echo htmlspecialchars($user['street']); ?>" 
-           placeholder="Enter street">
-</div>
+                            <div class="col-md-4">
+                                <label for="street" class="form-label">Street</label>
+                                <input type="text" class="form-control" id="street" name="street" 
+                                       value="<?php echo htmlspecialchars($user['street']); ?>" 
+                                       placeholder="Enter street">
+                            </div>
 
-<div class="col-md-4">
-    <label for="landmark" class="form-label">Landmark</label>
-    <input type="text" class="form-control" id="landmark" name="landmark" 
-           value="<?php echo htmlspecialchars($user['landmark']); ?>" 
-           placeholder="e.g. Near plaza, school">
-</div>
-
+                            <div class="col-md-4">
+                                <label for="landmark" class="form-label">Landmark</label>
+                                <input type="text" class="form-control" id="landmark" name="landmark" 
+                                       value="<?php echo htmlspecialchars($user['landmark']); ?>" 
+                                       placeholder="e.g. Near plaza, school">
+                            </div>
                         </div>
 
-                        
-
                         <hr>
-                        
 
                         <div class="d-flex justify-content-end">
                             <button type="submit" name="update_profile" class="btn btn-primary">
@@ -371,7 +372,6 @@ include '../includes/header.php';
                         <span>Member Since</span>
                         <strong><?php echo date('M Y', strtotime($user['created_at'])); ?></strong>
                     </div>
-                    
                     
                     <div class="d-flex justify-content-between align-items-center">
                         <span>Account Status</span>

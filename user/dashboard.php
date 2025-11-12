@@ -81,6 +81,9 @@ include '../includes/header.php';
                 <li class="nav-item">
                     <a class="nav-link" href="report.php"><i class="bi bi-exclamation-triangle-fill me-1"></i> Report Incident</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="my-reports.php"><i class="bi bi-file-earmark-text-fill me-1"></i> My Reports</a>
+                </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="../<?php echo $user['selfie_photo'] ?: 'assets/img/user-avatar.jpg'; ?>" class="rounded-circle me-1" width="28" height="28" alt="User">
@@ -88,7 +91,7 @@ include '../includes/header.php';
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person-circle me-2"></i>My Profile</a></li>
-                        <!-- <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Settings</a></li> -->
+                        
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="../logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
@@ -503,6 +506,7 @@ include '../includes/header.php';
                     <li><a href="alerts.php" class="text-decoration-none text-white-50">Alerts</a></li>
                     <li><a href="map.php" class="text-decoration-none text-white-50">Evacuation Map</a></li>
                     <li><a href="report.php" class="text-decoration-none text-white-50">Report Incident</a></li>
+                    <li><a href="my-reports.php" class="text-decoration-none text-white-50">My Reports</a></li>
                 </ul>
             </div>
 
@@ -590,7 +594,7 @@ const dashboardMap = {
             });
 
             const marker = L.marker([lat, lng], { icon: evacuationIcon })
-                .bindPopup(`
+                .bindPopup(``
                     <div class="text-center" style="min-width: 200px;">
                         <h6 class="mb-2 text-primary">${center.name}</h6>
                         <p class="mb-1 small"><i class="bi bi-geo-alt me-1"></i>${center.barangay_name}, Agoncillo</p>
@@ -697,7 +701,7 @@ const dashboardMap = {
         const notification = document.createElement('div');
         notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed dashboard-notification`;
         notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 400px;';
-        notification.innerHTML = `
+        notification.innerHTML = ``
             <strong>${title}:</strong> ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
@@ -736,7 +740,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Add custom CSS for map icons and styling
 const style = document.createElement('style');
-style.textContent = `
+style.textContent = ``
     .custom-div-icon {
         background: transparent !important;
         border: none !important;
@@ -764,7 +768,7 @@ style.textContent = `
         border: none;
         border-radius: 8px;
     }
-`;
+``;
 document.head.appendChild(style);
 </script>
 

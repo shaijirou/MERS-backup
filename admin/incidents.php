@@ -1,6 +1,7 @@
 <?php
 require_once '../config/config.php';
 requireAdmin();
+require_once '../includes/SemaphoreAPI.php';
 
 $page_title = 'Incident Management';
 $additional_css = ['assets/css/admin.css'];
@@ -23,6 +24,14 @@ if ($_POST) {
                 break;
             }
 
+            $get_details = "SELECT ir.*, u.phone FROM incident_reports ir 
+                           LEFT JOIN users u ON ir.user_id = u.id 
+                           WHERE ir.id = :incident_id";
+            $stmt_details = $db->prepare($get_details);
+            $stmt_details->bindParam(':incident_id', $incident_id, PDO::PARAM_INT);
+            $stmt_details->execute();
+            $incident_details = $stmt_details->fetch();
+
             $query = "UPDATE incident_reports SET 
                      approval_status = 'approved',
                      approved_by = :admin_id,
@@ -35,6 +44,15 @@ if ($_POST) {
             $stmt->bindParam(':incident_id', $incident_id, PDO::PARAM_INT);
             
             if ($stmt->execute()) {
+                if (ENABLE_SMS_NOTIFICATIONS && $incident_details && $incident_details['phone']) {
+                    try {
+                        $sms_api = new SemaphoreAPI();
+                        $sms_message = "Thank you for reporting. Your incident report has been reviewed and approved on " . date('M d, Y h:i A') . ". Assistance will be sent to your location immediately. ";
+                        $sms_api->sendSMS($incident_details['phone'], $sms_message);
+                    } catch (Exception $e) {
+                        error_log("SMS sending failed for incident {$incident_id}: " . $e->getMessage());
+                    }
+                }
                 $success_message = "Incident approved successfully!";
                 logActivity($admin_id, 'Incident approved', 'incident_reports', $incident_id);
             } else {
@@ -52,6 +70,14 @@ if ($_POST) {
                 break;
             }
 
+            $get_details = "SELECT ir.*, u.phone FROM incident_reports ir 
+                           LEFT JOIN users u ON ir.user_id = u.id 
+                           WHERE ir.id = :incident_id";
+            $stmt_details = $db->prepare($get_details);
+            $stmt_details->bindParam(':incident_id', $incident_id, PDO::PARAM_INT);
+            $stmt_details->execute();
+            $incident_details = $stmt_details->fetch();
+
             $query = "UPDATE incident_reports SET 
                      approval_status = 'rejected',
                      approved_by = :admin_id,
@@ -66,6 +92,15 @@ if ($_POST) {
             $stmt->bindParam(':incident_id', $incident_id, PDO::PARAM_INT);
             
             if ($stmt->execute()) {
+                if (ENABLE_SMS_NOTIFICATIONS && $incident_details && $incident_details['phone']) {
+                    try {
+                        $sms_api = new SemaphoreAPI();
+                        $sms_message = "Thank you for reporting. After careful review, your incident report has been rejected. Reason: " . $rejection_reason;
+                        $sms_api->sendSMS($incident_details['phone'], $sms_message);
+                    } catch (Exception $e) {
+                        error_log("SMS sending failed for incident {$incident_id}: " . $e->getMessage());
+                    }
+                }
                 $success_message = "Incident rejected successfully!";
                 logActivity($admin_id, 'Incident rejected', 'incident_reports', $incident_id);
             } else {
