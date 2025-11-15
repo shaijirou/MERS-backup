@@ -181,7 +181,13 @@ include '../includes/header.php';
     #page-content-wrapper > .navbar,
     .navbar,
     .sidebar,
-    #wrapper > div:first-child {
+    #wrapper > div:first-child,
+    .card.mb-4.no-print {
+        display: none !important;
+    }
+    
+    /* Hide the filter form completely in print */
+    form {
         display: none !important;
     }
     
@@ -191,6 +197,7 @@ include '../includes/header.php';
         width: 100% !important;
     }
     
+    /* Fixed header to repeat at top of every page */
     .print-header {
         display: flex !important;
         justify-content: center;
@@ -200,6 +207,13 @@ include '../includes/header.php';
         margin-bottom: 10px;
         page-break-after: avoid;
         text-align: center;
+        position: fixed;
+        top: 0;
+        left: 10px;
+        right: 10px;
+        width: calc(100% - 20px);
+        background: white;
+        z-index: 100;
     }
     
     .print-header img {
@@ -260,20 +274,22 @@ include '../includes/header.php';
         display: block;
     }
     
+    /* Fixed footer to repeat at bottom of every page */
     .print-footer {
         display: block !important;
         border-top: 3px solid #333;
         text-align: center;
         padding: 8px 0;
-        margin-top: 10px;
+        margin-top: 20px;
         font-size: 12px;
         color: #666;
-        page-break-before: avoid;
         position: fixed;
-        bottom: 10px;
+        bottom: 0;
         left: 10px;
         right: 10px;
         width: calc(100% - 20px);
+        background: white;
+        z-index: 100;
     }
     
     .print-footer p {
@@ -290,7 +306,7 @@ include '../includes/header.php';
         display: block !important;
         border: 1px solid #999;
         padding: 10px;
-        margin: 10px 0;
+        margin: 80px 0 10px 0;
         background-color: #f5f5f5;
         text-align: justify;
         font-size: 11px;
@@ -303,11 +319,12 @@ include '../includes/header.php';
         color: #333;
     }
     
+    /* Fixed table margins for proper print rendering: removed excessive bottom margin that was causing layout issues */
     table {
         width: 100%;
         border-collapse: collapse;
-        page-break-inside: avoid;
-        margin: 0 auto 70px auto;
+        page-break-inside: auto;
+        margin: 15px auto 80px auto;
     }
     
     table th, table td {
@@ -327,6 +344,7 @@ include '../includes/header.php';
         padding: 5px;
     }
     
+    /* Allow rows to break across pages naturally */
     tbody tr {
         page-break-inside: avoid;
     }
@@ -371,27 +389,37 @@ include '../includes/header.php';
     
     .card {
         border: 1px solid #999 !important;
-        page-break-inside: avoid;
+        page-break-inside: auto;
         margin: 8px auto;
         max-width: 100%;
+        display: block !important;
     }
     
     .card-header {
         background-color: #e8e8e8;
         border-bottom: 1px solid #999;
-        padding: 5px;
+        padding: 8px;
         text-align: center;
+        display: block !important;
+        page-break-inside: avoid;
     }
     
     .card-header h5 {
-        font-size: 12px;
+        font-size: 13px;
         font-weight: bold;
         margin: 0;
         text-align: center;
     }
     
     .card-body {
-        padding: 5px;
+        padding: 0;
+        display: block !important;
+        page-break-inside: auto;
+    }
+    
+    .table-responsive {
+        overflow: visible !important;
+        display: block !important;
     }
     
     /* Prevent empty pages from printing */
@@ -400,7 +428,7 @@ include '../includes/header.php';
     }
     
     .container-fluid {
-        padding-bottom: 80px;
+        padding-bottom: 0;
         text-align: center;
     }
 }
@@ -785,10 +813,11 @@ include '../includes/header.php';
                                             <?php elseif ($report_type == 'evacuation'): ?>
                                                 <td><?php echo htmlspecialchars($row['name']); ?></td>
                                                 <td><?php echo htmlspecialchars($row['address']); ?></td>
-                                                <td><?php echo number_format($row['capacity']); ?></td>
-                                                <td><?php echo number_format($row['current_occupancy']); ?></td>
+                                                <td style="text-align: center;"><?php echo number_format($row['capacity']); ?></td>
+                                                <td style="text-align: center;"><?php echo number_format($row['current_occupancy']); ?></td>
                                                 <td><?php echo ucfirst($row['status']); ?></td>
-                                                <td><?php echo htmlspecialchars($row['contact_person']) . '<br>' . htmlspecialchars($row['contact_number']); ?></td>
+                                                <!-- Split contact info into two lines for better print display -->
+                                                <td><?php echo htmlspecialchars($row['contact_person']) . ' / ' . htmlspecialchars($row['contact_number']); ?></td>
                                             <?php elseif ($report_type == 'users'): ?>
                                                 <td><?php echo date('M j, Y', strtotime($row['created_at'])); ?></td>
                                                 <td><?php echo htmlspecialchars($row['first_name'] . ' ' . $row['last_name']); ?></td>
@@ -807,6 +836,7 @@ include '../includes/header.php';
             <?php endif; ?>
 
             <!-- Professional print footer matching print_incident_report.php -->
+            <!-- Moved footer after table content to avoid layout conflicts -->
             <div class="print-footer">
                 <p>All Rights Reserved - MERS</p>
                 <p>Mobile Emergency Response System</p>
