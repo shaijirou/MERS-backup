@@ -471,7 +471,7 @@ include '../includes/header.php';
                                 <input type="text" class="form-control" id="name" name="name" required>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-5">
                             <div class="mb-3">
                                 <label for="barangay" class="form-label">Barangay *</label>
                                 <select class="form-select" id="barangay" name="barangay_id" required>  <!-- Changed name to barangay_id -->
@@ -484,55 +484,56 @@ include '../includes/header.php';
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="address" class="form-label">Address *</label>
-                        <textarea class="form-control" id="address" name="address" rows="2" required></textarea>
-                    </div>
-                    
                     <div class="row">
                         <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address *</label>
+                        <input type="address" class="form-control" id="address" name="address"  required>
+                     </div>
+                    </div>
+                        <div class="col-md-5">
                             <div class="mb-3">
                                 <label for="capacity" class="form-label">Capacity *</label>
                                 <input type="number" class="form-control" id="capacity" name="capacity" min="1" required>
                             </div>
                         </div>
+                    </div>
+                    
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="contact_person" class="form-label">Contact Person *</label>
                                 <input type="text" class="form-control" id="contact_person" name="contact_person" required>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-5">
                             <div class="mb-3">
                                 <label for="contact_number" class="form-label">Contact Number *</label>
                                 <input type="text" class="form-control" id="contact_number" name="contact_number" required>
                             </div>
                         </div>
+                    </div>
+                    
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="facilities" class="form-label">Facilities</label>
                                 <input type="text" class="form-control" id="facilities" name="facilities" placeholder="e.g., Kitchen, Medical, Restrooms">
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-5">
                             <div class="mb-3">
                                 <label for="latitude" class="form-label">Latitude</label>
                                 <input type="number" class="form-control" id="latitude" name="latitude" step="any" placeholder="e.g., 14.1234">
                             </div>
                         </div>
-                        <div class="col-md-6">
+                    </div>
+                    <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="longitude" class="form-label">Longitude</label>
                                 <input type="number" class="form-control" id="longitude" name="longitude" step="any" placeholder="e.g., 121.1234">
                             </div>
                         </div>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -563,7 +564,7 @@ include '../includes/header.php';
                                 <input type="text" class="form-control" id="edit_name" name="name" required>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-5">
                             <div class="mb-3">
                                 <label for="edit_barangay" class="form-label">Barangay *</label>
                                 <select class="form-select" id="edit_barangay" name="barangay_id" required>  <!-- Changed name to barangay_id -->
@@ -576,25 +577,30 @@ include '../includes/header.php';
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="edit_address" class="form-label">Address *</label>
-                        <textarea class="form-control" id="edit_address" name="address" rows="2" required></textarea>
-                    </div>
+                    
                     
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                            <label for="edit_address" class="form-label">Address *</label>
+                            <input type="address" class="form-control" id="edit_address" name="address" required>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
                             <div class="mb-3">
                                 <label for="edit_capacity" class="form-label">Capacity *</label>
                                 <input type="number" class="form-control" id="edit_capacity" name="capacity" min="1" required>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                    </div>
+                    <div class="row">
+                    <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="edit_current_occupancy" class="form-label">Current Occupancy</label>
                                 <input type="number" class="form-control" id="edit_current_occupancy" name="current_occupancy" min="0">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-5">
                             <div class="mb-3">
                                 <label for="edit_status" class="form-label">Status</label>
                                 <select class="form-select" id="edit_status" name="status">
@@ -605,7 +611,6 @@ include '../includes/header.php';
                             </div>
                         </div>
                     </div>
-                    
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -613,7 +618,7 @@ include '../includes/header.php';
                                 <input type="text" class="form-control" id="edit_contact_person" name="contact_person" required>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-5">
                             <div class="mb-3">
                                 <label for="edit_contact_number" class="form-label">Contact Number *</label>
                                 <input type="text" class="form-control" id="edit_contact_number" name="contact_number" required>
@@ -621,25 +626,26 @@ include '../includes/header.php';
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="edit_facilities" class="form-label">Facilities</label>
-                        <input type="text" class="form-control" id="edit_facilities" name="facilities" placeholder="e.g., Kitchen, Medical, Restrooms">
-                    </div>
-                    
                     <div class="row">
                         <div class="col-md-6">
+                            <div class="mb-3">
+                            <label for="edit_facilities" class="form-label">Facilities</label>
+                            <input type="text" class="form-control" id="edit_facilities" name="facilities" placeholder="e.g., Kitchen, Medical, Restrooms">
+                            </div>
+                        </div>
+                        <div class="col-md-5">
                             <div class="mb-3">
                                 <label for="edit_latitude" class="form-label">Latitude</label>
                                 <input type="number" class="form-control" id="edit_latitude" name="latitude" step="any">
                             </div>
                         </div>
-                        <div class="col-md-6">
+                    </div>
+                    <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="edit_longitude" class="form-label">Longitude</label>
                                 <input type="number" class="form-control" id="edit_longitude" name="longitude" step="any">
                             </div>
                         </div>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -666,7 +672,7 @@ include '../includes/header.php';
                             <p class="form-control-plaintext" id="view_name"></p>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-5">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Status</label>
                             <p class="form-control-plaintext">
@@ -677,34 +683,28 @@ include '../includes/header.php';
                 </div>
                 
                 <div class="row">
-                    <!-- <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Barangay</label>
-                            <p class="form-control-plaintext" id="view_barangay"></p>
-                        </div> -->
-                    <!-- </div> -->
-                    <div class="col-md-12">
+                    <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Address</label>
                             <p class="form-control-plaintext" id="view_address"></p>
                         </div>
                     </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Capacity</label>
                             <p class="form-control-plaintext" id="view_capacity"></p>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Current Occupancy</label>
                             <p class="form-control-plaintext" id="view_current_occupancy"></p>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-5">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Occupancy Rate</label>
                             <div class="progress mt-2" style="height: 25px;">
@@ -713,9 +713,9 @@ include '../includes/header.php';
                                 </div>
                             </div>
                         </div>
-                    </div>
                 </div>
-                
+                </div>
+            
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -723,48 +723,48 @@ include '../includes/header.php';
                             <p class="form-control-plaintext" id="view_contact_person"></p>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-5">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Contact Number</label>
                             <p class="form-control-plaintext" id="view_contact_number"></p>
                         </div>
                     </div>
                 </div>
-                
-                <div class="mb-3">
+                <div class="row">
+                    <div class="col-md-6">
+                    <div class="mb-3">
                     <label class="form-label fw-bold">Facilities</label>
                     <p class="form-control-plaintext" id="view_facilities"></p>
                 </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
+                </div>
+                    <div class="col-md-5">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Latitude</label>
                             <p class="form-control-plaintext" id="view_latitude"></p>
                         </div>
                     </div>
+                </div>
+                
+                <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Longitude</label>
                             <p class="form-control-plaintext" id="view_longitude"></p>
                         </div>
                     </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-5">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Created At</label>
                             <p class="form-control-plaintext" id="view_created_at"></p>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                </div>
+                <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Last Updated</label>
                             <p class="form-control-plaintext" id="view_updated_at"></p>
                         </div>
                     </div>
-                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

@@ -516,7 +516,7 @@ include '../includes/header.php';
                 <option value="Subic Ibaba">Subic Ibaba</option>
               </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-5">
               <label class="form-label">House Number *</label>
               <input type="text" class="form-control" name="house_number" required>
             </div>
@@ -532,7 +532,7 @@ include '../includes/header.php';
               <label class="form-label">Password *</label>
               <input type="password" class="form-control" name="password" required>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-5">
               <label class="form-label">Confirm Password *</label>
               <input type="password" class="form-control" name="confirm_password" required>
             </div>

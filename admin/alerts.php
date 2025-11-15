@@ -588,7 +588,7 @@ include '../includes/header.php';
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-5">
                             <div class="mb-3">
                                 <label for="severity_level" class="form-label">Severity Level *</label>
                                 <select class="form-select" id="severity_level" name="severity_level" required>
@@ -629,7 +629,7 @@ include '../includes/header.php';
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-5">
                             <div class="mb-3">
                                 <label for="expires_at" class="form-label">Expiration Date/Time</label>
                                 <input type="datetime-local" class="form-control" id="expires_at" name="expires_at">
@@ -796,7 +796,7 @@ include '../includes/header.php';
                         <p class="mb-0">${alert.message}</p>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <div class="card bg-light">
                         <div class="card-body">
                             <h6 class="card-title"><i class="bi bi-info-circle"></i> Alert Information</h6>
