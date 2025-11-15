@@ -133,6 +133,9 @@ include 'includes/header.php';
                             <div class="input-group">
                                 <span class="input-group-text bg-primary text-white"><i class="bi bi-lock-fill"></i></span>
                                 <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
                             </div>
                         </div>
                         
@@ -168,5 +171,23 @@ include 'includes/header.php';
         </div>
     </div>
 </div>
+
+<!-- Added JavaScript to toggle password visibility -->
+<script>
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const toggleIcon = this.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('bi-eye-fill');
+            toggleIcon.classList.add('bi-eye-slash-fill');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('bi-eye-slash-fill');
+            toggleIcon.classList.add('bi-eye-fill');
+        }
+    });
+</script>
 
 <?php include 'includes/footer.php'; ?>
