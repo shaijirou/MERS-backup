@@ -472,7 +472,6 @@ function getFireStatus($status) {
         case 'responding': return 'En Route';
         case 'on_scene': return 'Fighting Fire';
         case 'resolved': return 'Fire Out';
-        default: return ucfirst(str_replace('_', ' ', $status));
     }
 }
 

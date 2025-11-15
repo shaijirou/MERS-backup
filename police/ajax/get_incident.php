@@ -31,7 +31,6 @@ if (isset($_GET['id'])) {
                 <h6>Report Information</h6>
                 <p><strong>Report Number:</strong> <?php echo htmlspecialchars($incident['report_number']); ?></p>
                 <p><strong>Type:</strong> <?php echo htmlspecialchars($incident['incident_type']); ?></p>
-                <p><strong>Urgency:</strong> <span class="badge bg-<?php echo getUrgencyColor($incident['urgency_level']); ?>"><?php echo ucfirst($incident['urgency_level']); ?></span></p>
                 <p><strong>Location:</strong> <?php echo htmlspecialchars($incident['location']); ?></p>
                 <p><strong>Description:</strong> <?php echo htmlspecialchars($incident['description']); ?></p>
                 <p><strong>People Affected:</strong> <?php echo ucfirst($incident['people_affected']); ?></p>

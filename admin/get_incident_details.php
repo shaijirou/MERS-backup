@@ -33,13 +33,14 @@ if (!$incident) {
     exit;
 }
 
-// Format status badge
-$status_class = '';
-switch ($incident['status']) {
-    case 'pending': $status_class = 'bg-warning'; break;
-    case 'in_progress': $status_class = 'bg-info'; break;
-    case 'resolved': $status_class = 'bg-success'; break;
-    case 'closed': $status_class = 'bg-secondary'; break;
+// Format response_status badge
+$response_status_class = '';
+switch ($incident['response_status']) {
+    case 'pending': $response_status_class = 'bg-warning'; break;
+    case 'notified': $response_status_class = 'bg-info'; break;
+    case 'responding': $response_status_class = 'bg-info'; break;
+    case 'resolved': $response_status_class = 'bg-success'; break;
+    case 'on_scene': $response_status_class = 'bg-secondary'; break;
 }
 ?>
 
@@ -137,7 +138,7 @@ switch ($incident['status']) {
         <div class="mb-3">
             <label class="form-label fw-bold">Status:</label>
             <div>
-                <span class="badge <?php echo $status_class; ?>"><?php echo ucfirst(str_replace('_', ' ', $incident['status'])); ?></span>
+                <span class="badge <?php echo $response_status_class; ?>"><?php echo ucfirst(str_replace('_', ' ', $incident['response_status'])); ?></span>
             </div>
         </div>
     </div>
@@ -235,7 +236,7 @@ switch ($incident['status']) {
 
 <div class="mt-3 pt-3 border-top">
     <div class="d-flex gap-2 flex-wrap">
-        <button class="btn btn-warning" onclick="updateIncident(<?php echo $incident['id']; ?>, '<?php echo $incident['status']; ?>', '<?php echo htmlspecialchars($incident['resolution_notes']); ?>')">
+        <button class="btn btn-warning" onclick="updateIncident(<?php echo $incident['id']; ?>, '<?php echo $incident['response_status']; ?>', '<?php echo htmlspecialchars($incident['resolution_notes']); ?>')">
             <i class="bi bi-pencil"></i> Update Status
         </button>
         <?php if ($incident['latitude'] && $incident['longitude']): ?>

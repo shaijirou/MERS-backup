@@ -778,7 +778,7 @@ include '../includes/header.php';
         
         const html = `
             <div class="row">
-                <div class="col-md-8">
+                <div class="col-md-6">
                     <h4 class="mb-3">${alert.title}</h4>
                     <div class="mb-3">
                         <span class="badge bg-${severityColors[alert.severity_level]} me-2">
@@ -796,7 +796,7 @@ include '../includes/header.php';
                         <p class="mb-0">${alert.message}</p>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="card bg-light">
                         <div class="card-body">
                             <h6 class="card-title"><i class="bi bi-info-circle"></i> Alert Information</h6>

@@ -48,7 +48,7 @@ if (!$incident) {
 ?>
 
 <div class="row g-3">
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-lg-6">
         <h6 class="text-muted mb-3">Incident Information</h6>
         
         <div class="mb-3">
@@ -64,6 +64,7 @@ if (!$incident) {
                 }
                 
                 if (!empty($photos)): ?>
+                    <!-- Updated photo grid to be responsive: col-12 col-sm-6 col-md-4 -->
                     <div class="row g-2">
                         <?php foreach ($photos as $index => $photo): ?>
                             <?php 
@@ -77,19 +78,19 @@ if (!$incident) {
                             }
                             ?>
                             <?php if ($photo_path): ?>
-                                <div class="col-6 col-sm-4 col-md-6">
+                                <div class="col-12 col-sm-6 col-md-4">
                                     <img src="<?php echo htmlspecialchars($photo_path); ?>" 
                                          alt="Incident Photo <?php echo $index + 1; ?>" 
-                                         class="img-fluid rounded border" 
-                                         style="max-height: 150px; width: 100%; object-fit: cover; cursor: pointer;"
-                                         onclick="window.open('<?php echo htmlspecialchars($photo_path); ?>', '_blank')">
+                                         class="img-fluid rounded border photo-thumbnail" 
+                                         style="max-height: 150px; width: 100%; object-fit: cover;"
+                                         onclick="showImageModal('<?php echo htmlspecialchars($photo_path); ?>', 'Incident Photo <?php echo $index + 1; ?>')">
                                 </div>
                             <?php endif; ?>
                         <?php endforeach; ?>
                     </div>
-                    <small class="text-muted d-block mt-2">Click any photo to view full size</small>
+                    <small class="text-muted">Click any photo to view full size</small>
                 <?php else: ?>
-                    <div class="border rounded p-3 text-center bg-light" style="min-height: 120px; display: flex; align-items: center; justify-content: center;">
+                    <div class="border rounded p-3 text-center bg-light" style="height: 150px; display: flex; align-items: center; justify-content: center;">
                         <div>
                             <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
                             <br>
@@ -130,11 +131,9 @@ if (!$incident) {
             </div>
         </div>
         <?php endif; ?>
-        
-        
     </div>
     
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-lg-6">
         <h6 class="text-muted mb-3">Reporter Information</h6>
         
         <div class="mb-3">

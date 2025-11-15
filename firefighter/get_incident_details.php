@@ -47,8 +47,8 @@ if (!$incident) {
 // }
 ?>
 
-<div class="row">
-    <div class="col-md-6">
+<div class="row g-3">
+    <div class="col-12 col-lg-6">
         <h6 class="text-muted mb-3">Incident Information</h6>
         
         <div class="mb-3">
@@ -64,6 +64,7 @@ if (!$incident) {
                 }
                 
                 if (!empty($photos)): ?>
+                    <!-- Updated photo grid to be responsive: col-12 col-sm-6 col-md-4 -->
                     <div class="row g-2">
                         <?php foreach ($photos as $index => $photo): ?>
                             <?php 
@@ -77,12 +78,12 @@ if (!$incident) {
                             }
                             ?>
                             <?php if ($photo_path): ?>
-                                <div class="col-md-6">
+                                <div class="col-12 col-sm-6 col-md-4">
                                     <img src="<?php echo htmlspecialchars($photo_path); ?>" 
                                          alt="Incident Photo <?php echo $index + 1; ?>" 
-                                         class="img-fluid rounded border" 
-                                         style="max-height: 150px; width: 100%; object-fit: cover; cursor: pointer;"
-                                         onclick="window.open('<?php echo htmlspecialchars($photo_path); ?>', '_blank')">
+                                         class="img-fluid rounded border photo-thumbnail" 
+                                         style="max-height: 150px; width: 100%; object-fit: cover;"
+                                         onclick="showImageModal('<?php echo htmlspecialchars($photo_path); ?>', 'Incident Photo <?php echo $index + 1; ?>')">
                                 </div>
                             <?php endif; ?>
                         <?php endforeach; ?>
@@ -130,11 +131,9 @@ if (!$incident) {
             </div>
         </div>
         <?php endif; ?>
-        
-        
     </div>
     
-    <div class="col-md-6">
+    <div class="col-12 col-lg-6">
         <h6 class="text-muted mb-3">Reporter Information</h6>
         
         <div class="mb-3">

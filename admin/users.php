@@ -477,7 +477,7 @@ include '../includes/header.php';
               <label class="form-label">First Name *</label>
               <input type="text" class="form-control" name="first_name" required>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-5">
               <label class="form-label">Last Name *</label>
               <input type="text" class="form-control" name="last_name" required>
             </div>
@@ -485,7 +485,7 @@ include '../includes/header.php';
               <label class="form-label">Email *</label>
               <input type="email" class="form-control" name="email" required>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-5">
               <label class="form-label">Phone *</label>
               <input type="tel" class="form-control" name="phone" required>
             </div>
@@ -520,11 +520,11 @@ include '../includes/header.php';
               <label class="form-label">House Number *</label>
               <input type="text" class="form-control" name="house_number" required>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
               <label class="form-label">Street *</label>
               <input type="text" class="form-control" name="street" required>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-5">
               <label class="form-label">Landmark</label>
               <input type="text" class="form-control" name="landmark" placeholder="e.g. Near the market">
             </div>
