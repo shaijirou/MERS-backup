@@ -25,8 +25,7 @@ $type_filter = isset($_GET['type']) ? sanitizeInput($_GET['type']) : '';
 $urgency_filter = isset($_GET['urgency']) ? sanitizeInput($_GET['urgency']) : '';
 $search = isset($_GET['search']) ? sanitizeInput($_GET['search']) : '';
 
-// Build query conditions
-$conditions = ["a.status = 'sent'"];
+$conditions = ["(a.status = 'active' OR a.status = 'sent')"];
 $params = [];
 
 if (!empty($type_filter)) {
@@ -35,7 +34,7 @@ if (!empty($type_filter)) {
 }
 
 if (!empty($urgency_filter)) {
-    $conditions[] = "a.urgency_level = :urgency_filter";
+    $conditions[] = "a.severity_level = :urgency_filter";
     $params[':urgency_filter'] = $urgency_filter;
 }
 
@@ -44,9 +43,9 @@ if (!empty($search)) {
     $params[':search'] = "%$search%";
 }
 
-// Add barangay filter for user
-$conditions[] = "(a.affected_barangays IS NULL OR JSON_CONTAINS(a.affected_barangays, :user_barangay))";
-$params[':user_barangay'] = json_encode($user['barangay']);
+$barangay_condition = "(a.affected_barangays = 'All' OR a.affected_barangays IS NULL OR a.affected_barangays = '' OR a.affected_barangays = '[]' OR a.affected_barangays = :user_barangay OR JSON_CONTAINS(a.affected_barangays, JSON_QUOTE(:user_barangay)))";
+$conditions[] = $barangay_condition;
+$params[':user_barangay'] = $user['barangay'];
 
 $where_clause = "WHERE " . implode(" AND ", $conditions);
 
@@ -72,7 +71,7 @@ $query = "SELECT a.*, dt.name as disaster_type_name,
           FROM alerts a 
           LEFT JOIN disaster_types dt ON a.disaster_type_id = dt.id 
           $where_clause
-          ORDER BY a.created_at DESC 
+          ORDER BY a.severity_level DESC, a.created_at DESC 
           LIMIT :limit OFFSET :offset";
 
 $stmt = $db->prepare($query);
@@ -156,10 +155,12 @@ include '../includes/header.php';
                     <label for="type" class="form-label">Alert Type</label>
                     <select class="form-select" id="type" name="type">
                         <option value="">All Types</option>
-                        <option value="emergency" <?php echo $type_filter == 'emergency' ? 'selected' : ''; ?>>Emergency</option>
-                        <option value="warning" <?php echo $type_filter == 'warning' ? 'selected' : ''; ?>>Warning</option>
-                        <option value="advisory" <?php echo $type_filter == 'advisory' ? 'selected' : ''; ?>>Advisory</option>
-                        <option value="info" <?php echo $type_filter == 'info' ? 'selected' : ''; ?>>Information</option>
+                        <option value="flood" <?php echo $type_filter == 'flood' ? 'selected' : ''; ?>>Flood</option>
+                        <option value="earthquake" <?php echo $type_filter == 'earthquake' ? 'selected' : ''; ?>>Earthquake</option>
+                        <option value="fire" <?php echo $type_filter == 'fire' ? 'selected' : ''; ?>>Fire</option>
+                        <option value="typhoon" <?php echo $type_filter == 'typhoon' ? 'selected' : ''; ?>>Typhoon</option>
+                        <option value="landslide" <?php echo $type_filter == 'landslide' ? 'selected' : ''; ?>>Landslide</option>
+                        <option value="other" <?php echo $type_filter == 'other' ? 'selected' : ''; ?>>Other</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -208,7 +209,7 @@ include '../includes/header.php';
     </div>
     <?php endif; ?>
 
-    <!-- Alerts List -->
+    <!-- Alerts List Section -->
     <div class="row">
         <?php if (!empty($alerts)): ?>
             <?php foreach ($alerts as $alert): ?>
@@ -220,8 +221,8 @@ include '../includes/header.php';
                                 <span class="badge bg-<?php echo $alert['alert_type'] == 'emergency' ? 'danger' : ($alert['alert_type'] == 'warning' ? 'warning text-dark' : ($alert['alert_type'] == 'advisory' ? 'info text-dark' : 'secondary')); ?> me-2">
                                     <?php echo strtoupper($alert['alert_type']); ?>
                                 </span>
-                                <span class="badge bg-<?php echo $alert['urgency_level'] == 'critical' ? 'danger' : ($alert['urgency_level'] == 'high' ? 'warning text-dark' : ($alert['urgency_level'] == 'medium' ? 'info text-dark' : 'secondary')); ?> me-2">
-                                    <?php echo strtoupper($alert['urgency_level']); ?>
+                                <span class="badge bg-<?php echo $alert['severity_level'] == 'critical' ? 'danger' : ($alert['severity_level'] == 'high' ? 'warning text-dark' : ($alert['severity_level'] == 'medium' ? 'info text-dark' : 'secondary')); ?> me-2">
+                                    <?php echo strtoupper($alert['severity_level']); ?>
                                 </span>
                                 <?php if ($alert['recency'] == 'new'): ?>
                                 <span class="badge bg-success">NEW</span>
@@ -230,14 +231,14 @@ include '../includes/header.php';
                             <small class="text-muted"><?php echo timeAgo($alert['created_at']); ?></small>
                         </div>
                         
-                        <h5 class="card-title"><?php echo $alert['title']; ?></h5>
-                        <p class="card-text"><?php echo nl2br(substr($alert['message'], 0, 200)) . (strlen($alert['message']) > 200 ? '...' : ''); ?></p>
+                        <h5 class="card-title"><?php echo htmlspecialchars($alert['title']); ?></h5>
+                        <p class="card-text"><?php echo nl2br(htmlspecialchars(substr($alert['message'], 0, 200))) . (strlen($alert['message']) > 200 ? '...' : ''); ?></p>
                         
                         <div class="row text-sm mb-3">
                             <div class="col-md-6">
                                 <small class="text-muted">
                                     <i class="bi bi-tag-fill me-1"></i>
-                                    Type: <?php echo $alert['disaster_type_name'] ?: 'General'; ?>
+                                    Type: <?php echo htmlspecialchars($alert['alert_type']); ?>
                                 </small>
                             </div>
                             <div class="col-md-6">
@@ -287,21 +288,21 @@ include '../includes/header.php';
     <nav aria-label="Alerts pagination" class="mt-4">
         <ul class="pagination justify-content-center">
             <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
-                <a class="page-link" href="?page=<?php echo $page - 1; ?>&type=<?php echo $type_filter; ?>&urgency=<?php echo $urgency_filter; ?>&search=<?php echo urlencode($search); ?>">
+                <a class="page-link" href="?page=<?php echo $page - 1; ?>&type=<?php echo urlencode($type_filter); ?>&urgency=<?php echo urlencode($urgency_filter); ?>&search=<?php echo urlencode($search); ?>">
                     <i class="bi bi-chevron-left"></i>
                 </a>
             </li>
             
             <?php for ($i = max(1, $page - 2); $i <= min($total_pages, $page + 2); $i++): ?>
             <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                <a class="page-link" href="?page=<?php echo $i; ?>&type=<?php echo $type_filter; ?>&urgency=<?php echo $urgency_filter; ?>&search=<?php echo urlencode($search); ?>">
+                <a class="page-link" href="?page=<?php echo $i; ?>&type=<?php echo urlencode($type_filter); ?>&urgency=<?php echo urlencode($urgency_filter); ?>&search=<?php echo urlencode($search); ?>">
                     <?php echo $i; ?>
                 </a>
             </li>
             <?php endfor; ?>
             
             <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
-                <a class="page-link" href="?page=<?php echo $page + 1; ?>&type=<?php echo $type_filter; ?>&urgency=<?php echo $urgency_filter; ?>&search=<?php echo urlencode($search); ?>">
+                <a class="page-link" href="?page=<?php echo $page + 1; ?>&type=<?php echo urlencode($type_filter); ?>&urgency=<?php echo urlencode($urgency_filter); ?>&search=<?php echo urlencode($search); ?>">
                     <i class="bi bi-chevron-right"></i>
                 </a>
             </li>
@@ -371,14 +372,17 @@ function copyShareLink() {
     });
 }
 
-// Bookmark functionality
 document.querySelectorAll('.bookmark-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const alertId = this.dataset.alertId;
         // This would typically make an AJAX call to bookmark the alert
         this.innerHTML = '<i class="bi bi-bookmark-fill"></i>';
         this.classList.add('text-warning');
-        AgoncilloAlert.showInAppNotification('Bookmarked', 'Alert has been bookmarked', 'success');
+        if (typeof AgoncilloAlert !== 'undefined' && AgoncilloAlert.showInAppNotification) {
+            AgoncilloAlert.showInAppNotification('Bookmarked', 'Alert has been bookmarked', 'success');
+        } else {
+            alert('Alert bookmarked successfully!');
+        }
     });
 });
 </script>

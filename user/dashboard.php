@@ -16,29 +16,35 @@ $stmt->execute();
 $user = $stmt->fetch();
 
 // Get recent alerts
-$query = "SELECT a.*, dt.name as disaster_type_name 
-          FROM alerts a 
-          LEFT JOIN disaster_types dt ON a.disaster_type_id = dt.id 
-          WHERE a.status = 'sent' 
-          AND (a.affected_barangays IS NULL OR JSON_CONTAINS(a.affected_barangays, :barangay))
+$query = "SELECT a.* 
+          FROM alerts a
+          WHERE a.status = 'active' 
+          AND (a.affected_barangays = 'All' OR a.affected_barangays = :barangay)
           ORDER BY a.created_at DESC 
           LIMIT 3";
 $stmt = $db->prepare($query);
-$barangay_json = json_encode($user['barangay']);
-$stmt->bindParam(':barangay', $barangay_json, PDO::PARAM_STR);
+$stmt->bindParam(':barangay', $user['barangay']);
 $stmt->execute();
 $recent_alerts = $stmt->fetchAll();
 
-// Get nearest evacuation centers
 $query = "SELECT ec.*, b.name as barangay_name 
+          FROM evacuation_centers ec 
+          JOIN barangays b ON ec.barangay_id = b.id 
+          WHERE ec.status = 'active' 
+          ORDER BY ec.capacity DESC";
+$stmt = $db->prepare($query);
+$stmt->execute();
+$evacuation_centers = $stmt->fetchAll();
+
+$query_sidebar = "SELECT ec.*, b.name as barangay_name 
           FROM evacuation_centers ec 
           JOIN barangays b ON ec.barangay_id = b.id 
           WHERE ec.status = 'active' 
           ORDER BY ec.capacity DESC 
           LIMIT 4";
-$stmt = $db->prepare($query);
-$stmt->execute();
-$evacuation_centers = $stmt->fetchAll();
+$stmt_sidebar = $db->prepare($query_sidebar);
+$stmt_sidebar->execute();
+$evacuation_centers_sidebar = $stmt_sidebar->fetchAll();
 
 // Get recent incident reports from community
 $query = "SELECT ir.*, u.first_name, u.last_name 
@@ -55,8 +61,10 @@ include '../includes/header.php';
 
 <!-- Add Leaflet CSS and JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Added Bootstrap Icons CSS before Leaflet to ensure icons render properly -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
     <div class="container">
@@ -180,7 +188,7 @@ include '../includes/header.php';
                                     <small><?php echo timeAgo($alert['created_at']); ?></small>
                                 </div>
                                 <p class="mb-1"><?php echo substr($alert['message'], 0, 150) . '...'; ?></p>
-                                <small class="text-muted">Type: <?php echo $alert['disaster_type_name'] ?: 'General'; ?></small>
+                                <small class="text-muted">Type: <?php echo $alert['alert_type'] ?: 'General'; ?></small>
                             </a>
                             <?php endforeach; ?>
                         <?php else: ?>
@@ -209,7 +217,8 @@ include '../includes/header.php';
                     </div>
                 </div>
                 <div class="card-body p-0">
-                    <div id="dashboard-map" style="height: 350px; width: 100%;"></div>
+                    <!-- Add proper container div with correct ID and styling for Leaflet -->
+                    <div id="dashboard-map" style="height: 350px; width: 100%; background: #f0f0f0;"></div>
                 </div>
                 <div class="card-footer bg-white">
                     <div class="d-flex justify-content-between align-items-center">
@@ -232,7 +241,7 @@ include '../includes/header.php';
                     <h5 class="card-title mb-0">Nearest Evacuation Centers</h5>
                 </div>
                 <div class="card-body p-0" style="max-height: 350px; overflow-y: auto;">
-                    <?php foreach ($evacuation_centers as $index => $center): ?>
+                    <?php foreach ($evacuation_centers_sidebar as $index => $center): ?>
                     <div class="evacuation-center-item p-3 border-bottom cursor-pointer" 
                          onclick="dashboardMap.focusOnCenter(<?php echo $index; ?>)"
                          data-bs-toggle="tooltip" 
@@ -483,7 +492,7 @@ include '../includes/header.php';
     </div>
 </div>
 
-<!-- Bootstrap & Icons (add inside <head>) -->
+<!-- Bootstrap & Icons -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
@@ -542,8 +551,8 @@ include '../includes/header.php';
         </div>
     </div>
 </footer>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
+<!-- Rewrote dashboard map initialization to match working implementation from map.php -->
 <script>
 // Dashboard Map Implementation
 const dashboardMap = {
@@ -553,8 +562,24 @@ const dashboardMap = {
     centersVisible: true,
 
     init: function() {
-        console.log('Initializing dashboard map...');
-        console.log('Evacuation centers:', this.evacuationCenters);
+        // Check if Leaflet is loaded
+        if (typeof L === 'undefined') {
+            console.log('[v0] Leaflet not loaded');
+            return;
+        }
+
+        console.log('[v0] Initializing dashboard map with', this.evacuationCenters.length, 'evacuation centers');
+        
+        // Check if container exists and is ready
+        const mapContainer = document.getElementById('dashboard-map');
+        if (!mapContainer) {
+            console.log('[v0] Map container not found');
+            return;
+        }
+
+        // Make sure container has proper styling
+        mapContainer.style.height = '350px';
+        mapContainer.style.width = '100%';
         
         // Initialize the map centered on Agoncillo
         this.map = L.map('dashboard-map').setView([13.9333, 120.9333], 12);
@@ -568,97 +593,93 @@ const dashboardMap = {
         // Add evacuation center markers
         this.addEvacuationCenters();
 
-        // Disable scroll wheel zoom for better dashboard experience
-        this.map.scrollWheelZoom.disable();
-        
-        console.log('Dashboard map initialized successfully');
+        console.log('[v0] Dashboard map initialized successfully');
     },
 
     addEvacuationCenters: function() {
-        console.log('Adding evacuation centers to map...');
+        console.log('[v0] Adding', this.evacuationCenters.length, 'evacuation centers to map');
         
         this.evacuationCenters.forEach((center, index) => {
-            // Generate coordinates around Agoncillo if not provided
-            const lat = parseFloat(center.latitude) || (13.7565 + (Math.random() - 0.5) * 0.02);
-            const lng = parseFloat(center.longitude) || (120.9445 + (Math.random() - 0.5) * 0.02);
+            // Use actual coordinates from database
+            const lat = parseFloat(center.latitude);
+            const lng = parseFloat(center.longitude);
 
-            console.log(`Adding center ${index}: ${center.name} at [${lat}, ${lng}]`);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                console.log(`[v0] Adding center: ${center.name} at [${lat}, ${lng}]`);
 
-            // Create custom icon for evacuation centers
-            const evacuationIcon = L.divIcon({
-                html: '<i class="bi bi-shield-check-fill text-success" style="font-size: 24px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);"></i>',
-                iconSize: [24, 24],
-                iconAnchor: [12, 12],
-                popupAnchor: [0, -12],
-                className: 'custom-div-icon'
-            });
+                const evacuationIcon = L.divIcon({
+                    html: '<div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"><i class="bi bi-shield-check" style="font-size: 14px;"></i></div>',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20],
+                    popupAnchor: [0, -20],
+                    className: 'custom-div-icon'
+                });
 
-            const marker = L.marker([lat, lng], { icon: evacuationIcon })
-                .bindPopup(``
-                    <div class="text-center" style="min-width: 200px;">
-                        <h6 class="mb-2 text-primary">${center.name}</h6>
-                        <p class="mb-1 small"><i class="bi bi-geo-alt me-1"></i>${center.barangay_name}, Agoncillo</p>
-                        <p class="mb-2 small"><i class="bi bi-people me-1"></i>Capacity: ${center.capacity} people</p>
-                        <div class="d-flex gap-1 justify-content-center">
-                            <button class="btn btn-sm btn-primary" onclick="dashboardMap.getDirections(${index})">
-                                <i class="bi bi-navigation me-1"></i>Directions
-                            </button>
-                            <button class="btn btn-sm btn-outline-primary" onclick="dashboardMap.focusOnCenter(${index})">
-                                <i class="bi bi-zoom-in me-1"></i>Focus
+                const marker = L.marker([lat, lng], { icon: evacuationIcon })
+                    .bindPopup(``
+                        <div class="text-center" style="min-width: 180px;">
+                            <h6 class="mb-2 text-primary">${center.name}</h6>
+                            <p class="mb-1 small"><i class="bi bi-geo-alt me-1"></i>${center.barangay_name}</p>
+                            <p class="mb-2 small"><i class="bi bi-people me-1"></i>Capacity: ${center.capacity}</p>
+                            <button class="btn btn-sm btn-primary w-100" onclick="dashboardMap.getDirections(${lat}, ${lng})">
+                                <i class="bi bi-navigation me-1"></i>Get Directions
                             </button>
                         </div>
-                    </div>
-                `)
-                .addTo(this.map);
+                    ``)
+                    .addTo(this.map);
 
-            // Store marker with its index for easy reference
-            this.evacuationMarkers.push({ 
-                marker: marker, 
-                index: index, 
-                center: center,
-                lat: lat,
-                lng: lng
-            });
+                // Store marker with its data
+                this.evacuationMarkers.push({ 
+                    marker: marker, 
+                    index: index, 
+                    center: center,
+                    lat: lat,
+                    lng: lng
+                });
+            }
         });
         
-        console.log(`Added ${this.evacuationMarkers.length} evacuation center markers`);
+        console.log(`[v0] Added ${this.evacuationMarkers.length} evacuation center markers to map`);
     },
 
     focusOnCenter: function(centerIndex) {
-        console.log(`Focusing on center index: ${centerIndex}`);
+        console.log(`[v0] Focusing on center index: ${centerIndex}`);
         
-        if (centerIndex < 0 || centerIndex >= this.evacuationMarkers.length) {
-            console.error('Invalid center index:', centerIndex);
-            this.showNotification('Error', 'Invalid evacuation center selected', 'error');
+        // Find the marker by matching centers with sidebar order (limit 4)
+        let focusMarker = null;
+        for (let i = 0; i < this.evacuationMarkers.length && i < 4; i++) {
+            if (i === centerIndex) {
+                focusMarker = this.evacuationMarkers[i];
+                break;
+            }
+        }
+
+        if (!focusMarker) {
+            console.log('[v0] Marker not found for sidebar item');
+            this.showNotification('Error', 'Evacuation center not found on map', 'error');
             return;
         }
 
-        const markerItem = this.evacuationMarkers[centerIndex];
-        const center = markerItem.center;
+        const center = focusMarker.center;
         
-        console.log(`Focusing on: ${center.name} at [${markerItem.lat}, ${markerItem.lng}]`);
-
-        // Ensure centers are visible
-        if (!this.centersVisible) {
-            this.toggleEvacuationCenters();
-        }
+        console.log(`[v0] Focusing on: ${center.name}`);
 
         // Center map on the selected evacuation center
-        this.map.setView([markerItem.lat, markerItem.lng], 15, {
+        this.map.setView([focusMarker.lat, focusMarker.lng], 15, {
             animate: true,
             duration: 1
         });
         
         // Open the popup for this center
         setTimeout(() => {
-            markerItem.marker.openPopup();
+            focusMarker.marker.openPopup();
         }, 500);
 
         // Highlight the selected center in the sidebar
         this.highlightCenterInSidebar(centerIndex);
 
         // Show notification
-        this.showNotification('Map Focused', `Centered on ${center.name}`, 'success');
+        this.showNotification('Map Centered', `Viewing ${center.name}`, 'success');
     },
 
     highlightCenterInSidebar: function(centerIndex) {
@@ -670,27 +691,18 @@ const dashboardMap = {
         // Highlight the selected center
         const centerItems = document.querySelectorAll('.evacuation-center-item');
         if (centerItems[centerIndex]) {
-            centerItems[centerIndex].classList.add('bg-light', 'border-primary');
+            centerItems[centerIndex].classList.add('bg-light');
+            centerItems[centerIndex].style.borderLeft = '4px solid #2196f3';
             centerItems[centerIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     },
 
-    getDirections: function(centerIndex) {
-        console.log(`Getting directions to center index: ${centerIndex}`);
-        
-        if (centerIndex < 0 || centerIndex >= this.evacuationMarkers.length) {
-            console.error('Invalid center index for directions:', centerIndex);
-            return;
-        }
-
-        const markerItem = this.evacuationMarkers[centerIndex];
-        const lat = markerItem.lat;
-        const lng = markerItem.lng;
+    getDirections: function(lat, lng) {
+        console.log(`[v0] Getting directions to [${lat}, ${lng}]`);
 
         // Open Google Maps with the evacuation center location
         const url = `https://www.google.com/maps/place/${lat},${lng}`;
         window.open(url, '_blank');
-        this.showNotification('Directions', `Opening location of ${markerItem.center.name}`, 'info');
     },
 
     showNotification: function(title, message, type) {
@@ -704,7 +716,7 @@ const dashboardMap = {
         notification.innerHTML = ``
             <strong>${title}:</strong> ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
+        ``;
 
         document.body.appendChild(notification);
 
@@ -724,18 +736,22 @@ const dashboardMap = {
 
 // Initialize dashboard map when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing dashboard map...');
+    console.log('[v0] DOM loaded, initializing map');
     
-    // Small delay to ensure the map container is ready
-    setTimeout(() => {
-        dashboardMap.init();
+    // Wait for Leaflet to be available
+    let attempts = 0;
+    const maxAttempts = 50;
+    
+    const waitForLeaflet = setInterval(() => {
+        if (typeof L !== 'undefined' && document.getElementById('dashboard-map')) {
+            clearInterval(waitForLeaflet);
+            console.log('[v0] Leaflet ready, initializing dashboard map');
+            dashboardMap.init();
+        } else if (attempts++ > maxAttempts) {
+            clearInterval(waitForLeaflet);
+            console.log('[v0] Timeout waiting for Leaflet');
+        }
     }, 100);
-
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
 });
 
 // Add custom CSS for map icons and styling
@@ -749,10 +765,6 @@ style.textContent = ``
         background-color: #f8f9fa !important;
         cursor: pointer;
         transition: background-color 0.2s ease;
-    }
-    .evacuation-center-item.bg-light {
-        background-color: #e3f2fd !important;
-        border-left: 4px solid #2196f3 !important;
     }
     #dashboard-map {
         border-radius: 0;

@@ -32,7 +32,7 @@ $query = "SELECT a.*, dt.name as disaster_type_name, dt.description as disaster_
           END as recency
           FROM alerts a 
           LEFT JOIN disaster_types dt ON a.disaster_type_id = dt.id 
-          WHERE a.id = :alert_id AND a.status = 'sent'";
+          WHERE a.id = :alert_id AND a.status = 'active'";
 
 $stmt = $db->prepare($query);
 $stmt->bindParam(':alert_id', $alert_id);
@@ -45,15 +45,14 @@ if (!$alert) {
 }
 
 // Check if user is in affected barangays
-$affected_barangays = json_decode($alert['affected_barangays'] ?: '[]', true);
-$user_affected = empty($affected_barangays) || in_array($user['barangay'], $affected_barangays);
+$user_affected = ($alert['affected_barangays'] === 'All' || $alert['affected_barangays'] === $user['barangay']);
 
 // Get related alerts
 $query = "SELECT a.*, dt.name as disaster_type_name 
           FROM alerts a 
           LEFT JOIN disaster_types dt ON a.disaster_type_id = dt.id 
           WHERE a.id != :alert_id 
-          AND a.status = 'sent'
+          AND a.status = 'active'
           AND (a.disaster_type_id = :disaster_type_id OR a.alert_type = :alert_type)
           ORDER BY a.created_at DESC 
           LIMIT 5";
@@ -97,7 +96,7 @@ include '../includes/header.php';
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                        <img src="../<?php echo $user['profile_picture'] ?: 'assets/img/user-avatar.jpg'; ?>" class="rounded-circle me-1" width="28" height="28" alt="User">
+                        <img src="../<?php echo $user['selfie_photo'] ?: 'assets/img/user-avatar.jpg'; ?>" class="rounded-circle me-1" width="28" height="28" alt="User">
                         <span><?php echo $user['first_name'] . ' ' . $user['last_name']; ?></span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
@@ -133,8 +132,8 @@ include '../includes/header.php';
                             <span class="badge bg-<?php echo $alert['alert_type'] == 'emergency' ? 'danger' : ($alert['alert_type'] == 'warning' ? 'warning text-dark' : ($alert['alert_type'] == 'advisory' ? 'info text-dark' : 'secondary')); ?> me-2 fs-6">
                                 <?php echo strtoupper($alert['alert_type']); ?>
                             </span>
-                            <span class="badge bg-<?php echo $alert['urgency_level'] == 'critical' ? 'danger' : ($alert['urgency_level'] == 'high' ? 'warning text-dark' : ($alert['urgency_level'] == 'medium' ? 'info text-dark' : 'secondary')); ?> me-2 fs-6">
-                                <?php echo strtoupper($alert['urgency_level']); ?>
+                            <span class="badge bg-<?php echo $alert['severity_level'] == 'critical' ? 'danger' : ($alert['severity_level'] == 'high' ? 'warning text-dark' : ($alert['severity_level'] == 'medium' ? 'info text-dark' : 'secondary')); ?> me-2 fs-6">
+                                <?php echo strtoupper($alert['severity_level']); ?>
                             </span>
                             <?php if ($alert['recency'] == 'new'): ?>
                             <span class="badge bg-success fs-6">NEW</span>
@@ -213,7 +212,7 @@ include '../includes/header.php';
             <?php endif; ?>
 
             <!-- Affected Areas -->
-            <?php if (!empty($affected_barangays)): ?>
+            <?php if (!empty($alert['affected_barangays']) && $alert['affected_barangays'] !== 'All'): ?>
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white">
                     <h5 class="card-title mb-0">
@@ -222,10 +221,11 @@ include '../includes/header.php';
                 </div>
                 <div class="card-body">
                     <div class="row">
+                        <?php $affected_barangays = explode(',', $alert['affected_barangays']); ?>
                         <?php foreach ($affected_barangays as $barangay): ?>
                         <div class="col-md-4 mb-2">
                             <span class="badge bg-light text-dark border">
-                                <i class="bi bi-geo-alt me-1"></i><?php echo $barangay; ?>
+                                <i class="bi bi-geo-alt me-1"></i><?php echo trim($barangay); ?>
                             </span>
                         </div>
                         <?php endforeach; ?>
@@ -297,9 +297,9 @@ include '../includes/header.php';
                         </span>
                     </div>
                     <div class="mb-3">
-                        <strong>Urgency:</strong>
-                        <span class="badge bg-<?php echo $alert['urgency_level'] == 'critical' ? 'danger' : ($alert['urgency_level'] == 'high' ? 'warning text-dark' : ($alert['urgency_level'] == 'medium' ? 'info text-dark' : 'secondary')); ?>">
-                            <?php echo ucfirst($alert['urgency_level']); ?>
+                        <strong>Severity:</strong>
+                        <span class="badge bg-<?php echo $alert['severity_level'] == 'critical' ? 'danger' : ($alert['severity_level'] == 'high' ? 'warning text-dark' : ($alert['severity_level'] == 'medium' ? 'info text-dark' : 'secondary')); ?>">
+                            <?php echo ucfirst($alert['severity_level']); ?>
                         </span>
                     </div>
                     <div class="mb-3">
@@ -313,6 +313,12 @@ include '../includes/header.php';
                     <div class="mb-3">
                         <strong>Time Elapsed:</strong>
                         <span class="text-muted"><?php echo timeAgo($alert['created_at']); ?></span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Urgency:</strong>
+                        <span class="badge bg-<?php echo $alert['severity_level'] == 'critical' ? 'danger' : ($alert['severity_level'] == 'high' ? 'warning text-dark' : ($alert['severity_level'] == 'medium' ? 'info text-dark' : 'secondary')); ?>">
+                            <?php echo ucfirst($alert['severity_level']); ?>
+                        </span>
                     </div>
                     <?php if ($alert['expires_at']): ?>
                     <div class="mb-3">
@@ -449,7 +455,7 @@ function printAlert() {
 }
 
 // Auto-refresh for critical alerts
-<?php if ($alert['urgency_level'] == 'critical'): ?>
+<?php if ($alert['severity_level'] == 'critical'): ?>
 setInterval(function() {
     // Check for updates to this alert
     fetch(`../api/check_alert_updates.php?id=<?php echo $alert_id; ?>`)
