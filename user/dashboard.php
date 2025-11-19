@@ -262,7 +262,7 @@ include '../includes/header.php';
                                 </div>
                             </div>
                             <div class="text-end">
-                                <button class="btn btn-md btn-solid-primary" onclick="getDirections(<?php echo $center['latitude']; ?>, <?php echo $center['longitude']; ?>)">
+                                <button class="btn btn-md btn-solid-primary" onclick="dashboardMap.getDirections(<?php echo $center['latitude']; ?>, <?php echo $center['longitude']; ?>)">
                                     <i class="bi bi-geo-alt me-1 text-primary" style="font-size: 1.5rem;"></i>
                                 </button>
                                 <p style="font-size: 0.575rem;">Get Directions</p>
@@ -616,16 +616,14 @@ const dashboardMap = {
                 });
 
                 const marker = L.marker([lat, lng], { icon: evacuationIcon })
-                    .bindPopup(``
-                        <div class="text-center" style="min-width: 180px;">
-                            <h6 class="mb-2 text-primary">${center.name}</h6>
-                            <p class="mb-1 small"><i class="bi bi-geo-alt me-1"></i>${center.barangay_name}</p>
-                            <p class="mb-2 small"><i class="bi bi-people me-1"></i>Capacity: ${center.capacity}</p>
-                            <button class="btn btn-sm btn-primary w-100" onclick="dashboardMap.getDirections(${lat}, ${lng})">
-                                <i class="bi bi-navigation me-1"></i>Get Directions
-                            </button>
-                        </div>
-                    ``)
+                    .bindPopup(`<div class="text-center" style="min-width: 180px;">
+                                    <h6 class="mb-2 text-primary">${center.name}</h6>
+                                    <p class="mb-1 small"><i class="bi bi-geo-alt me-1"></i>${center.barangay_name}</p>
+                                    <p class="mb-2 small"><i class="bi bi-people me-1"></i>Capacity: ${center.capacity}</p>
+                                    <button class="btn btn-sm btn-primary w-100" onclick="dashboardMap.getDirections(${lat}, ${lng})">
+                                        <i class="bi bi-navigation me-1"></i>Get Directions
+                                    </button>
+                                </div>`)
                     .addTo(this.map);
 
                 // Store marker with its data
@@ -713,10 +711,8 @@ const dashboardMap = {
         const notification = document.createElement('div');
         notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed dashboard-notification`;
         notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 400px;';
-        notification.innerHTML = ``
-            <strong>${title}:</strong> ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        ``;
+        notification.innerHTML = `<strong>${title}:</strong> ${message}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
 
         document.body.appendChild(notification);
 
@@ -756,31 +752,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Add custom CSS for map icons and styling
 const style = document.createElement('style');
-style.textContent = ``
-    .custom-div-icon {
-        background: transparent !important;
-        border: none !important;
-    }
-    .evacuation-center-item:hover {
-        background-color: #f8f9fa !important;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-    }
-    #dashboard-map {
-        border-radius: 0;
-    }
-    .leaflet-popup-content-wrapper {
-        border-radius: 8px;
-    }
-    .leaflet-popup-content {
-        margin: 12px 16px;
-    }
-    .dashboard-notification {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        border: none;
-        border-radius: 8px;
-    }
-``;
+style.textContent = `.custom-div-icon {
+                        background: transparent !important;
+                        border: none !important;
+                    }
+                    .evacuation-center-item:hover {
+                        background-color: #f8f9fa !important;
+                        cursor: pointer;
+                        transition: background-color 0.2s ease;
+                    }
+                    #dashboard-map {
+                        border-radius: 0;
+                    }
+                    .leaflet-popup-content-wrapper {
+                        border-radius: 8px;
+                    }
+                    .leaflet-popup-content {
+                        margin: 12px 16px;
+                    }
+                    .dashboard-notification {
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                        border: none;
+                        border-radius: 8px;
+                    }`;
 document.head.appendChild(style);
 </script>
 
